@@ -2,18 +2,15 @@
 
 import { useRouter } from 'next/navigation';
 
-interface JourneyStep {
-  ico: string; stage: string; date: string; desc: string;
-  type: 'done' | 'active' | 'pending';
-}
+interface JourneyStep { stage: string; date: string; desc: string; type: 'done' | 'active' | 'pending'; }
 
 const steps: JourneyStep[] = [
-  { ico: '✓', stage: 'Submission',        date: 'Feb 20, 2026',           desc: 'Your request was successfully submitted online.',                      type: 'done' },
-  { ico: '✓', stage: 'Verification',      date: 'Feb 20, 2026',           desc: 'Your documents and enrollment have been verified.',                   type: 'done' },
-  { ico: '✓', stage: 'Billing & Payment', date: 'Feb 21, 2026',           desc: 'Payment of ₱100.00 confirmed (OR-2026-00453).',                       type: 'done' },
-  { ico: '…', stage: 'Processing',        date: 'Feb 22, 2026 — In Progress', desc: 'Your SF9 and SF10 are currently being processed.',                type: 'active' },
-  { ico: '○', stage: 'Ready for Release', date: '—',                      desc: 'We will notify you when your documents are ready.',                   type: 'pending' },
-  { ico: '○', stage: 'Released',          date: '—',                      desc: "Present your claim slip at the Registrar's Office.",                  type: 'pending' },
+  { stage: 'Submission',        date: 'Feb 20, 2026',               desc: 'Your request was successfully submitted online.',          type: 'done'    },
+  { stage: 'Verification',      date: 'Feb 20, 2026',               desc: 'Your documents and enrollment have been verified.',        type: 'done'    },
+  { stage: 'Billing & Payment', date: 'Feb 21, 2026',               desc: 'Payment of ₱100.00 confirmed (OR-2026-00453).',            type: 'done'    },
+  { stage: 'Processing',        date: 'Feb 22, 2026 — In Progress', desc: 'Your SF9 and SF10 are currently being processed.',         type: 'active'  },
+  { stage: 'Ready for Release', date: '—',                          desc: 'We will notify you when your documents are ready.',        type: 'pending' },
+  { stage: 'Released',          date: '—',                          desc: "Present your claim slip at the Registrar's Office.",       type: 'pending' },
 ];
 
 export default function StudentTrackPage() {
@@ -21,62 +18,53 @@ export default function StudentTrackPage() {
 
   return (
     <div className="public-page drms-root">
-      {/* Public topbar */}
       <div className="pub-topbar">
-        <div className="pub-logo" style={{ cursor: 'pointer' }} onClick={() => router.push('/student/landing')}>M</div>
+        <div className="pub-logo">M</div>
         <div>
           <div className="pub-title">MMCM Registrar's Office</div>
-          <div className="pub-sub">Track Request Status</div>
+          <div className="pub-sub">Document Request Monitoring System</div>
         </div>
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 12 }}>
-          <button className="btn-outline" style={{ color: 'white', borderColor: 'rgba(255,255,255,0.4)', background: 'transparent' }} onClick={() => router.push('/student/landing')}>Cancel</button>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 12, alignItems: 'center' }}>
+          <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, cursor: 'pointer' }} onClick={() => router.push('/student/submit')}>Submit a Request</span>
+          <button style={{ padding: '8px 18px', background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', borderRadius: 6, color: 'white', fontFamily: 'var(--drms-font)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }} onClick={() => router.push('/')}>
+            Student Login
+          </button>
         </div>
       </div>
 
-      <div style={{ flex: 1, padding: '40px 20px', display: 'flex', justifyContent: 'center' }}>
-        <div style={{ width: '100%', maxWidth: 700 }}>
-          <div style={{ textAlign: 'center', marginBottom: 24 }}>
-            <h2 style={{ color: '#001C43', fontFamily: "'Montserrat', sans-serif" }}>Track Your Document Request</h2>
-            <p style={{ color: '#444', fontSize: 13, fontFamily: "'Montserrat', sans-serif" }}>Enter your Tracking ID and Student Number below.</p>
+      <div className="pub-body">
+        {/* Search card */}
+        <div className="track-card">
+          <div style={{ fontSize: 28, marginBottom: 12 }}>🔍</div>
+          <div className="track-title">Track Your Request</div>
+          <div className="track-sub">Enter your Tracking ID to check the current status of your document request. Your Tracking ID was sent to your email upon submission.</div>
+          <div className="track-input-row">
+            <input className="track-input" type="text" defaultValue="REQ-2026-003" placeholder="e.g. REQ-2026-003" />
+            <button className="btn-track">Track</button>
+          </div>
+          <div className="info-box">
+            <span className="info-icon">ℹ️</span>
+            <div className="info-text">For concerns, contact the Registrar's Office at <strong>registrar@mcm.edu.ph</strong> or visit Room 101, Admin Building.</div>
+          </div>
+        </div>
+
+        {/* Result card */}
+        <div className="track-result">
+          <div className="result-header">
+            <div>
+              <div className="result-id">Tracking ID: REQ-2026-003</div>
+              <div className="result-name">Dela Cruz, Maria</div>
+              <div className="result-doc">SF9 (Report Card) + SF10 (Permanent Record)</div>
+            </div>
+            <span className="badge b-apr" style={{ fontSize: 13 }}>For Approval</span>
           </div>
 
-          <div className="drms-card" style={{ padding: 24, marginBottom: 20, display: 'flex', gap: 12, alignItems: 'flex-end' }}>
-            <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--mid-gray)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>Tracking / Request ID</label>
-              <input type="text" className="drms-input" placeholder="e.g. REQ-003" defaultValue="REQ-003" />
-            </div>
-            <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--mid-gray)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>Student Number</label>
-              <input type="text" className="drms-input" placeholder="e.g. 2020-12345" defaultValue="2020-100234" />
-            </div>
-            <button className="btn-primary" style={{ height: 38 }}>Track Status</button>
-          </div>
-
-          <div className="drms-card" style={{ padding: 24 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, paddingBottom: 16, borderBottom: '1px solid rgba(0,0,0,.06)' }}>
-              <div>
-                <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--navy)' }}>#REQ-003</div>
-                <div style={{ fontSize: 12, color: 'var(--mid-gray)', marginTop: 4 }}>Dela Cruz, Maria · SF9 + SF10</div>
-              </div>
-              <span className="badge b-apr">Processing</span>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20, paddingLeft: 10 }}>
-              {steps.map((s, i) => (
-                <div key={i} style={{ display: 'flex', gap: 16, position: 'relative' }}>
-                  {i < steps.length - 1 && (
-                    <div style={{ position: 'absolute', left: 11, top: 24, bottom: -20, width: 2, background: s.type === 'done' ? 'var(--blue)' : 'var(--light-gray)' }} />
-                  )}
-                  <div
-                    style={{
-                      width: 24, height: 24, borderRadius: '50%', flexShrink: 0, position: 'relative', zIndex: 2,
-                      background: s.type === 'done' ? 'var(--blue)' : s.type === 'active' ? 'white' : 'var(--light-gray)',
-                      border: s.type === 'active' ? '2px solid var(--blue)' : '2px solid transparent',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 13, fontWeight: 700,
-                      color: s.type === 'pending' ? 'var(--mid-gray)' : 'white',
-                    }}
-                  >
+          <div className="drms-card" style={{ padding: 20 }}>
+            <div className="section-title" style={{ fontSize: 13 }}>Request Progress</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {steps.map(s => (
+                <div key={s.stage} style={{ display: 'flex', gap: 14, alignItems: 'flex-start', padding: '10px 0', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+                  <div style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0, background: s.type === 'done' ? 'var(--blue)' : s.type === 'active' ? 'var(--navy)' : 'var(--light-gray)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: s.type === 'pending' ? 'var(--mid-gray)' : 'white' }}>
                     {s.type === 'done' ? '✓' : s.type === 'active' ? '…' : ''}
                   </div>
                   <div style={{ flex: 1 }}>
@@ -87,12 +75,9 @@ export default function StudentTrackPage() {
                 </div>
               ))}
             </div>
-
             <div style={{ marginTop: 14, padding: 12, background: '#F0F4FF', borderRadius: 'var(--drms-radius-sm)' }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--navy)' }}>📅 Expected Claim Date: February 27, 2026</div>
-              <div style={{ fontSize: 11, color: 'var(--mid-gray)', marginTop: 4 }}>
-                Claim slip will be generated once the documents are ready for release.
-              </div>
+              <div style={{ fontSize: 11, color: 'var(--mid-gray)', marginTop: 4 }}>Claim slip will be issued once your documents are ready. Please bring a valid ID when claiming.</div>
             </div>
           </div>
         </div>

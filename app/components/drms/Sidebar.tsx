@@ -1,34 +1,38 @@
 "use client";
 
 import { useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation'; // Correct Next.js hooks
+import { useRouter, usePathname } from 'next/navigation';
 
-// ── SVG icon definitions (Keep these exactly as you have them) ──
-const IcoReports = () => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" style={{ width: 20, height: 20, display: 'block' }}><path d="M18 20V10M12 20V4M6 20v-6"/></svg>);
-const IcoRequests = () => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20, display: 'block' }}><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>);
-const IcoPayment = () => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20, display: 'block' }}><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>);
-const IcoClaimSlip = () => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20, display: 'block' }}><path d="M4 3l1.5 1.5L7 3l1.5 1.5L10 3l1.5 1.5L13 3l1.5 1.5L16 3l1.5 1.5L19 3v16l-1.5-1.5L16 19l-1.5 1.5L13 19l-1.5 1.5L10 19l-1.5 1.5L7 19l-1.5 1.5L4 19V3z"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="13" y2="14"/></svg>);
-const IcoClearance = () => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20, display: 'block' }}><path d="M12 2l8 4v6c0 4.4-3.3 8.5-8 10-4.7-1.5-8-5.6-8-10V6l8-4z"/><polyline points="9 12 11 14 15 10"/></svg>);
-const IcoNewReq = () => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" style={{ width: 20, height: 20, display: 'block' }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>);
-const IcoBell = () => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20, display: 'block' }}><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>);
-const IcoLogout = () => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20, display: 'block' }}><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>);
-const IcoChevRight = () => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" style={{ width: 10, height: 10, display: 'block' }}><polyline points="9 18 15 12 9 6"/></svg>);
-const IcoChevLeft = () => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" style={{ width: 10, height: 10, display: 'block' }}><polyline points="15 18 9 12 15 6"/></svg>);
+const IcoReports   = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" style={{ width: 20, height: 20, display: 'block' }}><path d="M18 20V10M12 20V4M6 20v-6"/></svg>;
+const IcoRequests  = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20, display: 'block' }}><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>;
+const IcoPayment   = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20, display: 'block' }}><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>;
+const IcoClaimSlip = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20, display: 'block' }}><path d="M4 3l1.5 1.5L7 3l1.5 1.5L10 3l1.5 1.5L13 3l1.5 1.5L16 3l1.5 1.5L19 3v16l-1.5-1.5L16 19l-1.5 1.5L13 19l-1.5 1.5L10 19l-1.5 1.5L7 19l-1.5 1.5L4 19V3z"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="13" y2="14"/></svg>;
+const IcoClearance = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20, display: 'block' }}><path d="M12 2l8 4v6c0 4.4-3.3 8.5-8 10-4.7-1.5-8-5.6-8-10V6l8-4z"/><polyline points="9 12 11 14 15 10"/></svg>;
+const IcoNewReq    = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" style={{ width: 20, height: 20, display: 'block' }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>;
+const IcoBell      = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20, display: 'block' }}><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>;
+const IcoLogout    = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20, display: 'block' }}><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>;
+const IcoChevRight = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" style={{ width: 10, height: 10, display: 'block' }}><polyline points="9 18 15 12 9 6"/></svg>;
+const IcoChevLeft  = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" style={{ width: 10, height: 10, display: 'block' }}><polyline points="15 18 9 12 15 6"/></svg>;
 
 interface NavItem { icon: React.ReactNode; label: string; path: string; notif?: boolean; }
 
 const topNav: NavItem[] = [
-  { icon: <IcoReports />,   label: 'Reports & Analytics', path: '/reports'      },
-  { icon: <IcoRequests />,  label: 'Document Requests',   path: '/dashboard'    },
-  { icon: <IcoPayment />,   label: 'Payment Monitor',     path: '/payment'      },
-  { icon: <IcoClaimSlip />, label: 'Claim Slip Monitor',  path: '/claim-slips'  },
-  { icon: <IcoClearance />, label: 'Clearance Tracking',  path: '/clearance'    },
+  { icon: <IcoReports />,   label: 'Reports & Analytics', path: '/staff/reports'       },
+  { icon: <IcoRequests />,  label: 'Document Requests',   path: '/staff/dashboard'     },
+  { icon: <IcoPayment />,   label: 'Payment Monitor',     path: '/staff/payment'       },
+  { icon: <IcoClaimSlip />, label: 'Claim Slip Monitor',  path: '/staff/claimslip'     },
+  { icon: <IcoClearance />, label: 'Clearance Tracking',  path: '/staff/clearance'     },
+];
+const midNav: NavItem[] = [
+  { icon: <IcoNewReq />, label: 'New Request',   path: '/staff/dashboard/new'          },
+  { icon: <IcoBell />,   label: 'Notifications', path: '/staff/notifications', notif: true },
 ];
 
-const midNav: NavItem[] = [
-  { icon: <IcoNewReq />,    label: 'New Request',         path: '/submit'        },
-  { icon: <IcoBell />,      label: 'Notifications',       path: '/notifications', notif: true },
-];
+function isActive(path: string, loc: string) {
+  if (path === '/staff/dashboard') return loc === '/staff/dashboard' || loc.startsWith('/staff/request');
+  if (path === '/staff/dashboard/new') return loc.startsWith('/staff/dashboard/new');
+  return loc === path || loc.startsWith(path + '/');
+}
 
 const itemBase: React.CSSProperties = {
   display: 'flex', alignItems: 'center', gap: 10,
@@ -38,23 +42,16 @@ const itemBase: React.CSSProperties = {
 };
 
 export function Sidebar() {
-  const router = useRouter(); // Next.js router
-  const pathname = usePathname(); // Next.js current path
+  const router = useRouter();
+  const pathname = usePathname();
   const [expanded, setExpanded] = useState(false);
 
-  // Function to check if a link should be highlighted as active
-  const checkActive = (path: string) => {
-    if (path === '/dashboard') return pathname === '/dashboard' || pathname.startsWith('/request');
-    if (path === '/submit')    return pathname.startsWith('/submit');
-    return pathname === path || pathname.startsWith(path + '/');
-  };
-
   const NavBtn = ({ item }: { item: NavItem }) => {
-    const active = checkActive(item.path);
+    const active = isActive(item.path, pathname);
     return (
       <div
         style={{ ...itemBase, background: active ? '#001C43' : 'transparent' }}
-        onClick={() => router.push(item.path)} // Fixed: router.push instead of navigate
+        onClick={() => router.push(item.path)}
         title={item.label}
         onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.background = '#F5F5F5'; }}
         onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
@@ -71,13 +68,7 @@ export function Sidebar() {
           </span>
         )}
         {!expanded && (
-          <span className="sb-tt" style={{
-            position: 'absolute', left: 'calc(100% + 8px)', top: '50%', transform: 'translateY(-50%)',
-            background: '#001C43', color: 'white', fontSize: 11, fontWeight: 600,
-            padding: '5px 10px', borderRadius: 6, whiteSpace: 'nowrap', pointerEvents: 'none',
-            opacity: 0, transition: 'opacity .15s', zIndex: 300,
-            boxShadow: '0 2px 8px rgba(0,0,0,.2)', fontFamily: "'Montserrat', sans-serif",
-          }}>
+          <span className="sb-tt" style={{ position: 'absolute', left: 'calc(100% + 8px)', top: '50%', transform: 'translateY(-50%)', background: '#001C43', color: 'white', fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 6, whiteSpace: 'nowrap', pointerEvents: 'none', opacity: 0, transition: 'opacity .15s', zIndex: 300, boxShadow: '0 2px 8px rgba(0,0,0,.2)', fontFamily: "'Montserrat', sans-serif" }}>
             {item.label}
           </span>
         )}
@@ -90,27 +81,9 @@ export function Sidebar() {
   return (
     <>
       <style>{`div:hover > .sb-tt { opacity: 1 !important; }`}</style>
-      <div
-        className="drms-root"
-        style={{
-          width: SBW, background: '#FCFCFC',
-          borderRight: '1px solid rgba(0,0,0,.06)',
-          display: 'flex', flexDirection: 'column',
-          alignItems: expanded ? 'flex-start' : 'center',
-          padding: '20px 0', flexShrink: 0,
-          position: 'sticky', top: 0, height: '100vh',
-          overflow: 'visible',
-          transition: 'width .25s cubic-bezier(.4,0,.2,1)',
-          zIndex: 200,
-        }}
-      >
+      <div className="drms-root" style={{ width: SBW, background: '#FCFCFC', borderRight: '1px solid rgba(0,0,0,.06)', display: 'flex', flexDirection: 'column', alignItems: expanded ? 'flex-start' : 'center', padding: '20px 0', flexShrink: 0, position: 'sticky', top: 0, height: '100vh', overflow: 'visible', transition: 'width .25s cubic-bezier(.4,0,.2,1)', zIndex: 200 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: expanded ? 10 : 0, width: '100%', paddingLeft: expanded ? 14 : 10, marginBottom: 14 }}>
-          <div style={{
-            width: 38, height: 38, minWidth: 38, borderRadius: 8,
-            background: 'linear-gradient(135deg,#001C43,#114B9F)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'white', fontSize: 14, fontWeight: 900, flexShrink: 0,
-          }}>M</div>
+          <div style={{ width: 38, height: 38, minWidth: 38, borderRadius: 8, background: 'linear-gradient(135deg,#001C43,#114B9F)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 14, fontWeight: 900, flexShrink: 0 }}>M</div>
           {expanded && (
             <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               <span style={{ fontSize: 12, fontWeight: 800, color: '#001C43', whiteSpace: 'nowrap', fontFamily: "'Montserrat', sans-serif" }}>Registrar's Office</span>
@@ -128,52 +101,27 @@ export function Sidebar() {
         </div>
 
         <div style={{ padding: '8px 7px', width: '100%', overflow: 'hidden' }}>
-          <div
-            style={{ ...itemBase, background: 'transparent' }}
-            onClick={() => router.push('/login')} // Fixed for Next.js
-            title="Sign Out"
+          <div style={{ ...itemBase }} onClick={() => router.push('/login')} title="Sign Out"
             onMouseEnter={e => (e.currentTarget.style.background = '#FEEAEA')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-          >
-            <span style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#E50019' }}>
-              <IcoLogout />
-            </span>
-            {expanded && (
-              <span style={{ fontSize: 13, fontWeight: 500, color: '#E50019', whiteSpace: 'nowrap', fontFamily: "'Montserrat', sans-serif" }}>
-                Sign Out
-              </span>
+            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+            <span style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#E50019' }}><IcoLogout /></span>
+            {expanded && <span style={{ fontSize: 13, fontWeight: 500, color: '#E50019', whiteSpace: 'nowrap', fontFamily: "'Montserrat', sans-serif" }}>Sign Out</span>}
+            {!expanded && (
+              <span className="sb-tt" style={{ position: 'absolute', left: 'calc(100% + 8px)', top: '50%', transform: 'translateY(-50%)', background: '#001C43', color: 'white', fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 6, whiteSpace: 'nowrap', pointerEvents: 'none', opacity: 0, transition: 'opacity .15s', zIndex: 300, boxShadow: '0 2px 8px rgba(0,0,0,.2)' }}>Sign Out</span>
             )}
           </div>
         </div>
 
-        <button
-          onClick={() => setExpanded(e => !e)}
-          title={expanded ? 'Collapse' : 'Expand'}
-          style={{
-            position: 'absolute', right: -13, top: '50%', transform: 'translateY(-50%)',
-            width: 13, height: 44,
-            background: '#FCFCFC',
-            border: '1px solid rgba(0,0,0,.10)', borderLeft: 'none',
-            borderRadius: '0 8px 8px 0',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', zIndex: 250,
-            boxShadow: '2px 0 6px rgba(0,0,0,.07)',
-            transition: 'background .15s',
-          }}
+        <button onClick={() => setExpanded(e => !e)} title={expanded ? 'Collapse' : 'Expand'}
+          style={{ position: 'absolute', right: -13, top: '50%', transform: 'translateY(-50%)', width: 13, height: 44, background: '#FCFCFC', border: '1px solid rgba(0,0,0,.10)', borderLeft: 'none', borderRadius: '0 8px 8px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 250, boxShadow: '2px 0 6px rgba(0,0,0,.07)', transition: 'background .15s' }}
           onMouseEnter={e => (e.currentTarget.style.background = '#F5F5F5')}
-          onMouseLeave={e => (e.currentTarget.style.background = '#FCFCFC')}
-        >
-          <span style={{ color: '#B1B1B1' }}>
-            {expanded ? <IcoChevLeft /> : <IcoChevRight />}
-          </span>
+          onMouseLeave={e => (e.currentTarget.style.background = '#FCFCFC')}>
+          <span style={{ color: '#B1B1B1' }}>{expanded ? <IcoChevLeft /> : <IcoChevRight />}</span>
         </button>
       </div>
 
       {expanded && (
-        <div
-          onClick={() => setExpanded(false)}
-          style={{ display: 'block', position: 'fixed', inset: `0 0 0 ${SBW}px`, zIndex: 199, cursor: 'default' }}
-        />
+        <div onClick={() => setExpanded(false)} style={{ display: 'block', position: 'fixed', inset: `0 0 0 ${SBW}px`, zIndex: 199, cursor: 'default' }} />
       )}
     </>
   );
