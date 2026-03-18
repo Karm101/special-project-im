@@ -58,14 +58,14 @@ export default function LoginPage() { // Added 'default'
               <button
                 className="btn-primary"
                 style={{ justifyContent: 'center', padding: 12, marginTop: 8 }}
-                onClick={() => router.push(isStaff ? '/dashboard' : '/submit')} // Changed to router.push
+                onClick={() => router.push(isStaff ? '/staff/dashboard' : '/student/submit')}
               >
                 Login
               </button>
               <button
                 className="btn-login-ms"
                 style={{ marginTop: isStaff ? 55 : 12 }}
-                onClick={() => router.push(isStaff ? '/reports' : '/student/landing')} // Changed to router.push
+                onClick={() => router.push(isStaff ? '/staff/reports' : '/student/landing')}
               >
                 {isStaff ? '🪟 Login with Microsoft Account' : '🪟 Login with Google / SSO'}
               </button>
@@ -75,7 +75,7 @@ export default function LoginPage() { // Added 'default'
                   <span style={{ fontSize: 12, color: '#B1B1B1' }}>Just want to check your request? </span>
                   <span
                     style={{ fontSize: 12, color: '#114B9F', cursor: 'pointer', fontWeight: 700 }}
-                    onClick={() => router.push('/track')} // Changed to router.push
+                    onClick={() => router.push('/student/track')}
                   >
                     Track Request →
                   </span>

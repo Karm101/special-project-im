@@ -89,7 +89,7 @@ export default function ClaimSlipsPage() { // Added 'default'
             </thead>
             <tbody>
               {visibleRows.map(r => (
-                <tr key={r.cs} style={{ background: r.rowBg }} onClick={() => router.push(`/request/${r.reqId.replace('#', '')}`)}>
+                <tr key={r.cs} style={{ background: r.rowBg }} onClick={() => router.push(`/staff/request/${r.reqId.replace('#', '')}`)}>
                   <td><span className="req-id">{r.cs}</span></td>
                   <td>{r.reqId}</td>
                   <td>{r.requester}</td>

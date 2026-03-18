@@ -247,7 +247,7 @@ export default function DashboardPage() {
               </thead>
               <tbody>
                 {visibleRows.map(r => (
-                  <tr key={r.id} onClick={() => router.push(`/request/${r.id.replace('#', '')}`)}>
+                  <tr key={r.id} onClick={() => router.push(`/staff/request/${r.id.replace('#', '')}`)}>
                     <td style={{ textAlign: 'center' }} onClick={e => e.stopPropagation()}>
                       <input type="checkbox" className="cb" />
                     </td>
@@ -261,7 +261,7 @@ export default function DashboardPage() {
                     <td>{r.staff}</td>
                     <td><span className={`badge ${r.badgeCls}`}>{r.label}</span></td>
                     <td onClick={e => e.stopPropagation()}>
-                      <button className="btn-outline btn-sm" onClick={() => router.push(`/request/${r.id.replace('#', '')}`)}>View</button>
+                      <button className="btn-outline btn-sm" onClick={() => router.push(`/staff/request/${r.id.replace('#', '')}`)}>View</button>
                     </td>
                   </tr>
                 ))}
@@ -279,7 +279,7 @@ export default function DashboardPage() {
             {visibleRows.map(r => (
               <div
                 key={r.id}
-                onClick={() => router.push(`/request/${r.id.replace('#', '')}`)}
+                onClick={() => router.push(`/staff/request/${r.id.replace('#', '')}`)}
                 style={{
                   background: 'white', borderRadius: 10, border: '1px solid rgba(0,0,0,.08)',
                   padding: 16, cursor: 'pointer', transition: 'all .18s', display: 'flex', flexDirection: 'column', gap: 10,
@@ -303,7 +303,7 @@ export default function DashboardPage() {
                   <span style={{ fontSize: 11, color: '#B1B1B1' }}>Submitted {r.subDate}</span>
                   <button
                     className="btn-outline btn-sm"
-                    onClick={e => { e.stopPropagation(); router.push(`/request/${r.id.replace('#', '')}`); }}
+                    onClick={e => { e.stopPropagation(); router.push(`/staff/request/${r.id.replace('#', '')}`); }}
                   >View</button>
                 </div>
               </div>

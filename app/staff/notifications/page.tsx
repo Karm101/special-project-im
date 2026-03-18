@@ -66,7 +66,7 @@ export default function NotificationsPage() {
                     background: n.unread ? 'rgba(17, 75, 159, 0.02)' : 'transparent',
                     cursor: 'pointer'
                 }}
-                onClick={() => n.title.includes('#REQ') && router.push(`/request/${n.title.split('#')[1].split(' ')[0]}`)}
+                onClick={() => n.title.includes('#REQ') && router.push(`/staff/request/${n.title.split('#')[1].split(' ')[0]}`)}
             >
               <div 
                 className="notif-icon-wrap" 

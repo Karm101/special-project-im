@@ -42,7 +42,7 @@ export default function StudentLandingPage() { // Added default export
           
           <div
             className="landing-card"
-            onClick={() => router.push('/submit')} // Changed to router.push
+            onClick={() => router.push('/student/submit')} // Changed to router.push
           >
             <div className="landing-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="#001C43" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 36, height: 36 }}>
@@ -59,7 +59,7 @@ export default function StudentLandingPage() { // Added default export
             <button
               className="btn-primary"
               style={{ padding: '10px 24px', marginTop: 4 }}
-              onClick={e => { e.stopPropagation(); router.push('/submit'); }} // Changed to router.push
+              onClick={e => { e.stopPropagation(); router.push('/student/submit'); }} // Changed to router.push
             >
               Start Request →
             </button>
@@ -67,7 +67,7 @@ export default function StudentLandingPage() { // Added default export
 
           <div
             className="landing-card"
-            onClick={() => router.push('/track')} // Changed to router.push
+            onClick={() => router.push('/student/track')} // Changed to router.push
           >
             <div className="landing-icon" style={{ background: '#EAFAF1' }}>
               <svg viewBox="0 0 24 24" fill="none" stroke="#198754" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 36, height: 36 }}>
@@ -82,7 +82,7 @@ export default function StudentLandingPage() { // Added default export
             <button
               className="btn-outline"
               style={{ padding: '10px 24px', marginTop: 4 }}
-              onClick={e => { e.stopPropagation(); router.push('/track'); }} // Changed to router.push
+              onClick={e => { e.stopPropagation(); router.push('/student/track'); }} // Changed to router.push
             >
               Track Now →
             </button>
@@ -96,7 +96,7 @@ export default function StudentLandingPage() { // Added default export
           </div>
           <span
             style={{ fontSize: 12, color: '#114B9F', cursor: 'pointer', fontWeight: 600, fontFamily: "'Montserrat', sans-serif" }}
-            onClick={() => router.push('/submit')} // Changed to router.push
+            onClick={() => router.push('/student/submit')} // Changed to router.push
           >
             Use the request form as a guest →
           </span>

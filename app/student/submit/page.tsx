@@ -22,13 +22,13 @@ export default function StudentSubmitPage() {
     <div className="public-page drms-root">
       {/* Public topbar */}
       <div className="pub-topbar">
-        <div className="pub-logo" style={{ cursor: 'pointer' }} onClick={() => router.push('/landing')}>M</div>
+        <div className="pub-logo" style={{ cursor: 'pointer' }} onClick={() => router.push('/student/landing')}>M</div>
         <div>
           <div className="pub-title">MMCM Registrar's Office</div>
           <div className="pub-sub">Online Document Request</div>
         </div>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 12, alignItems: 'center' }}>
-          <button className="btn-outline" style={{ color: 'white', borderColor: 'rgba(255,255,255,0.4)', background: 'transparent' }} onClick={() => router.push('/landing')}>Cancel</button>
+          <button className="btn-outline" style={{ color: 'white', borderColor: 'rgba(255,255,255,0.4)', background: 'transparent' }} onClick={() => router.push('/student/landing')}>Cancel</button>
         </div>
       </div>
 
@@ -126,8 +126,8 @@ export default function StudentSubmitPage() {
           </div>
 
           <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
-            <button className="btn-outline" onClick={() => router.push('/landing')}>Cancel</button>
-            <button className="btn-primary" onClick={() => router.push('/track')}>Submit Request →</button>
+            <button className="btn-outline" onClick={() => router.push('/student/landing')}>Cancel</button>
+            <button className="btn-primary" onClick={() => router.push('/student/track')}>Submit Request →</button>
           </div>
         </div>
       </div>

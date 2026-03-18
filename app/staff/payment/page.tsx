@@ -103,7 +103,7 @@ export default function PaymentMonitorPage() { // Added 'default'
             </thead>
             <tbody>
               {visibleRows.map(r => (
-                <tr key={r.id} style={{ background: r.rowBg }} onClick={() => router.push(`/request/${r.id.replace('#', '')}`)}>
+                <tr key={r.id} style={{ background: r.rowBg }} onClick={() => router.push(`/staff/request/${r.id.replace('#', '')}`)}>
                   <td><span className="req-id">{r.id}</span></td>
                   <td>{r.requester}</td>
                   <td>{r.docs}</td>
