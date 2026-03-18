@@ -1,5 +1,7 @@
+"use client"; // Added for Next.js interactivity
+
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router';
+import { useRouter } from 'next/navigation'; // Changed from react-router
 import { Bell, ChevronDown } from 'lucide-react';
 
 interface BreadcrumbItem { label: string; href?: string; }
@@ -21,7 +23,7 @@ export function Topbar({
   userInitials = 'GS',
   rightExtras,
 }: TopbarProps) {
-  const navigate = useNavigate();
+  const router = useRouter(); // Changed from useNavigate
   const [ddOpen, setDdOpen] = useState(false);
   const ddRef = useRef<HTMLDivElement>(null);
 
@@ -41,24 +43,28 @@ export function Topbar({
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           {breadcrumbs.map((crumb, i) => (
             <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              {i > 0 && <span style={{ color: '#B1B1B1', margin: '0 2px', fontSize: 16 }}>/</span>}
-              <span
-                className="topbar-page-title"
-                style={crumb.href ? { cursor: 'pointer', color: '#B1B1B1', fontWeight: 400 } : {}}
-                onClick={crumb.href ? () => navigate(crumb.href!) : undefined}
+              <span 
+                style={{ 
+                  color: crumb.href ? '#114B9F' : '#001C43', 
+                  fontWeight: crumb.href ? 500 : 700, 
+                  cursor: crumb.href ? 'pointer' : 'default' 
+                }}
+                onClick={() => crumb.href && router.push(crumb.href)} // Changed to router.push
               >
                 {crumb.label}
               </span>
+              {i < breadcrumbs.length - 1 && <span style={{ color: '#B1B1B1', margin: '0 4px' }}>/</span>}
             </span>
           ))}
         </div>
       </div>
 
-      {/* Right */}
+      {/* Right side */}
       <div className="topbar-right">
         {rightExtras}
-
-        <div className="topbar-bell" onClick={() => navigate('/notifications')} style={{ cursor: 'pointer', position: 'relative', padding: 4 }}>
+        
+        {/* Notif bell */}
+        <div style={{ position: 'relative', cursor: 'pointer', padding: 8, borderRadius: 50, background: '#F5F5F5' }}>
           <Bell size={18} color="#001C43" />
           {showNotifDot && (
             <span style={{ position: 'absolute', top: 3, right: 3, width: 7, height: 7, background: '#E50019', borderRadius: '50%', border: '1.5px solid #FCFCFC' }} />
@@ -85,8 +91,10 @@ export function Topbar({
           <div className={`user-dropdown${ddOpen ? ' open' : ''}`} onClick={e => e.stopPropagation()}>
             <button className="dd-item">👤 View Profile</button>
             <button className="dd-item">⚙️ Settings</button>
-            <div className="dd-sep" />
-            <button className="dd-item danger" onClick={() => navigate('/')}>🚪 Sign Out</button>
+            <div className="dd-divider" />
+            <button className="dd-item" style={{ color: '#E50019' }} onClick={() => router.push('/login')}> {/* Changed to router.push */}
+              Sign Out
+            </button>
           </div>
         </div>
       </div>

@@ -1,10 +1,12 @@
+"use client";
+
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useRouter } from 'next/navigation'; // Next.js router
 
 const CAMPUS_IMG = 'https://images.unsplash.com/photo-1613688365965-8abc666fe1e2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080&q=80';
 
-export function LoginPage() {
-  const navigate = useNavigate();
+export default function LoginPage() { // Added 'default'
+  const router = useRouter();
   const [mode, setMode] = useState<'staff' | 'student'>('staff');
 
   const isStaff = mode === 'staff';
@@ -31,60 +33,39 @@ export function LoginPage() {
           </div>
 
           <div className="login-header">
-            {/* MMCM Logo */}
             <div style={{
               width: 80, height: 80, borderRadius: '50%',
               background: 'linear-gradient(135deg,#001C43,#114B9F)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 26, fontWeight: 900, color: 'white',
-              border: '4px solid white', boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-            }}>
-              M
-            </div>
-            <div className="login-office-tag">
-              <div className="login-office-icon">RO</div>
-              <span className="login-office-name">Registrar's Office · MMCM</span>
-            </div>
-            <div className="login-title">Welcome Back!</div>
-            <div className="login-sub">
-              {isStaff
-                ? 'Sign in to access the Document Request Monitoring System'
-                : 'Sign in to submit and track your document requests'}
-            </div>
+              color: 'white', fontSize: 32, fontWeight: 800, marginBottom: 16
+            }}>M</div>
+            <h1>{isStaff ? 'Staff Portal' : 'Student Portal'}</h1>
+            <p>Document Request Monitoring System</p>
           </div>
 
-          <div className="login-inputs">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <div className="login-field">
-                <div className="login-field-header">
-                  <span className="login-label">Username</span>
-                </div>
-                <input
-                  className="login-input"
-                  type="text"
-                  placeholder={isStaff ? '@example.mcm.edu.ph' : 'student@mcm.edu.ph'}
-                />
+          <div style={{ marginTop: 30 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <input type="text" className="drms-input" placeholder={isStaff ? "Email or Username" : "Student Number"} />
+              <input type="password" className="drms-input" placeholder="Password" />
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12 }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+                  <input type="checkbox" className="cb" /> Remember me
+                </label>
+                <span style={{ color: '#114B9F', cursor: 'pointer', fontWeight: 600 }}>Forgot Password?</span>
               </div>
-              <div className="login-field">
-                <div className="login-field-header">
-                  <span className="login-label">Password</span>
-                  <span className="login-forgot">Forgot your password?</span>
-                </div>
-                <input className="login-input" type="password" placeholder="" />
-              </div>
-            </div>
 
-            <div className="login-btns">
               <button
-                className="btn-login-primary"
-                onClick={() => navigate(isStaff ? '/reports' : '/student/landing')}
+                className="btn-primary"
+                style={{ justifyContent: 'center', padding: 12, marginTop: 8 }}
+                onClick={() => router.push(isStaff ? '/dashboard' : '/submit')} // Changed to router.push
               >
                 Login
               </button>
               <button
                 className="btn-login-ms"
                 style={{ marginTop: isStaff ? 55 : 12 }}
-                onClick={() => navigate(isStaff ? '/reports' : '/student/landing')}
+                onClick={() => router.push(isStaff ? '/reports' : '/student/landing')} // Changed to router.push
               >
                 {isStaff ? '🪟 Login with Microsoft Account' : '🪟 Login with Google / SSO'}
               </button>
@@ -94,7 +75,7 @@ export function LoginPage() {
                   <span style={{ fontSize: 12, color: '#B1B1B1' }}>Just want to check your request? </span>
                   <span
                     style={{ fontSize: 12, color: '#114B9F', cursor: 'pointer', fontWeight: 700 }}
-                    onClick={() => navigate('/track')}
+                    onClick={() => router.push('/track')} // Changed to router.push
                   >
                     Track Request →
                   </span>
