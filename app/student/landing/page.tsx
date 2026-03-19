@@ -15,7 +15,7 @@ export default function StudentLandingPage() {
         </div>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 12, alignItems: 'center' }}>
           <button style={{ padding: '8px 18px', background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.4)', borderRadius: 6, color: 'white', fontFamily: 'var(--drms-font)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }} onClick={() => router.push('/')}>
-            ← Back to Login
+            Logout
           </button>
         </div>
       </div>

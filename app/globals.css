@@ -2,24 +2,23 @@
 @import "../styles/index.css";
 @import "../styles/drms.css";
 
-/* Ensure the root containers don't have hidden padding/margins */
+/* Reset margins/padding but allow scrolling by default */
+/* Public pages (login, student) scroll naturally via the browser */
 html, body, :root {
   margin: 0;
   padding: 0;
   height: 100%;
   width: 100%;
-  overflow: hidden; /* Prevents double scrollbars */
 }
 
-/* Force the drms-root to fill the screen */
+/* Staff app layout handles its own scroll internally via .main-area */
+/* Overflow hidden here prevents double scrollbars in the sidebar layout */
+.app-layout.drms-root {
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* drms-root fills width for all contexts */
 .drms-root {
-  height: 100%;
   width: 100%;
-}
-
-/* Reset any default Next.js padding that might break the sidebar */
-body, html {
-  margin: 0;
-  padding: 0;
-  height: 100%;
 }

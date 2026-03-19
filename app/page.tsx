@@ -54,7 +54,7 @@ export default function LoginPage() {
               <button className="btn-login-primary" onClick={() => router.push(isStaff ? '/staff/reports' : '/student/landing')}>
                 Login
               </button>
-              <button className="btn-login-ms" style={{ marginTop: isStaff ? 55 : 12 }} onClick={() => router.push(isStaff ? '/staff/reports' : '/student/landing')}>
+              <button className="btn-login-ms" style={{ marginTop: 12 }} onClick={() => router.push(isStaff ? '/staff/reports' : '/student/landing')}>
                 {isStaff ? '🪟 Login with Microsoft Account' : '🪟 Login with Google / SSO'}
               </button>
               {!isStaff && (

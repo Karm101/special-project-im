@@ -24,11 +24,20 @@ export default function StudentTrackPage() {
           <div className="pub-title">MMCM Registrar's Office</div>
           <div className="pub-sub">Document Request Monitoring System</div>
         </div>
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 12, alignItems: 'center' }}>
-          <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, cursor: 'pointer' }} onClick={() => router.push('/student/submit')}>Submit a Request</span>
-          <button style={{ padding: '8px 18px', background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', borderRadius: 6, color: 'white', fontFamily: 'var(--drms-font)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }} onClick={() => router.push('/')}>
-            Student Login
-          </button>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 0, alignItems: 'center' }}>
+          <span
+            style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13, cursor: 'pointer', padding: '8px 16px', borderRadius: 6, transition: 'background .15s' }}
+            onClick={() => router.push('/student/submit')}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.15)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+          >Submit a Request</span>
+          <div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.3)', margin: '0 4px' }} />
+          <span
+            style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13, cursor: 'pointer', padding: '8px 16px', borderRadius: 6, transition: 'background .15s' }}
+            onClick={() => router.push('/student/landing')}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.15)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+          >← Back</span>
         </div>
       </div>
 

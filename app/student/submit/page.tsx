@@ -94,7 +94,7 @@ export default function StudentSubmitPage() {
           </div>
 
           <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
-            <button className="btn-outline" onClick={() => router.push('/student/landing')}>Cancel</button>
+            <button className="btn-outline" onClick={() => router.push('/student/landing')}>← Cancel</button>
             <button className="btn-primary" onClick={() => router.push('/student/track')}>Submit Request →</button>
           </div>
         </div>
