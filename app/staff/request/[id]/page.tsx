@@ -585,96 +585,220 @@ export default function RequestPage() {
     }
   }
 
-  // ── Download / Print form ────────────────────────────────────────────────
+  // ── Download / Print form — matches actual RO-0005 / RO-0004 layout ────────
   function handleDownload() {
     if (!data) return;
-    const r = data.requester_info;
-    const fullName = r ? `${r.last_name}, ${r.first_name}` : '—';
+    const r    = data.requester_info;
+    const name = r ? `${r.last_name}, ${r.first_name}` : '—';
+    const isTC = data.form_type === 'RO-0004';
     const reqId = `REQ-${String(data.request_id).padStart(3, '0')}`;
-    const docs = data.requested_documents.map((d, i) =>
-      `<tr><td>${i+1}</td><td>${d.document_name}</td><td>${d.copies}</td><td>${d.processing_days} working days</td></tr>`
-    ).join('');
+
+    // Build document checkboxes based on requested docs
+    const docNames = data.requested_documents.map(d => d.document_name.toLowerCase());
+    const checked = (keyword: string) => docNames.some(n => n.includes(keyword)) ? '✓' : '___';
+
+    // Clearance rows for RO-0004
+    const clearanceOffices = [
+      'Academic Coordinator (SHS)', "Principal / Dean's Office",
+      'Office of Student Services', 'Center for Student Activities and Discipline',
+      'Center for Guidance and Counseling', 'Laboratory Management Office',
+      'Center for Learning and Information Resources', 'Center for Health Services',
+      'Bookstore', 'Treasury Office', "Registrar's Office",
+    ];
+    const clearanceRows = clearanceOffices.map(office => {
+      const clr = (data as any).clearances?.find((c: any) => c.office_name === office);
+      return `<tr>
+        <td style="padding:6px 8px;border-bottom:1px solid #ddd;font-size:12px;">${office}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid #ddd;font-size:12px;">${clr?.processed_by ?? ''}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid #ddd;font-size:12px;">${clr?.date_processed ?? ''}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid #ddd;font-size:12px;">${clr?.remarks ?? ''}</td>
+      </tr>`;
+    }).join('');
 
     const html = `<!DOCTYPE html>
 <html>
 <head>
-  <title>Document Request Form — ${reqId}</title>
+  <title>${isTC ? 'Transfer Credential Request' : 'Credential Request'} — ${reqId}</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; color: #001C43; }
-    h1 { font-size: 18px; margin-bottom: 4px; }
-    .sub { font-size: 13px; color: #666; margin-bottom: 24px; }
-    .section { margin-bottom: 20px; border-top: 2px solid #001C43; padding-top: 10px; }
-    .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #666; margin-bottom: 10px; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .field label { font-size: 10px; text-transform: uppercase; color: #999; display: block; margin-bottom: 2px; }
-    .field span { font-size: 13px; font-weight: 600; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th { background: #001C43; color: white; padding: 8px; text-align: left; font-size: 11px; }
-    td { padding: 8px; border-bottom: 1px solid #eee; }
-    .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; background: #EEF4FB; color: #001C43; }
-    .header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #eee; }
-    .logo { width: 50px; height: 50px; background: linear-gradient(135deg,#001C43,#114B9F); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; font-weight: 900; }
-    .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #eee; font-size: 11px; color: #999; display: flex; justify-content: space-between; }
-    @media print { body { margin: 20px; } }
+    * { box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; font-size: 12px; margin: 0; padding: 20px; color: #000; }
+    .page { max-width: 750px; margin: 0 auto; }
+    .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+    .logo-area { display: flex; align-items: center; gap: 10px; }
+    .logo-box { width: 60px; height: 60px; }
+    .school-name { font-size: 14px; font-weight: 900; color: #001C43; }
+    .form-title { font-size: 18px; font-weight: 900; text-align: center; margin: 8px 0 4px; text-transform: uppercase; letter-spacing: 1px; }
+    .rev-box { border: 1px solid #000; padding: 4px 8px; font-size: 10px; text-align: right; }
+    .note { font-size: 11px; margin-bottom: 8px; font-style: italic; }
+    table.info { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+    table.info td { border: 1px solid #000; padding: 4px 6px; font-size: 12px; }
+    table.info td.label { background: #f0f0f0; font-weight: 700; width: 30%; }
+    .section-header { background: #001C43; color: white; text-align: center; font-weight: 700; font-size: 12px; padding: 4px; margin: 6px 0 4px; letter-spacing: 1px; }
+    .doc-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px 16px; margin: 6px 0; }
+    .doc-item { font-size: 12px; display: flex; align-items: center; gap: 6px; padding: 2px 0; }
+    .purpose-box { border: 1px solid #000; min-height: 60px; padding: 6px; margin: 6px 0; font-size: 12px; }
+    .sig-line { border-top: 1px solid #000; width: 60%; margin: 24px auto 2px; }
+    .sig-label { text-align: center; font-size: 11px; }
+    .cut-line { border-top: 2px dashed #000; margin: 16px 0; text-align: center; font-size: 10px; color: #666; }
+    .claim-slip { margin-top: 4px; }
+    table.clearance { width: 100%; border-collapse: collapse; margin: 6px 0; font-size: 11px; }
+    table.clearance th { background: #001C43; color: white; padding: 4px 6px; text-align: left; }
+    table.clearance td { border: 1px solid #ccc; padding: 6px; }
+    .conditions { font-size: 10px; margin-top: 8px; }
+    .conditions li { margin-bottom: 3px; }
+    @media print { 
+      body { padding: 10px; }
+      @page { margin: 10mm; }
+    }
   </style>
 </head>
 <body>
+<div class="page">
+  <!-- Header -->
   <div class="header">
-    <div class="logo">M</div>
-    <div>
-      <h1>Document Request Form</h1>
-      <div class="sub">Mapúa Malayan Colleges Mindanao — Registrar's Office &nbsp;|&nbsp; ${reqId} &nbsp;|&nbsp; ${data.current_status}</div>
+    <div class="logo-area">
+      <svg class="logo-box" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+        <rect width="60" height="60" rx="4" fill="#001C43"/>
+        <text x="30" y="42" font-size="28" font-weight="900" fill="white" text-anchor="middle" font-family="Arial">M</text>
+      </svg>
+      <div>
+        <div class="school-name">MAPÚA MALAYAN COLLEGES MINDANAO</div>
+        <div style="font-size:10px;color:#666;">Registrar's Office</div>
+      </div>
+    </div>
+    <div class="rev-box">
+      REVISION NO. &nbsp; 00<br>
+      REVISION DATE &nbsp;&nbsp;
     </div>
   </div>
 
-  <div class="section">
-    <div class="section-title">Requester Information</div>
-    <div class="grid">
-      <div class="field"><label>Full Name</label><span>${fullName}</span></div>
-      <div class="field"><label>Student Number</label><span>${r?.student_number ?? '—'}</span></div>
-      <div class="field"><label>Program / Strand</label><span>${r?.program_strand ?? '—'}</span></div>
-      <div class="field"><label>Academic Level</label><span>${r?.academic_level ?? '—'}</span></div>
-      <div class="field"><label>Enrollment Status</label><span>${r?.enrollment_status ?? '—'}</span></div>
-      <div class="field"><label>Email</label><span>${r?.email ?? '—'}</span></div>
+  <div class="form-title">${isTC ? 'Transfer Credential Request' : 'Credential Request'}</div>
+  <div style="text-align:right;font-size:10px;color:#666;margin-bottom:4px;">${isTC ? 'RO-0004-FORM' : 'RO-0005-FORM'} &nbsp;|&nbsp; ${reqId}</div>
+  <div class="note">Please print legibly. Use BLACK ink only.</div>
+
+  <!-- Student Info Table -->
+  <table class="info">
+    <tr>
+      <td class="label">Student Name</td>
+      <td colspan="3">${name}</td>
+      <td class="label">Date of Request</td>
+      <td>${formatDate(data.date_submitted)}</td>
+    </tr>
+    <tr>
+      <td class="label">Student Number</td>
+      <td colspan="3">${r?.student_number ?? ''}</td>
+      <td class="label">Claim Date</td>
+      <td>${formatDate(data.expected_claim_date)}</td>
+    </tr>
+    <tr>
+      <td class="label">Program / Strand</td>
+      <td colspan="3">${r?.program_strand ?? ''}</td>
+      <td class="label">${isTC ? 'Date of Graduation' : 'Term/Sem'}</td>
+      <td>${r ? (isTC ? '' : (r as any).term_semester ?? '') : ''}</td>
+    </tr>
+    ${!isTC ? `<tr>
+      <td class="label">Acad/School Year</td>
+      <td colspan="3">${(r as any)?.academic_year ?? ''}</td>
+      <td class="label">Term/Sem</td>
+      <td>${(r as any)?.term_semester ?? ''}</td>
+    </tr>` : ''}
+  </table>
+
+  <!-- Document Request -->
+  <div class="section-header">DOCUMENT REQUEST</div>
+  <div class="doc-grid">
+    <div class="doc-item"><span style="font-size:14px;">${checked('transcript')}</span> Transcript of Records</div>
+    <div class="doc-item"><span style="font-size:14px;">${checked('sf10')}</span> SF10 (Permanent Copy)</div>
+    <div class="doc-item"><span style="font-size:14px;">${checked('sf9')}</span> SF9 (Report Card)</div>
+    <div class="doc-item"><span style="font-size:14px;">${checked('honorable') || checked('transfer')}</span> Honorable Dismissal / TC</div>
+    <div class="doc-item"><span style="font-size:14px;">${checked('certified true')}</span> Certified True Copy</div>
+    <div class="doc-item"><span style="font-size:14px;">${checked('diploma')}</span> Diploma</div>
+    <div class="doc-item"><span style="font-size:14px;">${checked('certification') || checked('certificate')}</span> Certification _______________</div>
+    <div class="doc-item"><span style="font-size:14px;">${checked('cav')}</span> CAV (via CHED)</div>
+    <div class="doc-item"><span style="font-size:14px;">___</span> Special Order</div>
+  </div>
+
+  <!-- Purpose -->
+  <div style="font-weight:700;margin-top:6px;">Purpose of Request</div>
+  <div class="purpose-box">${data.purpose}</div>
+
+  ${isTC ? `
+  <!-- Conforme + CAV signature for RO-0004 -->
+  <div style="display:flex;gap:20px;margin:8px 0;">
+    <div style="flex:1;">
+      <div style="font-size:11px;margin-bottom:20px;">By affixing your signature below, it is understood that you have read the instructions and terms and conditions of the request.</div>
+      <div>CONFORME: <span style="border-bottom:1px solid #000;display:inline-block;width:200px;"></span></div>
+      <div style="font-size:10px;margin-left:80px;">Student's Signature over printed name</div>
+      <div style="margin-top:6px;">Contact #: <span style="border-bottom:1px solid #000;display:inline-block;width:180px;">${r?.contact_number ?? ''}</span></div>
+    </div>
+    <div style="border:1px solid #000;padding:8px;width:160px;font-size:10px;">
+      Signature of Requestor for CAV request
+      <div style="height:40px;"></div>
     </div>
   </div>
 
-  <div class="section">
-    <div class="section-title">Request Details</div>
-    <div class="grid">
-      <div class="field"><label>Request ID</label><span>${reqId}</span></div>
-      <div class="field"><label>Form Type</label><span>${data.form_type}</span></div>
-      <div class="field"><label>Submission Mode</label><span>${data.submission_mode}</span></div>
-      <div class="field"><label>Date Submitted</label><span>${formatDate(data.date_submitted)}</span></div>
-      <div class="field"><label>Expected Claim Date</label><span>${formatDate(data.expected_claim_date)}</span></div>
-      <div class="field"><label>Current Status</label><span><span class="badge">${data.current_status}</span></span></div>
-      <div class="field" style="grid-column:1/-1"><label>Purpose</label><span>${data.purpose}</span></div>
-    </div>
+  <!-- Clearance Table for RO-0004 -->
+  <div class="section-header">CLEARANCE</div>
+  <table class="clearance">
+    <thead><tr><th>Department / Office</th><th>PROCESSED BY: (name & signature)</th><th>Date</th><th>Remarks</th></tr></thead>
+    <tbody>${clearanceRows}</tbody>
+  </table>
+  ` : `
+  <!-- Signature for RO-0005 -->
+  <div style="text-align:center;margin:12px 0 4px;">
+    <div class="sig-line"></div>
+    <div class="sig-label">Student's Signature over printed name</div>
   </div>
+  `}
 
-  <div class="section">
-    <div class="section-title">Documents Requested</div>
-    <table>
-      <thead><tr><th>#</th><th>Document Type</th><th>Copies</th><th>Processing Time</th></tr></thead>
-      <tbody>${docs}</tbody>
+  <!-- Cut line -->
+  <div class="cut-line">✂ &nbsp; cut here &nbsp; ✂</div>
+
+  <!-- CLAIM SLIP -->
+  <div class="claim-slip">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <svg width="30" height="30" viewBox="0 0 60 60"><rect width="60" height="60" rx="4" fill="#001C43"/><text x="30" y="42" font-size="28" font-weight="900" fill="white" text-anchor="middle" font-family="Arial">M</text></svg>
+        <div style="font-size:13px;font-weight:900;">CLAIM SLIP</div>
+      </div>
+      <div style="font-size:11px;color:#666;">${isTC ? 'Transfer Credential Request' : 'Credential Request'}</div>
+    </div>
+    <table class="info">
+      <tr>
+        <td class="label">Student Name</td>
+        <td>${name}</td>
+        ${isTC ? `<td class="label">For the Authorized Representative:</td><td></td>` : `<td class="label">Date of Request</td><td>${formatDate(data.date_submitted)}</td>`}
+      </tr>
+      <tr>
+        <td class="label">${isTC ? 'Claim Date' : 'Documents Requested'}</td>
+        <td>${isTC ? formatDate(data.expected_claim_date) : data.requested_documents.map(d => d.document_name).join(', ')}</td>
+        ${isTC ? `<td class="label">Name of Representative</td><td>${data.representative_name ?? ''}</td>` : `<td class="label">Claim Date</td><td>${formatDate(data.expected_claim_date)}</td>`}
+      </tr>
+      ${isTC ? `<tr>
+        <td class="label">Documents Requested</td>
+        <td>${data.requested_documents.map(d => d.document_name).join(', ')}</td>
+        <td class="label">Relation to Student</td>
+        <td>${data.rep_relation ?? ''}</td>
+      </tr>` : ''}
     </table>
   </div>
 
-  ${data.payment_info ? `
-  <div class="section">
-    <div class="section-title">Payment Information</div>
-    <div class="grid">
-      <div class="field"><label>Amount</label><span>${parseFloat(data.payment_info.amount) > 0 ? '₱' + parseFloat(data.payment_info.amount).toFixed(2) : 'Pending billing'}</span></div>
-      <div class="field"><label>Payment Status</label><span>${data.payment_info.payment_status}</span></div>
-      <div class="field"><label>Official Receipt No.</label><span>${data.payment_info.official_receipt_no ?? '—'}</span></div>
-      <div class="field"><label>Payment Date</label><span>${formatDate(data.payment_info.payment_date)}</span></div>
-    </div>
-  </div>` : ''}
-
-  <div class="footer">
-    <span>Printed on ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
-    <span>MMCM Registrar's Office — Document Request Monitoring System</span>
+  <!-- Conditions -->
+  <div class="conditions">
+    <strong>CONDITIONS AND REMINDERS:</strong>
+    <ol>
+      <li>Under existing laws, only the student is allowed to request and claim documents. For authorized representatives: (a) written authorization letter addressed to the Registrar, (b) copy of student's school ID with 3 specimen signatures, and (c) valid ID of representative.</li>
+      <li>Kindly return this form to the Registrar's Office after payment at the Treasury. Without this form, the request cannot be processed.</li>
+      <li>Documents will be processed within <strong>7 working days</strong> after payment has been made.</li>
+      <li>Documents not claimed after <strong>ninety (90) days</strong> will be shredded. Payment made is forfeited.</li>
+      <li>The Institution reserves the right to withhold, deny or cancel any request due to pending accountabilities.</li>
+    </ol>
   </div>
+
+  <div style="margin-top:12px;font-size:10px;color:#666;text-align:right;">
+    ${isTC ? 'RO-0004-FORM' : 'RO-0005-FORM'} &nbsp;|&nbsp; THIS FORM IS AVAILABLE AT THE REGISTRAR'S OFFICE.
+  </div>
+</div>
 </body>
 </html>`;
 
@@ -682,7 +806,7 @@ export default function RequestPage() {
     if (win) {
       win.document.write(html);
       win.document.close();
-      win.print();
+      setTimeout(() => win.print(), 500);
     }
   }
 
@@ -702,7 +826,7 @@ export default function RequestPage() {
             </div>
             <span className="modal-title">Document Request Form — {displayId}</span>
             <button className="modal-dl-btn" onClick={handleDownload}><Download size={12} /> Download Form</button>
-            <button className="modal-close-btn" onClick={() => router.push('/staff/dashboard')}><X size={14} /></button>
+            <button className="modal-close-btn" onClick={() => router.back()}><X size={14} /></button>
           </div>
 
           {/* Tabs */}

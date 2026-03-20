@@ -118,25 +118,38 @@ export default function ClaimSlipsPage() {
     fetchData();
   }, []);
 
+  // ── Modal state ──────────────────────────────────────────────────────────
+  const [modal, setModal] = useState<{ slipId: number; requestId: number } | null>(null);
+  const [modalName, setModalName] = useState('');
+  const [modalError, setModalError] = useState('');
+
   // ── Mark as Claimed ───────────────────────────────────────────────────────
-  async function handleMarkClaimed(slipId: number, claimedBy: string) {
-    setUpdating(slipId);
+  function openMarkClaimed(slipId: number, requestId: number) {
+    setModal({ slipId, requestId });
+    setModalName('');
+    setModalError('');
+  }
+
+  async function handleModalConfirm() {
+    if (!modal) return;
+    setUpdating(modal.slipId);
+    setModalError('');
     try {
-      const res = await fetch(`http://localhost:8000/api/claimslips/${slipId}/`, {
+      const res = await fetch(`http://localhost:8000/api/claimslips/${modal.slipId}/`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           actual_claim_date: new Date().toISOString().split('T')[0],
-          claimed_by: claimedBy || 'Student',
+          claimed_by: modalName.trim() || 'Student',
         }),
       });
-      if (!res.ok) throw new Error('Update failed');
-      // Refresh
+      if (!res.ok) throw new Error();
       const refreshed = await fetch('http://localhost:8000/api/claimslips/');
       const data = await refreshed.json();
       setSlips(data.results ?? data);
+      setModal(null);
     } catch {
-      alert('Failed to update claim slip. Please try again.');
+      setModalError('Failed to update. Please try again.');
     } finally {
       setUpdating(null);
     }
@@ -297,10 +310,7 @@ export default function ClaimSlipsPage() {
                           <button
                             className={slipStatus.actionCls}
                             disabled={updating === s.claim_slip_id}
-                            onClick={() => {
-                              const name = prompt('Claimed by (name):');
-                              if (name !== null) handleMarkClaimed(s.claim_slip_id, name);
-                            }}
+                            onClick={() => openMarkClaimed(s.claim_slip_id, s.request)}
                           >
                             {updating === s.claim_slip_id ? 'Updating...' : slipStatus.actionLabel}
                           </button>
@@ -329,6 +339,45 @@ export default function ClaimSlipsPage() {
           </div>
         )}
       </div>
+      {/* ── Mark Claimed Modal ── */}
+      {modal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          onClick={() => setModal(null)}>
+          <div style={{ background: 'white', borderRadius: 12, padding: 28, width: 380, boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: 16, fontWeight: 800, color: '#001C43', marginBottom: 6 }}>Mark as Claimed</div>
+            <div style={{ fontSize: 13, color: '#B1B1B1', marginBottom: 20 }}>
+              Enter the name of the person claiming the documents. Leave blank if the student claimed personally.
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ fontSize: 11, fontWeight: 700, color: '#555', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 5 }}>
+                Claimed By <span style={{ color: '#B1B1B1', fontWeight: 400, textTransform: 'none' }}>(optional)</span>
+              </label>
+              <input
+                className="drms-input"
+                type="text"
+                placeholder="Full name of claimant"
+                value={modalName}
+                onChange={e => { setModalName(e.target.value); setModalError(''); }}
+                autoFocus
+              />
+            </div>
+            {modalError && (
+              <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600, marginBottom: 12 }}>⚠️ {modalError}</div>
+            )}
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button className="btn-primary" style={{ flex: 1, justifyContent: 'center', padding: 10 }}
+                onClick={handleModalConfirm} disabled={!!updating}>
+                {updating ? 'Saving...' : '✓ Confirm Claim'}
+              </button>
+              <button className="btn-outline" style={{ flex: 1, justifyContent: 'center', padding: 10 }}
+                onClick={() => setModal(null)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
