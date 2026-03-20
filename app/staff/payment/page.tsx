@@ -39,6 +39,9 @@ export default function PaymentMonitorPage() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [search, setSearch]         = useState('');
   const [selStatus, setSelStatus]   = useState<Set<string>>(new Set());
+  const [dateFrom, setDateFrom]     = useState('');
+  const [dateTo, setDateTo]         = useState('');
+  const [activeFilters, setActiveFilters] = useState<any>(null);
 
   // ── API state ────────────────────────────────────────────────────────────
   const [payments, setPayments]   = useState<ApiPayment[]>([]);
@@ -147,6 +150,9 @@ export default function PaymentMonitorPage() {
   // ── Filter rows ──────────────────────────────────────────────────────────
   const visibleRows = useMemo(() => {
     let rows = activeTab === 'all' ? payments : payments.filter(p => p.payment_status === activeTab);
+    if (activeFilters?.statuses?.size > 0) rows = rows.filter(p => activeFilters.statuses.has(p.payment_status));
+    if (activeFilters?.dateFrom) rows = rows.filter(p => p.payment_date && p.payment_date >= activeFilters.dateFrom);
+    if (activeFilters?.dateTo)   rows = rows.filter(p => p.payment_date && p.payment_date <= activeFilters.dateTo);
     if (search.trim()) {
       const q = search.toLowerCase();
       rows = rows.filter(p => {
@@ -160,7 +166,7 @@ export default function PaymentMonitorPage() {
       });
     }
     return rows;
-  }, [payments, activeTab, search, requests]);
+  }, [payments, activeTab, search, requests, activeFilters]);
 
   const toggleChip = (set: Set<string>, val: string, setter: (s: Set<string>) => void) => {
     const next = new Set(set); next.has(val) ? next.delete(val) : next.add(val); setter(next);
@@ -180,10 +186,10 @@ export default function PaymentMonitorPage() {
 
         {/* Stat cards */}
         <div className="stat-grid stat-grid-4">
-          <div className="stat-card c-orange"><div className="stat-top"><div><div className="stat-num c-orange">{loading ? '—' : stats.pending}</div><div className="stat-label">Awaiting Payment</div></div><div className="stat-icon" style={{ background: '#FFF8E1' }}>⏳</div></div></div>
-          <div className="stat-card c-red"><div className="stat-top"><div><div className="stat-num c-red">{loading ? '—' : stats.overdue}</div><div className="stat-label">Overdue</div></div><div className="stat-icon" style={{ background: '#FEEAEA' }}>🚨</div></div></div>
-          <div className="stat-card c-green"><div className="stat-top"><div><div className="stat-num c-green">{loading ? '—' : stats.paid}</div><div className="stat-label">Paid This Month</div></div><div className="stat-icon" style={{ background: '#EAFAF1' }}>✅</div></div></div>
-          <div className="stat-card c-navy"><div className="stat-top"><div><div className="stat-num c-navy" style={{ fontSize: 22 }}>{loading ? '—' : `₱${stats.collected.toLocaleString()}`}</div><div className="stat-label">Total Collected</div></div><div className="stat-icon" style={{ background: '#EEF4FB' }}>📊</div></div></div>
+          <div className="stat-card c-orange"><div className="stat-top"><div><div className="stat-num c-orange">{loading ? '—' : stats.pending}</div><div className="stat-label">Awaiting Payment</div></div><div className="stat-icon" style={{ background: '#FFF8E1', color: '#FFA323' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div></div></div>
+          <div className="stat-card c-red"><div className="stat-top"><div><div className="stat-num c-red">{loading ? '—' : stats.overdue}</div><div className="stat-label">Overdue</div></div><div className="stat-icon" style={{ background: '#FEEAEA', color: '#E50019' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div></div></div>
+          <div className="stat-card c-green"><div className="stat-top"><div><div className="stat-num c-green">{loading ? '—' : stats.paid}</div><div className="stat-label">Paid This Month</div></div><div className="stat-icon" style={{ background: '#EAFAF1', color: '#198754' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}><polyline points="20 6 9 17 4 12"/></svg></div></div></div>
+          <div className="stat-card c-navy"><div className="stat-top"><div><div className="stat-num c-navy" style={{ fontSize: 22 }}>{loading ? '—' : `₱${stats.collected.toLocaleString()}`}</div><div className="stat-label">Total Collected</div></div><div className="stat-icon" style={{ background: '#EEF4FB', color: '#001C43' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div></div></div>
         </div>
 
         {/* Tabs */}
@@ -199,15 +205,18 @@ export default function PaymentMonitorPage() {
         <div className="toolbar">
           <div className="toolbar-right">
             <div style={{ position: 'relative' }}>
-              <button className="btn-filter" onClick={() => setFilterOpen(o => !o)} title="Filter">
+              <button className="btn-filter" data-filter-btn="true" onClick={() => setFilterOpen(o => !o)} title="Filter">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
               </button>
               <FilterPanel
                 open={filterOpen} onClose={() => setFilterOpen(false)}
-                onApply={() => {}} onReset={() => setSelStatus(new Set())}
+                onApply={(f) => { setActiveFilters(f); setFilterOpen(false); }}
+                onReset={() => { setSelStatus(new Set()); setDateFrom(''); setDateTo(''); setActiveFilters(null); }}
                 selectedStatus={selStatus} onToggleStatus={s => toggleChip(selStatus, s, setSelStatus)}
                 statusOptions={['Pending', 'Paid', 'Overdue']}
                 showFormType={false} showMode={false} showStaff={false}
+                dateFrom={dateFrom} onDateFromChange={setDateFrom}
+                dateTo={dateTo} onDateToChange={setDateTo}
               />
             </div>
             <div className="search-box" style={{ minWidth: 340 }}>

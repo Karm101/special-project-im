@@ -87,6 +87,9 @@ export default function DashboardPage() {
   const [selStatus, setSelStatus]   = useState<Set<string>>(new Set());
   const [selForm, setSelForm]       = useState<Set<string>>(new Set());
   const [selMode, setSelMode]       = useState<Set<string>>(new Set());
+  const [dateFrom, setDateFrom]     = useState('');
+  const [dateTo, setDateTo]         = useState('');
+  const [activeFilters, setActiveFilters] = useState<{statuses: Set<string>; formTypes: Set<string>; modes: Set<string>; dateFrom: string; dateTo: string} | null>(null);
 
   // ── API data ───────────────────────────────────────────────────────────
   const [collegeRows, setCollegeRows] = useState<ApiRow[]>([]);
@@ -176,6 +179,36 @@ export default function DashboardPage() {
     else if (activeTab === 'processing') rows = rows.filter(r => ['For Payment', 'Processing'].includes(r.current_status));
     else if (activeTab === 'released')   rows = rows.filter(r => ['Ready for Release', 'Released'].includes(r.current_status));
 
+    // Active filter chips
+    if (activeFilters) {
+      if (activeFilters.statuses.size > 0) {
+        const statusMap: Record<string, string[]> = {
+          'Submitted':       ['Pending'],
+          'For Endorsement': ['Verifying'],
+          'For Review':      ['For Payment'],
+          'For Approval':    ['Processing'],
+          'For Release':     ['Ready for Release'],
+          'Completed':       ['Released'],
+          'Rejected':        ['Rejected'],
+        };
+        rows = rows.filter(r => {
+          return [...activeFilters.statuses].some(s => (statusMap[s] ?? [s]).includes(r.current_status));
+        });
+      }
+      if (activeFilters.formTypes.size > 0) {
+        rows = rows.filter(r => activeFilters.formTypes.has(r.form_type));
+      }
+      if (activeFilters.modes.size > 0) {
+        rows = rows.filter(r => activeFilters.modes.has(r.submission_mode));
+      }
+      if (activeFilters.dateFrom) {
+        rows = rows.filter(r => r.date_submitted >= activeFilters.dateFrom);
+      }
+      if (activeFilters.dateTo) {
+        rows = rows.filter(r => r.date_submitted <= activeFilters.dateTo);
+      }
+    }
+
     // Search filter
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -188,7 +221,7 @@ export default function DashboardPage() {
     }
 
     return rows;
-  }, [allRows, activeTab, search]);
+  }, [allRows, activeTab, search, activeFilters]);
 
   const toggleChip = (set: Set<string>, val: string, setter: (s: Set<string>) => void) => {
     const next = new Set(set); next.has(val) ? next.delete(val) : next.add(val); setter(next);
@@ -293,18 +326,21 @@ export default function DashboardPage() {
 
           <div className="toolbar-right">
             <div style={{ position: 'relative' }}>
-              <button className="btn-filter" onClick={() => setFilterOpen(o => !o)} title="Filter">
+              <button className="btn-filter" data-filter-btn="true" onClick={() => setFilterOpen(o => !o)} title="Filter">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}>
                   <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
                 </svg>
               </button>
               <FilterPanel
                 open={filterOpen} onClose={() => setFilterOpen(false)}
-                onApply={() => {}} onReset={() => { setSelStatus(new Set()); setSelForm(new Set()); setSelMode(new Set()); }}
+                onApply={(f) => { setActiveFilters(f); setFilterOpen(false); }}
+                onReset={() => { setSelStatus(new Set()); setSelForm(new Set()); setSelMode(new Set()); setDateFrom(''); setDateTo(''); setActiveFilters(null); }}
                 selectedStatus={selStatus}  onToggleStatus={(s: string) => toggleChip(selStatus, s, setSelStatus)}
                 statusOptions={STATUS_OPTIONS}
                 selectedFormType={selForm}  onToggleFormType={(s: string) => toggleChip(selForm, s, setSelForm)}
                 selectedMode={selMode}      onToggleMode={(s: string) => toggleChip(selMode, s, setSelMode)}
+                dateFrom={dateFrom} onDateFromChange={setDateFrom}
+                dateTo={dateTo}     onDateToChange={setDateTo}
               />
             </div>
             <div className="search-box" style={{ minWidth: 320 }}>

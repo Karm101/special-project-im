@@ -16,7 +16,7 @@ function ChipGroup({ label, chips, selected, onToggle }: ChipGroupProps) {
           <button
             key={chip}
             className={`fp-chip${selected.has(chip) ? ' selected' : ''}`}
-            onClick={() => onToggle(chip)}
+            onClick={e => { e.stopPropagation(); onToggle(chip); }}
           >
             {chip}
           </button>
@@ -29,7 +29,7 @@ function ChipGroup({ label, chips, selected, onToggle }: ChipGroupProps) {
 export interface FilterPanelProps {
   open: boolean;
   onClose: () => void;
-  onApply: () => void;
+  onApply: (filters: { statuses: Set<string>; formTypes: Set<string>; modes: Set<string>; dateFrom: string; dateTo: string }) => void;
   onReset: () => void;
   selectedStatus: Set<string>;
   onToggleStatus: (s: string) => void;
@@ -42,6 +42,10 @@ export interface FilterPanelProps {
   onToggleMode?: (s: string) => void;
   showStaff?: boolean;
   showDateRange?: boolean;
+  dateFrom?: string;
+  dateTo?: string;
+  onDateFromChange?: (d: string) => void;
+  onDateToChange?: (d: string) => void;
 }
 
 export function FilterPanel({
@@ -51,23 +55,41 @@ export function FilterPanel({
   showMode = true, selectedMode, onToggleMode,
   showStaff = true,
   showDateRange = true,
+  dateFrom = '', dateTo = '',
+  onDateFromChange, onDateToChange,
 }: FilterPanelProps) {
   const ref = useRef<HTMLDivElement>(null);
 
-  // Close on outside click
+  // Close on outside click — but NOT when clicking the filter button itself
+  // The filter button has data-filter-btn="true" to identify it
   useEffect(() => {
     if (!open) return;
     function handler(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        onClose();
-      }
+      const target = e.target as HTMLElement;
+      // Don't close if clicking inside the panel
+      if (ref.current && ref.current.contains(target)) return;
+      // Don't close if clicking the filter toggle button
+      if (target.closest('[data-filter-btn]')) return;
+      onClose();
     }
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    // Use a slight delay so the button's own onClick fires first
+    const timer = setTimeout(() => {
+      document.addEventListener('mousedown', handler);
+    }, 0);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('mousedown', handler);
+    };
   }, [open, onClose]);
 
+  if (!open) return null;
+
   return (
-    <div ref={ref} className={`filter-panel drms-root${open ? ' open' : ''}`}>
+    <div
+      ref={ref}
+      className="filter-panel drms-root open"
+      onClick={e => e.stopPropagation()}
+    >
       <div className="fp-title">Filter By</div>
 
       <ChipGroup
@@ -98,10 +120,27 @@ export function FilterPanel({
       {showDateRange && (
         <div className="fp-group">
           <span className="fp-label">Date Range</span>
-          <div className="fp-date-row">
-            <input type="date" className="drms-input" style={{ fontSize: 12, padding: '6px 8px' }} />
-            <span className="fp-sep-txt">to</span>
-            <input type="date" className="drms-input" style={{ fontSize: 12, padding: '6px 8px' }} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 11, color: '#B1B1B1', minWidth: 24 }}>From</span>
+              <input
+                type="date"
+                className="drms-input"
+                style={{ fontSize: 12, padding: '6px 8px', flex: 1, minWidth: 0 }}
+                value={dateFrom}
+                onChange={e => onDateFromChange?.(e.target.value)}
+              />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 11, color: '#B1B1B1', minWidth: 24 }}>To</span>
+              <input
+                type="date"
+                className="drms-input"
+                style={{ fontSize: 12, padding: '6px 8px', flex: 1, minWidth: 0 }}
+                value={dateTo}
+                onChange={e => onDateToChange?.(e.target.value)}
+              />
+            </div>
           </div>
         </div>
       )}
@@ -121,13 +160,23 @@ export function FilterPanel({
         <button
           className="btn-primary btn-sm"
           style={{ flex: 1, justifyContent: 'center' }}
-          onClick={() => { onApply(); onClose(); }}
+          onClick={e => {
+            e.stopPropagation();
+            onApply({
+              statuses: selectedStatus,
+              formTypes: selectedFormType ?? new Set(),
+              modes: selectedMode ?? new Set(),
+              dateFrom,
+              dateTo,
+            });
+            onClose();
+          }}
         >
           Apply Filter
         </button>
         <button
           className="btn-outline btn-sm"
-          onClick={() => { onReset(); }}
+          onClick={e => { e.stopPropagation(); onReset(); }}
         >
           Reset
         </button>

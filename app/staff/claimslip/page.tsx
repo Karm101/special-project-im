@@ -76,6 +76,9 @@ export default function ClaimSlipsPage() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [search, setSearch]         = useState('');
   const [selStatus, setSelStatus]   = useState<Set<string>>(new Set());
+  const [dateFrom, setDateFrom]     = useState('');
+  const [dateTo, setDateTo]         = useState('');
+  const [activeFilters, setActiveFilters] = useState<any>(null);
 
   // ── API state ─────────────────────────────────────────────────────────────
   const [slips, setSlips]       = useState<ApiClaimSlip[]>([]);
@@ -159,6 +162,12 @@ export default function ClaimSlipsPage() {
   // ── Filter rows ───────────────────────────────────────────────────────────
   const visibleRows = useMemo(() => {
     let rows = activeTab === 'all' ? slips : slips.filter(s => getFilterKey(s) === activeTab);
+    if (activeFilters?.statuses?.size > 0) {
+      const keyMap: Record<string,string> = {'Claimed':'claimed','Awaiting Claim':'awaiting','Expiring Soon':'expiring','Expired':'expired'};
+      rows = rows.filter(s => [...activeFilters.statuses].some(st => keyMap[st] === getFilterKey(s)));
+    }
+    if (activeFilters?.dateFrom) rows = rows.filter(s => s.issued_date >= activeFilters.dateFrom);
+    if (activeFilters?.dateTo)   rows = rows.filter(s => s.issued_date <= activeFilters.dateTo);
     if (search.trim()) {
       const q = search.toLowerCase();
       rows = rows.filter(s => {
@@ -173,7 +182,7 @@ export default function ClaimSlipsPage() {
       });
     }
     return rows;
-  }, [slips, activeTab, search, requests]);
+  }, [slips, activeTab, search, requests, activeFilters]);
 
   const toggleChip = (set: Set<string>, val: string, setter: (s: Set<string>) => void) => {
     const next = new Set(set); next.has(val) ? next.delete(val) : next.add(val); setter(next);
@@ -202,10 +211,10 @@ export default function ClaimSlipsPage() {
 
         {/* Stat cards */}
         <div className="stat-grid stat-grid-4">
-          <div className="stat-card c-green"><div className="stat-top"><div><div className="stat-num c-green">{loading ? '—' : stats.claimed}</div><div className="stat-label">Claimed</div></div><div className="stat-icon" style={{ background: '#EAFAF1' }}>✅</div></div></div>
-          <div className="stat-card c-navy"><div className="stat-top"><div><div className="stat-num c-navy">{loading ? '—' : stats.awaiting}</div><div className="stat-label">Awaiting Claim</div></div><div className="stat-icon" style={{ background: '#EEF4FB' }}>🎫</div></div></div>
-          <div className="stat-card c-orange"><div className="stat-top"><div><div className="stat-num c-orange">{loading ? '—' : stats.expiring}</div><div className="stat-label">Expiring in 7 days</div></div><div className="stat-icon" style={{ background: '#FFF8E1' }}>⏰</div></div></div>
-          <div className="stat-card c-red"><div className="stat-top"><div><div className="stat-num c-red">{loading ? '—' : stats.expired}</div><div className="stat-label">Expired</div></div><div className="stat-icon" style={{ background: '#FEEAEA' }}>🗑️</div></div></div>
+          <div className="stat-card c-green"><div className="stat-top"><div><div className="stat-num c-green">{loading ? '—' : stats.claimed}</div><div className="stat-label">Claimed</div></div><div className="stat-icon" style={{ background: '#EAFAF1', color: '#198754' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div></div></div>
+          <div className="stat-card c-navy"><div className="stat-top"><div><div className="stat-num c-navy">{loading ? '—' : stats.awaiting}</div><div className="stat-label">Awaiting Claim</div></div><div className="stat-icon" style={{ background: '#EEF4FB', color: '#001C43' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}><path d="M4 3l1.5 1.5L7 3l1.5 1.5L10 3l1.5 1.5L13 3l1.5 1.5L16 3l1.5 1.5L19 3v16l-1.5-1.5L16 19l-1.5 1.5L13 19l-1.5 1.5L10 19l-1.5 1.5L7 19l-1.5 1.5L4 19V3z"/></svg></div></div></div>
+          <div className="stat-card c-orange"><div className="stat-top"><div><div className="stat-num c-orange">{loading ? '—' : stats.expiring}</div><div className="stat-label">Expiring in 7 days</div></div><div className="stat-icon" style={{ background: '#FFF8E1', color: '#FFA323' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div></div></div>
+          <div className="stat-card c-red"><div className="stat-top"><div><div className="stat-num c-red">{loading ? '—' : stats.expired}</div><div className="stat-label">Expired</div></div><div className="stat-icon" style={{ background: '#FEEAEA', color: '#E50019' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></div></div></div>
         </div>
 
         {/* Tabs */}
@@ -221,15 +230,18 @@ export default function ClaimSlipsPage() {
         <div className="toolbar">
           <div className="toolbar-right">
             <div style={{ position: 'relative' }}>
-              <button className="btn-filter" onClick={() => setFilterOpen(o => !o)} title="Filter">
+              <button className="btn-filter" data-filter-btn="true" onClick={() => setFilterOpen(o => !o)} title="Filter">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
               </button>
               <FilterPanel
                 open={filterOpen} onClose={() => setFilterOpen(false)}
-                onApply={() => {}} onReset={() => setSelStatus(new Set())}
+                onApply={(f) => { setActiveFilters(f); setFilterOpen(false); }}
+                onReset={() => { setSelStatus(new Set()); setDateFrom(''); setDateTo(''); setActiveFilters(null); }}
                 selectedStatus={selStatus} onToggleStatus={s => toggleChip(selStatus, s, setSelStatus)}
                 statusOptions={['Awaiting Claim', 'Expiring Soon', 'Expired', 'Claimed']}
                 showFormType={false} showMode={false} showStaff={false}
+                dateFrom={dateFrom} onDateFromChange={setDateFrom}
+                dateTo={dateTo} onDateToChange={setDateTo}
               />
             </div>
             <div className="search-box" style={{ minWidth: 320 }}>

@@ -24,7 +24,7 @@ type ApiPayment = {
 const COLORS = ['#114B9F','#001C43','#FFA323','#6D4DF5','#808EA1','#198754','#E50019'];
 
 function StatCard({ num, label, color, bg, icon, loading }: {
-  num: string | number; label: string; color: string; bg: string; icon: string; loading: boolean;
+  num: string | number; label: string; color: string; bg: string; icon: React.ReactNode; loading: boolean;
 }) {
   return (
     <div className="stat-card" style={{ padding: 16, borderBottom: `3px solid ${color}` }}>
@@ -205,11 +205,11 @@ export default function ReportsPage() {
 
         {/* KPI stat cards */}
         <div className="stat-grid stat-grid-5" style={{ marginBottom: 22 }}>
-          <StatCard loading={loading} num={stats.total}      label="Total Requests"    color="#001C43" bg="#EEF4FB" icon="📋" />
-          <StatCard loading={loading} num={stats.released}   label="Released"          color="#198754" bg="#EAFAF1" icon="✅" />
-          <StatCard loading={loading} num={stats.inProgress} label="In Progress"       color="#FFA323" bg="#FFF8E1" icon="⏳" />
-          <StatCard loading={loading} num={stats.college}    label="College Requests"  color="#114B9F" bg="#EBF5FB" icon="🎓" />
-          <StatCard loading={loading} num={stats.shs}        label="SHS Requests"      color="#6D4DF5" bg="#F0EDFF" icon="📚" />
+          <StatCard loading={loading} num={stats.total}      label="Total Requests"    color="#001C43" bg="#EEF4FB" icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>} />
+          <StatCard loading={loading} num={stats.released}   label="Released"          color="#198754" bg="#EAFAF1" icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>} />
+          <StatCard loading={loading} num={stats.inProgress} label="In Progress"       color="#FFA323" bg="#FFF8E1" icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>} />
+          <StatCard loading={loading} num={stats.college}    label="College Requests"  color="#114B9F" bg="#EBF5FB" icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"/></svg>} />
+          <StatCard loading={loading} num={stats.shs}        label="SHS Requests"      color="#6D4DF5" bg="#F0EDFF" icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>} />
         </div>
 
         {/* Revenue + breakdown row */}
