@@ -17,15 +17,53 @@ interface TopbarProps {
 
 export function Topbar({
   breadcrumbs,
-  showNotifDot = true,
-  userName = 'Sinday, Grace Hyacinth',
-  userRole = 'RO Staff',
-  userInitials = 'GS',
+  showNotifDot = false,
+  userName,
+  userRole,
+  userInitials,
   rightExtras,
 }: TopbarProps) {
   const router = useRouter();
   const [ddOpen, setDdOpen] = useState(false);
   const ddRef = useRef<HTMLDivElement>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // ── Read auth from sessionStorage ──────────────────────────────────────────
+  const [displayName, setDisplayName]       = useState(userName ?? 'Staff');
+  const [displayRole, setDisplayRole]       = useState(userRole ?? 'RO Staff');
+  const [displayInitials, setDisplayInitials] = useState(userInitials ?? '??');
+
+  useEffect(() => {
+    // Read staff info from sessionStorage (set during login)
+    const storedName = sessionStorage.getItem('staff_name');
+    const storedRole = sessionStorage.getItem('staff_role');
+    if (storedName) {
+      setDisplayName(storedName);
+      // Generate initials from "LastName, FirstName" format
+      const parts = storedName.replace(',', '').split(' ').filter(Boolean);
+      const initials = parts.length >= 2
+        ? `${parts[0][0]}${parts[1][0]}`.toUpperCase()
+        : storedName.substring(0, 2).toUpperCase();
+      setDisplayInitials(initials);
+    }
+    if (storedRole) setDisplayRole(storedRole);
+  }, []);
+
+  // ── Fetch unread notification count ───────────────────────────────────────
+  useEffect(() => {
+    async function fetchUnread() {
+      try {
+        const res = await fetch('http://localhost:8000/api/notifications/');
+        if (!res.ok) return;
+        const data = await res.json();
+        const notifs = data.results ?? data;
+        setUnreadCount(notifs.filter((n: any) => !n.is_read).length);
+      } catch {
+        // Silent fail — not critical
+      }
+    }
+    fetchUnread();
+  }, []);
 
   useEffect(() => {
     function handler(e: MouseEvent) {
@@ -34,6 +72,11 @@ export function Topbar({
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
+
+  // Use prop values if explicitly passed, otherwise use sessionStorage values
+  const finalName     = userName     ?? displayName;
+  const finalRole     = userRole     ?? displayRole;
+  const finalInitials = userInitials ?? displayInitials;
 
   return (
     <div className="topbar">
@@ -59,7 +102,7 @@ export function Topbar({
         {rightExtras}
         <div className="topbar-bell" onClick={() => router.push('/staff/notifications')} style={{ cursor: 'pointer', position: 'relative', padding: 4 }}>
           <Bell size={18} color="#001C43" />
-          {showNotifDot && (
+          {unreadCount > 0 && (
             <span style={{ position: 'absolute', top: 3, right: 3, width: 7, height: 7, background: '#E50019', borderRadius: '50%', border: '1.5px solid #FCFCFC' }} />
           )}
         </div>
@@ -72,10 +115,10 @@ export function Topbar({
             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
           >
             <div className="user-info-block">
-              <span className="user-name">{userName}</span>
-              <span className="user-role">{userRole}</span>
+              <span className="user-name">{finalName}</span>
+              <span className="user-role">{finalRole}</span>
             </div>
-            <div className="user-avatar">{userInitials}</div>
+            <div className="user-avatar">{finalInitials}</div>
             <ChevronDown size={10} color="#B1B1B1" />
           </div>
 
@@ -83,7 +126,10 @@ export function Topbar({
             <button className="dd-item">👤 View Profile</button>
             <button className="dd-item">⚙️ Settings</button>
             <div className="dd-sep" />
-            <button className="dd-item danger" onClick={() => router.push('/')}>🚪 Sign Out</button>
+            <button className="dd-item danger" onClick={() => {
+              sessionStorage.clear();
+              router.push('/');
+            }}>🚪 Sign Out</button>
           </div>
         </div>
       </div>

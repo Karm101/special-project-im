@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 
 const IcoReports   = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" style={{ width: 20, height: 20, display: 'block' }}><path d="M18 20V10M12 20V4M6 20v-6"/></svg>;
@@ -45,6 +45,26 @@ export function Sidebar() {
   const router = useRouter();
   const pathname = usePathname();
   const [expanded, setExpanded] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Fetch live unread notification count
+  useEffect(() => {
+    async function fetchUnread() {
+      try {
+        const res = await fetch('http://localhost:8000/api/notifications/');
+        if (!res.ok) return;
+        const data = await res.json();
+        const notifs = data.results ?? data;
+        setUnreadCount(notifs.filter((n: any) => !n.is_read).length);
+      } catch {
+        // Silent fail
+      }
+    }
+    fetchUnread();
+    // Refresh every 60 seconds
+    const interval = setInterval(fetchUnread, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   const NavBtn = ({ item }: { item: NavItem }) => {
     const active = isActive(item.path, pathname);
@@ -59,7 +79,7 @@ export function Sidebar() {
         <span style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: active ? 'white' : '#001C43' }}>
           {item.icon}
         </span>
-        {item.notif && (
+        {item.notif && unreadCount > 0 && (
           <span style={{ position: 'absolute', top: 8, right: 8, width: 7, height: 7, background: '#E50019', borderRadius: '50%', border: '1.5px solid #FCFCFC' }} />
         )}
         {expanded && (
@@ -101,7 +121,7 @@ export function Sidebar() {
         </div>
 
         <div style={{ padding: '8px 7px', width: '100%', overflow: 'hidden' }}>
-          <div style={{ ...itemBase }} onClick={() => router.push('/')} title="Sign Out"
+          <div style={{ ...itemBase }} onClick={() => { sessionStorage.clear(); router.push('/'); }} title="Sign Out"
             onMouseEnter={e => (e.currentTarget.style.background = '#FEEAEA')}
             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
             <span style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#E50019' }}><IcoLogout /></span>

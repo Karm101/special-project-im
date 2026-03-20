@@ -89,6 +89,7 @@ function statusToWorkflow(status: string): string {
     case 'Processing':        return '● For Approval';
     case 'Ready for Release': return '● For Release';
     case 'Released':          return '● Completed';
+    case 'Rejected':          return '● Rejected';
     default:                  return `● ${status}`;
   }
 }
@@ -116,7 +117,10 @@ function SidePanel({
   onUpdateStatus: (status: string, remarks: string) => Promise<void>;
   updating: boolean;
 }) {
-  const [comment, setComment] = useState('');
+  const [comment, setComment]           = useState('');
+  const [rejectMode, setRejectMode]     = useState(false);
+  const commentInputRef                 = useState<HTMLInputElement | null>(null);
+
   const staffName = data.assigned_staff
     ? `${data.assigned_staff.first_name} ${data.assigned_staff.last_name}`
     : 'Unassigned';
@@ -124,13 +128,12 @@ function SidePanel({
     ? `${data.assigned_staff.first_name[0]}${data.assigned_staff.last_name[0]}`
     : '?';
 
-  const recentLogs = [...(data.status_logs || [])].slice(0, 3);
+  const recentLogs = [...(data.status_logs || [])].reverse().slice(0, 5);
 
-  // Determine which action buttons to show based on current status
-  const status = data.current_status;
+  const status     = data.current_status;
   const canReturn  = ['Verifying', 'For Payment', 'Processing'].includes(status);
-  const canReject  = !['Released'].includes(status);
-  const canAdvance = !['Released'].includes(status);
+  const canReject  = !['Released', 'Rejected'].includes(status);
+  const canAdvance = !['Released', 'Rejected'].includes(status);
 
   const nextStatus: Record<string, string> = {
     'Pending':           'Verifying',
@@ -147,6 +150,39 @@ function SidePanel({
     'Ready for Release': 'Mark as Released',
   };
 
+  // When reject mode activates, pre-fill the comment box
+  function handleRejectClick() {
+    setRejectMode(true);
+    const reqId = `REQ-${String(data.request_id).padStart(3, '0')}`;
+    setComment(`Request ${reqId} has been rejected. Reason: `);
+  }
+
+  function handleCancelReject() {
+    setRejectMode(false);
+    setComment('');
+  }
+
+  async function handleConfirmReject() {
+    if (!comment.trim() || comment.endsWith('Reason: ')) {
+      alert('Please enter a reason for the rejection.');
+      return;
+    }
+    await onUpdateStatus('Rejected', comment);
+    setRejectMode(false);
+    setComment('');
+  }
+
+  async function handleAdvance() {
+    if (!nextStatus[status]) return;
+    await onUpdateStatus(nextStatus[status], comment || '');
+    setComment('');
+  }
+
+  async function handleReturn() {
+    await onUpdateStatus('Pending', comment || 'Returned for revision');
+    setComment('');
+  }
+
   return (
     <div className="modal-side-pane">
       {/* Assigned Staff */}
@@ -161,7 +197,7 @@ function SidePanel({
         </div>
       </div>
 
-      {/* Status Log as Comments */}
+      {/* Status History */}
       <div className="side-sect" style={{ flex: 1, overflowY: 'auto' }}>
         <div className="side-sect-title">Status History</div>
         {recentLogs.length === 0 ? (
@@ -182,48 +218,88 @@ function SidePanel({
         )}
       </div>
 
-      {/* Comment input (UI only for now) */}
-      <div className="comment-input-row">
-        <input
-          className="comment-input"
-          type="text"
-          placeholder="Type a remark..."
-          value={comment}
-          onChange={e => setComment(e.target.value)}
-        />
-        <button className="send-btn"><Send size={12} /></button>
-      </div>
+      {/* Comment / Reject input */}
+      {rejectMode ? (
+        // ── Reject mode — inline rejection form ──────────────────────────────
+        <div style={{ padding: '12px 14px', borderTop: '1px solid rgba(0,0,0,0.06)', background: '#fff8f8' }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#E50019', marginBottom: 8 }}>
+            ⚠️ Confirm Rejection
+          </div>
+          <div style={{ fontSize: 11, color: '#666', marginBottom: 8, lineHeight: 1.5 }}>
+            Edit the message below — include the specific reason for rejection.
+          </div>
+          <textarea
+            className="drms-textarea"
+            style={{ fontSize: 12, minHeight: 80, resize: 'vertical', borderColor: '#E50019' }}
+            value={comment}
+            onChange={e => setComment(e.target.value)}
+            autoFocus
+          />
+          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+            <button
+              className="btn-action btn-reject"
+              style={{ flex: 1, fontSize: 12 }}
+              disabled={updating}
+              onClick={handleConfirmReject}
+            >
+              {updating ? 'Rejecting...' : '✓ Confirm Rejection'}
+            </button>
+            <button
+              className="btn-outline btn-sm"
+              style={{ flex: 1 }}
+              onClick={handleCancelReject}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
+        // ── Normal comment input ──────────────────────────────────────────────
+        <div className="comment-input-row">
+          <input
+            className="comment-input"
+            type="text"
+            placeholder="Add a remark (optional)..."
+            value={comment}
+            onChange={e => setComment(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && canAdvance && handleAdvance()}
+          />
+          <button className="send-btn"><Send size={12} /></button>
+        </div>
+      )}
 
-      {/* Action buttons */}
-      <div className="modal-action-btns">
-        {canReturn && (
-          <button
-            className="btn-action btn-return"
-            disabled={updating}
-            onClick={() => onUpdateStatus('Pending', 'Returned for revision')}
-          >
-            Return for Revision
-          </button>
-        )}
-        {canReject && (
-          <button
-            className="btn-action btn-reject"
-            disabled={updating}
-            onClick={() => onUpdateStatus('Pending', 'Request rejected')}
-          >
-            Reject Request
-          </button>
-        )}
-        {canAdvance && nextStatus[status] && (
-          <button
-            className="btn-action btn-release"
-            disabled={updating}
-            onClick={() => onUpdateStatus(nextStatus[status], comment || '')}
-          >
-            {updating ? 'Updating...' : nextLabel[status] ?? 'Advance Status'}
-          </button>
-        )}
-      </div>
+      {/* Action buttons — hidden in reject mode */}
+      {!rejectMode && (
+        <div className="modal-action-btns">
+          {canReturn && (
+            <button
+              className="btn-action btn-return"
+              disabled={updating}
+              onClick={handleReturn}
+            >
+              Return for Revision
+            </button>
+          )}
+          {canReject && (
+            <button
+              className="btn-action btn-reject"
+              disabled={updating}
+              onClick={handleRejectClick}
+            >
+              Reject Request
+            </button>
+          )}
+          {canAdvance && nextStatus[status] && (
+            <button
+              className="btn-action btn-release"
+              disabled={updating}
+              onClick={handleAdvance}
+            >
+              {updating ? 'Updating...' : nextLabel[status] ?? 'Advance Status'}
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
