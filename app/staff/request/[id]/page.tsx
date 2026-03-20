@@ -72,13 +72,15 @@ type RequestDetail = {
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+const PH_TZ = 'Asia/Manila';
+
 function formatDate(d: string | null) {
   if (!d) return '—';
-  return new Date(d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  return new Date(d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: PH_TZ });
 }
 
 function formatDateTime(d: string) {
-  return new Date(d).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+  return new Date(d).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: PH_TZ });
 }
 
 function statusToWorkflow(status: string): string {
@@ -112,10 +114,14 @@ function SidePanel({
   data,
   onUpdateStatus,
   updating,
+  staffList,
+  onAssignStaff,
 }: {
   data: RequestDetail;
   onUpdateStatus: (status: string, remarks: string) => Promise<void>;
   updating: boolean;
+  staffList: {staff_id: number; first_name: string; last_name: string; position: string}[];
+  onAssignStaff: (staffId: number) => Promise<void>;
 }) {
   const [comment, setComment]           = useState('');
   const [rejectMode, setRejectMode]     = useState(false);
@@ -187,7 +193,24 @@ function SidePanel({
     <div className="modal-side-pane">
       {/* Assigned Staff */}
       <div className="side-sect">
-        <div className="side-sect-title">Assigned Staff</div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+          <div className="side-sect-title" style={{ marginBottom: 0 }}>Assigned Staff</div>
+          {staffList.length > 0 && (
+            <select
+              className="drms-select"
+              style={{ fontSize: 11, padding: '3px 8px', height: 28, width: 'auto', maxWidth: 130 }}
+              value={data.assigned_staff?.staff_id ?? ''}
+              onChange={e => e.target.value && onAssignStaff(parseInt(e.target.value))}
+            >
+              <option value="">Reassign...</option>
+              {staffList.map(s => (
+                <option key={s.staff_id} value={s.staff_id}>
+                  {s.last_name}, {s.first_name}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
         <div className="approver-row">
           <div className="approver-av">{staffInitials}</div>
           <div>
@@ -375,7 +398,7 @@ function FormTab({ data }: { data: RequestDetail }) {
           <div style={{ fontSize: 13, color: '#B1B1B1', padding: '8px 0' }}>No payment record yet.</div>
         ) : (
           <div className="field-grid">
-            <div className="field-group"><div className="field-label">Amount</div><div className="field-value">₱ {parseFloat(data.payment_info.amount).toFixed(2)}</div></div>
+            <div className="field-group"><div className="field-label">Amount</div><div className="field-value">{parseFloat(data.payment_info.amount) === 0 ? <span style={{ color: '#B1B1B1' }}>Not set — pending Treasury billing</span> : `₱ ${parseFloat(data.payment_info.amount).toFixed(2)}`}</div></div>
             <div className="field-group"><div className="field-label">Official Receipt No.</div><div className="field-value">{data.payment_info.official_receipt_no ?? '—'}</div></div>
             <div className="field-group"><div className="field-label">Payment Date</div><div className="field-value">{formatDate(data.payment_info.payment_date)}</div></div>
             <div className="field-group">
@@ -403,7 +426,7 @@ function JourneyTab({ data }: { data: RequestDetail }) {
   const STAGES = [
     { num: 1, name: 'Submission',        leftKey: 'Form Received',  leftVal: `${data.submission_mode} (RO Portal)`, rightKey: 'Assigned Staff:', rightVal: staffName },
     { num: 2, name: 'Verification',      leftKey: 'Verified',       leftVal: currentStage > 2 ? 'Done' : '—',       rightKey: 'Verified By:',    rightVal: staffName },
-    { num: 3, name: 'Billing & Payment', leftKey: 'Amount Billed',  leftVal: data.payment_info ? `₱ ${parseFloat(data.payment_info.amount).toFixed(2)}` : '—', rightKey: 'Receipt:', rightVal: data.payment_info?.official_receipt_no ?? '—' },
+    { num: 3, name: 'Billing & Payment', leftKey: 'Amount Billed',  leftVal: data.payment_info && parseFloat(data.payment_info.amount) > 0 ? `₱ ${parseFloat(data.payment_info.amount).toFixed(2)}` : '—', rightKey: 'Receipt:', rightVal: data.payment_info?.official_receipt_no ?? '—' },
     { num: 4, name: 'Processing',        leftKey: 'Status',         leftVal: currentStage === 4 ? 'In Progress' : currentStage > 4 ? 'Done' : '—', rightKey: 'Assigned Staff:', rightVal: staffName },
     { num: 5, name: 'Ready for Release', leftKey: 'Claim Slip',     leftVal: currentStage >= 5 ? 'Issued' : 'Not yet issued', rightKey: '', rightVal: '' },
     { num: 6, name: 'Released',          leftKey: 'Claimed By',     leftVal: '—', rightKey: '', rightVal: '' },
@@ -484,7 +507,21 @@ export default function RequestPage() {
   const [data, setData] = useState<RequestDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [updating, setUpdating] = useState(false);
+  const [updating, setUpdating]   = useState(false);
+  const [staffList, setStaffList] = useState<{staff_id: number; first_name: string; last_name: string; position: string}[]>([]);
+
+  // Fetch staff list for assignment dropdown
+  useEffect(() => {
+    async function fetchStaff() {
+      try {
+        const res = await fetch('http://localhost:8000/api/staff/');
+        if (!res.ok) return;
+        const data = await res.json();
+        setStaffList(data.results ?? data);
+      } catch {}
+    }
+    fetchStaff();
+  }, []);
 
   // Extract numeric ID from URL param (e.g. "REQ-001" → 1)
   const rawId = params?.id as string ?? '';
@@ -511,6 +548,22 @@ export default function RequestPage() {
     fetchDetail();
   }, [numericId]);
 
+  // ── Assign staff ──────────────────────────────────────────────────────────
+  async function handleAssignStaff(staffId: number) {
+    try {
+      const res = await fetch(`http://localhost:8000/api/requests/${numericId}/assign_staff/`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ staff_id: staffId }),
+      });
+      if (!res.ok) throw new Error();
+      const updated = await fetch(`http://localhost:8000/api/requests/${numericId}/`);
+      setData(await updated.json());
+    } catch {
+      alert('Failed to assign staff.');
+    }
+  }
+
   // ── Update status ─────────────────────────────────────────────────────────
   async function handleUpdateStatus(newStatus: string, remarks: string) {
     if (!data) return;
@@ -532,6 +585,107 @@ export default function RequestPage() {
     }
   }
 
+  // ── Download / Print form ────────────────────────────────────────────────
+  function handleDownload() {
+    if (!data) return;
+    const r = data.requester_info;
+    const fullName = r ? `${r.last_name}, ${r.first_name}` : '—';
+    const reqId = `REQ-${String(data.request_id).padStart(3, '0')}`;
+    const docs = data.requested_documents.map((d, i) =>
+      `<tr><td>${i+1}</td><td>${d.document_name}</td><td>${d.copies}</td><td>${d.processing_days} working days</td></tr>`
+    ).join('');
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <title>Document Request Form — ${reqId}</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; color: #001C43; }
+    h1 { font-size: 18px; margin-bottom: 4px; }
+    .sub { font-size: 13px; color: #666; margin-bottom: 24px; }
+    .section { margin-bottom: 20px; border-top: 2px solid #001C43; padding-top: 10px; }
+    .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #666; margin-bottom: 10px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .field label { font-size: 10px; text-transform: uppercase; color: #999; display: block; margin-bottom: 2px; }
+    .field span { font-size: 13px; font-weight: 600; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { background: #001C43; color: white; padding: 8px; text-align: left; font-size: 11px; }
+    td { padding: 8px; border-bottom: 1px solid #eee; }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; background: #EEF4FB; color: #001C43; }
+    .header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #eee; }
+    .logo { width: 50px; height: 50px; background: linear-gradient(135deg,#001C43,#114B9F); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; font-weight: 900; }
+    .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #eee; font-size: 11px; color: #999; display: flex; justify-content: space-between; }
+    @media print { body { margin: 20px; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">M</div>
+    <div>
+      <h1>Document Request Form</h1>
+      <div class="sub">Mapúa Malayan Colleges Mindanao — Registrar's Office &nbsp;|&nbsp; ${reqId} &nbsp;|&nbsp; ${data.current_status}</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Requester Information</div>
+    <div class="grid">
+      <div class="field"><label>Full Name</label><span>${fullName}</span></div>
+      <div class="field"><label>Student Number</label><span>${r?.student_number ?? '—'}</span></div>
+      <div class="field"><label>Program / Strand</label><span>${r?.program_strand ?? '—'}</span></div>
+      <div class="field"><label>Academic Level</label><span>${r?.academic_level ?? '—'}</span></div>
+      <div class="field"><label>Enrollment Status</label><span>${r?.enrollment_status ?? '—'}</span></div>
+      <div class="field"><label>Email</label><span>${r?.email ?? '—'}</span></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Request Details</div>
+    <div class="grid">
+      <div class="field"><label>Request ID</label><span>${reqId}</span></div>
+      <div class="field"><label>Form Type</label><span>${data.form_type}</span></div>
+      <div class="field"><label>Submission Mode</label><span>${data.submission_mode}</span></div>
+      <div class="field"><label>Date Submitted</label><span>${formatDate(data.date_submitted)}</span></div>
+      <div class="field"><label>Expected Claim Date</label><span>${formatDate(data.expected_claim_date)}</span></div>
+      <div class="field"><label>Current Status</label><span><span class="badge">${data.current_status}</span></span></div>
+      <div class="field" style="grid-column:1/-1"><label>Purpose</label><span>${data.purpose}</span></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Documents Requested</div>
+    <table>
+      <thead><tr><th>#</th><th>Document Type</th><th>Copies</th><th>Processing Time</th></tr></thead>
+      <tbody>${docs}</tbody>
+    </table>
+  </div>
+
+  ${data.payment_info ? `
+  <div class="section">
+    <div class="section-title">Payment Information</div>
+    <div class="grid">
+      <div class="field"><label>Amount</label><span>${parseFloat(data.payment_info.amount) > 0 ? '₱' + parseFloat(data.payment_info.amount).toFixed(2) : 'Pending billing'}</span></div>
+      <div class="field"><label>Payment Status</label><span>${data.payment_info.payment_status}</span></div>
+      <div class="field"><label>Official Receipt No.</label><span>${data.payment_info.official_receipt_no ?? '—'}</span></div>
+      <div class="field"><label>Payment Date</label><span>${formatDate(data.payment_info.payment_date)}</span></div>
+    </div>
+  </div>` : ''}
+
+  <div class="footer">
+    <span>Printed on ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+    <span>MMCM Registrar's Office — Document Request Monitoring System</span>
+  </div>
+</body>
+</html>`;
+
+    const win = window.open('', '_blank');
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+      win.print();
+    }
+  }
+
   return (
     <>
       <Topbar
@@ -547,7 +701,7 @@ export default function RequestPage() {
               <span className="modal-header-name">Registrar's Office — MMCM</span>
             </div>
             <span className="modal-title">Document Request Form — {displayId}</span>
-            <button className="modal-dl-btn"><Download size={12} /> Download Form</button>
+            <button className="modal-dl-btn" onClick={handleDownload}><Download size={12} /> Download Form</button>
             <button className="modal-close-btn" onClick={() => router.push('/staff/dashboard')}><X size={14} /></button>
           </div>
 
@@ -577,7 +731,7 @@ export default function RequestPage() {
             {data && !loading && (
               <>
                 {activeTab === 'form' ? <FormTab data={data} /> : <JourneyTab data={data} />}
-                <SidePanel data={data} onUpdateStatus={handleUpdateStatus} updating={updating} />
+                <SidePanel data={data} onUpdateStatus={handleUpdateStatus} updating={updating} staffList={staffList} onAssignStaff={handleAssignStaff} />
               </>
             )}
           </div>

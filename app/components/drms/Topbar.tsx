@@ -63,6 +63,9 @@ export function Topbar({
       }
     }
     fetchUnread();
+    // Refresh every 60 seconds — same as sidebar
+    const interval = setInterval(fetchUnread, 60000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
