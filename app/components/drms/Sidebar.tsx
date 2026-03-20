@@ -62,7 +62,7 @@ export function Sidebar() {
     }
     fetchUnread();
     // Refresh every 60 seconds
-    const interval = setInterval(fetchUnread, 60000);
+    const interval = setInterval(fetchUnread, 30000);
     return () => clearInterval(interval);
   }, []);
 

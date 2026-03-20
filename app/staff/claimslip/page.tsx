@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search } from 'lucide-react';
 import { Topbar } from '../../components/drms/Topbar';
+import { Pagination } from '../../components/drms/Pagination';
 import { FilterPanel } from '../../components/drms/FilterPanel';
 
 // ── API type ──────────────────────────────────────────────────────────────────
@@ -86,6 +87,7 @@ export default function ClaimSlipsPage() {
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState<string | null>(null);
   const [updating, setUpdating] = useState<number | null>(null);
+  const [page, setPage]         = useState(1);
 
   // ── Fetch claim slips ─────────────────────────────────────────────────────
   useEffect(() => {
@@ -197,6 +199,9 @@ export default function ClaimSlipsPage() {
     return rows;
   }, [slips, activeTab, search, requests, activeFilters]);
 
+  const totalRows = visibleRows.length;
+  const pagedRows  = visibleRows.slice((page - 1) * 10, page * 10);
+
   const toggleChip = (set: Set<string>, val: string, setter: (s: Set<string>) => void) => {
     const next = new Set(set); next.has(val) ? next.delete(val) : next.add(val); setter(next);
   };
@@ -273,6 +278,7 @@ export default function ClaimSlipsPage() {
 
         {/* Table */}
         {!loading && (
+          <>
           <div className="table-wrap">
             <table className="drms-table">
               <thead>
@@ -283,7 +289,7 @@ export default function ClaimSlipsPage() {
                 </tr>
               </thead>
               <tbody>
-                {visibleRows.map(s => {
+                {pagedRows.map(s => {
                   const slipStatus = getSlipStatus(s);
                   const slipId     = `CS-${String(s.claim_slip_id).padStart(3, '0')}`;
                   const reqId      = `REQ-${String(s.request).padStart(3, '0')}`;
@@ -327,7 +333,7 @@ export default function ClaimSlipsPage() {
                     </tr>
                   );
                 })}
-                {visibleRows.length === 0 && (
+                {pagedRows.length === 0 && (
                   <tr>
                     <td colSpan={8} style={{ textAlign: 'center', padding: 24, color: '#B1B1B1', fontSize: 13 }}>
                       No claim slips found.
@@ -337,6 +343,8 @@ export default function ClaimSlipsPage() {
               </tbody>
             </table>
           </div>
+          <Pagination currentPage={page} totalItems={totalRows} itemsPerPage={10} onPageChange={p => setPage(p)} />
+          </>
         )}
       </div>
       {/* ── Mark Claimed Modal ── */}

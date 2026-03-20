@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search } from 'lucide-react';
 import { Topbar } from '../../components/drms/Topbar';
+import { Pagination } from '../../components/drms/Pagination';
 import { FilterPanel } from '../../components/drms/FilterPanel';
 
 // ── API type ──────────────────────────────────────────────────────────────────
@@ -49,6 +50,7 @@ export default function PaymentMonitorPage() {
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState<string | null>(null);
   const [updating, setUpdating]   = useState<number | null>(null);
+  const [page, setPage]           = useState(1);
 
   // ── Fetch payments + request details ────────────────────────────────────
   useEffect(() => {
@@ -198,6 +200,9 @@ export default function PaymentMonitorPage() {
     return rows;
   }, [payments, activeTab, search, requests, activeFilters]);
 
+  const totalRows = visibleRows.length;
+  const pagedRows  = visibleRows.slice((page - 1) * 10, page * 10);
+
   const toggleChip = (set: Set<string>, val: string, setter: (s: Set<string>) => void) => {
     const next = new Set(set); next.has(val) ? next.delete(val) : next.add(val); setter(next);
   };
@@ -272,7 +277,7 @@ export default function PaymentMonitorPage() {
                 </tr>
               </thead>
               <tbody>
-                {visibleRows.map(p => {
+                {pagedRows.map(p => {
                   const reqId    = `REQ-${String(p.request).padStart(3, '0')}`;
                   const reqData  = requests[p.request];
                   const requester = reqData?.requester_info
@@ -331,7 +336,7 @@ export default function PaymentMonitorPage() {
                     </tr>
                   );
                 })}
-                {visibleRows.length === 0 && (
+                {pagedRows.length === 0 && (
                   <tr><td colSpan={7} style={{ textAlign: 'center', padding: 24, color: '#B1B1B1', fontSize: 13 }}>No records found.</td></tr>
                 )}
               </tbody>

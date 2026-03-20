@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search } from 'lucide-react';
+import { Pagination } from '../../components/drms/Pagination';
 import { Topbar } from '../../components/drms/Topbar';
 
 // ── API types ─────────────────────────────────────────────────────────────────
@@ -46,6 +47,7 @@ export default function ClearancePage() {
   const [search, setSearch]           = useState('');
   const [selectedId, setSelectedId]   = useState<number | null>(null);
   const [updating, setUpdating]       = useState<number | null>(null);
+  const [page, setPage]               = useState(1);
 
   // ── API state ─────────────────────────────────────────────────────────────
   const [ro4Requests, setRo4Requests] = useState<ApiRequest[]>([]);
@@ -152,6 +154,8 @@ export default function ClearancePage() {
     });
   }, [ro4Requests, search]);
 
+  const pagedRequests = visibleRequests.slice((page - 1) * 10, page * 10);
+
   return (
     <>
       <Topbar breadcrumbs={[{ label: 'Clearance Tracking' }]} showNotifDot />
@@ -208,7 +212,7 @@ export default function ClearancePage() {
                 </div>
               </div>
               <div style={{ padding: '4px 0' }}>
-                {visibleRequests.map((r, i) => {
+                {pagedRequests.map((r, i) => {
                   const reqId     = `REQ-${String(r.request_id).padStart(3, '0')}`;
                   const name      = r.requester_info
                     ? `${r.requester_info.last_name}, ${r.requester_info.first_name}`
@@ -218,13 +222,15 @@ export default function ClearancePage() {
                   const totalClr  = clrs.filter(c => c.clearance_status !== 'Not Applicable').length;
                   const isSelected = selectedId === r.request_id;
 
-                  return (
+                  const pagedRequests = visibleRequests.slice((page - 1) * 10, page * 10);
+
+  return (
                     <div
                       key={r.request_id}
                       onClick={() => setSelectedId(r.request_id)}
                       style={{
                         padding: '12px 16px',
-                        borderBottom: i < visibleRequests.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none',
+                        borderBottom: i < pagedRequests.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none',
                         background: isSelected ? '#F0F4FF' : 'white',
                         borderLeft: isSelected ? '3px solid var(--navy)' : '3px solid transparent',
                         cursor: 'pointer',
@@ -253,6 +259,9 @@ export default function ClearancePage() {
                     No requests match your search.
                   </div>
                 )}
+              </div>
+              <div style={{ padding: '4px 12px' }}>
+                <Pagination currentPage={page} totalItems={visibleRequests.length} itemsPerPage={10} onPageChange={p => setPage(p)} />
               </div>
             </div>
 

@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search } from 'lucide-react';
 import { Topbar } from '../../components/drms/Topbar';
+import { Pagination } from '../../components/drms/Pagination';
 import { FilterPanel } from '../../components/drms/FilterPanel';
 
 // ── API response type (matches DocumentRequestListSerializer) ─────────────
@@ -90,6 +91,7 @@ export default function DashboardPage() {
   const [dateFrom, setDateFrom]     = useState('');
   const [dateTo, setDateTo]         = useState('');
   const [activeFilters, setActiveFilters] = useState<{statuses: Set<string>; formTypes: Set<string>; modes: Set<string>; dateFrom: string; dateTo: string} | null>(null);
+  const [page, setPage] = useState(1);
 
   // ── API data ───────────────────────────────────────────────────────────
   const [collegeRows, setCollegeRows] = useState<ApiRow[]>([]);
@@ -123,6 +125,8 @@ export default function DashboardPage() {
 
   // ── Derived values ─────────────────────────────────────────────────────
   const isCollege  = dept === 'college';
+  // Reset page when filters change
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const activeTab  = isCollege ? collegeTab : shsTab;
   const setActiveTab = isCollege ? setCollegeTab : setShsTab;
   const allRows    = isCollege ? collegeRows : shsRows;
@@ -222,6 +226,9 @@ export default function DashboardPage() {
 
     return rows;
   }, [allRows, activeTab, search, activeFilters]);
+
+  const totalRows = filteredRows.length;
+  const paginatedRows = filteredRows.slice((page - 1) * 10, page * 10);
 
   const toggleChip = (set: Set<string>, val: string, setter: (s: Set<string>) => void) => {
     const next = new Set(set); next.has(val) ? next.delete(val) : next.add(val); setter(next);
@@ -359,6 +366,7 @@ export default function DashboardPage() {
 
         {/* ── List view ── */}
         {!loading && listView && (
+          <>
           <div className="table-wrap">
             <table className="drms-table">
               <thead>
@@ -370,7 +378,7 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredRows.map(r => {
+                {paginatedRows.map(r => {
                   const badge = statusToBadge(r.current_status);
                   const reqId = `REQ-${String(r.request_id).padStart(3, '0')}`;
                   return (
@@ -392,18 +400,21 @@ export default function DashboardPage() {
                     </tr>
                   );
                 })}
-                {filteredRows.length === 0 && (
+                {paginatedRows.length === 0 && (
                   <tr><td colSpan={10} style={{ textAlign: 'center', padding: 24, color: '#B1B1B1', fontSize: 13 }}>No requests found.</td></tr>
                 )}
               </tbody>
             </table>
           </div>
+          <Pagination currentPage={page} totalItems={totalRows} itemsPerPage={10} onPageChange={p => setPage(p)} />
+          </>
         )}
 
         {/* ── Card / Grid view ── */}
         {!loading && !listView && (
+          <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: 14 }}>
-            {filteredRows.map(r => {
+            {paginatedRows.map(r => {
               const badge = statusToBadge(r.current_status);
               const reqId = `REQ-${String(r.request_id).padStart(3, '0')}`;
               return (
@@ -432,10 +443,12 @@ export default function DashboardPage() {
                 </div>
               );
             })}
-            {filteredRows.length === 0 && (
+            {paginatedRows.length === 0 && (
               <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: 40, color: '#B1B1B1', fontSize: 13 }}>No requests found.</div>
             )}
           </div>
+          <Pagination currentPage={page} totalItems={totalRows} itemsPerPage={10} onPageChange={p => setPage(p)} />
+          </>
         )}
       </div>
     </>

@@ -66,6 +66,9 @@ export default function NotificationsPage() {
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState<string | null>(null);
   const [markingAll, setMarkingAll] = useState(false);
+  const [displayCount, setDisplayCount] = useState(10);
+
+  function handleRefresh() { fetchNotifs(); }
 
   // ── Fetch notifications ───────────────────────────────────────────────────
   useEffect(() => {
@@ -154,6 +157,8 @@ export default function NotificationsPage() {
   }, [notifs, activeTab]);
 
   const unreadCount = notifs.filter(n => !n.is_read).length;
+  const displayedNotifs = visible.slice(0, displayCount);
+  const hasMore = displayCount < visible.length;
 
   // ── Handle click on notification ──────────────────────────────────────────
   function handleClick(n: ApiNotification) {
@@ -179,13 +184,18 @@ export default function NotificationsPage() {
               {loading ? '...' : `${unreadCount} unread notification${unreadCount !== 1 ? 's' : ''}`}
             </div>
           </div>
-          <button
-            className="btn-outline btn-sm"
-            onClick={markAllRead}
-            disabled={markingAll || unreadCount === 0}
-          >
-            {markingAll ? 'Marking...' : 'Mark All as Read'}
-          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn-outline btn-sm" onClick={handleRefresh} title="Refresh">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+            </button>
+            <button
+              className="btn-outline btn-sm"
+              onClick={markAllRead}
+              disabled={markingAll || unreadCount === 0}
+            >
+              {markingAll ? 'Marking...' : 'Mark All as Read'}
+            </button>
+          </div>
         </div>
 
         {/* Error */}
@@ -222,7 +232,7 @@ export default function NotificationsPage() {
                   : 'No notifications in this category.'}
               </div>
             ) : (
-              visible.map(n => {
+              displayedNotifs.map(n => {
                 const { icon, bg } = getNotifStyle(n);
                 return (
                   <div
@@ -249,6 +259,13 @@ export default function NotificationsPage() {
                 );
               })
             )}
+          {hasMore && (
+            <div style={{ textAlign: 'center', padding: '12px 0', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+              <button className="btn-outline btn-sm" onClick={() => setDisplayCount(c => c + 10)}>
+                Load More ({visible.length - displayCount} more)
+              </button>
+            </div>
+          )}
           </div>
         )}
       </div>
