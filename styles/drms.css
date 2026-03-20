@@ -785,3 +785,15 @@ div:hover > .sb-tooltip { opacity: 1 !important; }
 .landing-icon svg { width: 36px; height: 36px; }
 .landing-title { font-size: 18px; font-weight: 800; color: var(--navy); font-family: var(--drms-font); }
 .landing-sub { font-size: 13px; color: var(--mid-gray); line-height: 1.6; font-family: var(--drms-font); }
+
+.input-error {
+  border-color: #E50019 !important;
+  background: #fff8f8;
+}
+
+.field-error {
+  font-size: 11px;
+  color: #E50019;
+  margin-top: 4px;
+  font-weight: 600;
+}
