@@ -3,7 +3,22 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+// ── Replace with your MMCM campus photo ───────────────────────────────────────
+// To use a local photo: put the file in special-project-im/public/campus.jpg
+// then change this to: const CAMPUS_IMG = '/campus.jpg';
 const CAMPUS_IMG = 'https://images.unsplash.com/photo-1613688365965-8abc666fe1e2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080&q=80';
+
+const EyeIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}>
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+  </svg>
+);
+const EyeOffIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}>
+    <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+    <line x1="1" y1="1" x2="23" y2="23"/>
+  </svg>
+);
 
 type Mode = 'login' | 'register';
 
@@ -11,40 +26,35 @@ export default function StudentLoginPage() {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>('login');
 
-  // ── Login state ────────────────────────────────────────────────────────────
-  const [loginNumber, setLoginNumber]   = useState('');
+  const [loginNumber, setLoginNumber]     = useState('');
   const [loginPassword, setLoginPassword] = useState('');
-  const [loginError, setLoginError]     = useState('');
-  const [loginLoading, setLoginLoading] = useState(false);
-  const [showLoginPw, setShowLoginPw]   = useState(false);
+  const [loginError, setLoginError]       = useState('');
+  const [loginLoading, setLoginLoading]   = useState(false);
+  const [showLoginPw, setShowLoginPw]     = useState(false);
 
-  // ── Register state ─────────────────────────────────────────────────────────
   const [reg, setReg] = useState({
     student_number: '', first_name: '', last_name: '',
     email: '', password: '', confirm_password: '',
-    program_strand: '', academic_level: 'College',
-    academic_year: '', term_semester: '', contact_number: '',
+    program_strand: '', academic_level: 'College', contact_number: '',
   });
-  const [regErrors, setRegErrors]     = useState<Record<string, string>>({});
-  const [regError, setRegError]       = useState('');
-  const [regLoading, setRegLoading]   = useState(false);
-  const [showRegPw, setShowRegPw]     = useState(false);
-  const [regSuccess, setRegSuccess]   = useState(false);
+  const [regErrors, setRegErrors]   = useState<Record<string, string>>({});
+  const [regError, setRegError]     = useState('');
+  const [regLoading, setRegLoading] = useState(false);
+  const [showRegPw, setShowRegPw]   = useState(false);
+  const [showConfPw, setShowConfPw] = useState(false);
+  const [regSuccess, setRegSuccess] = useState(false);
 
   const setR = (k: string, v: string) => setReg(p => ({ ...p, [k]: v }));
+  const clrE = (k: string) => setRegErrors(p => ({ ...p, [k]: '' }));
 
-  // ── Login ──────────────────────────────────────────────────────────────────
   async function handleLogin() {
     if (!loginNumber.trim() || !loginPassword.trim()) {
-      setLoginError('Please enter your student number and password.');
-      return;
+      setLoginError('Please enter your student number and password.'); return;
     }
-    setLoginLoading(true);
-    setLoginError('');
+    setLoginLoading(true); setLoginError('');
     try {
       const res = await fetch('http://localhost:8000/api/auth/student-login/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ student_number: loginNumber, password: loginPassword }),
       });
       const data = await res.json();
@@ -56,14 +66,10 @@ export default function StudentLoginPage() {
       sessionStorage.setItem('student_level',   data.academic_level);
       sessionStorage.setItem('student_program', data.program_strand);
       router.push('/student/landing');
-    } catch {
-      setLoginError('Could not connect to server. Make sure Django is running.');
-    } finally {
-      setLoginLoading(false);
-    }
+    } catch { setLoginError('Could not connect to server. Make sure Django is running.'); }
+    finally { setLoginLoading(false); }
   }
 
-  // ── Register ───────────────────────────────────────────────────────────────
   async function handleRegister() {
     const e: Record<string, string> = {};
     if (!reg.student_number.trim()) e.student_number = 'Required.';
@@ -77,23 +83,15 @@ export default function StudentLoginPage() {
     setRegErrors(e);
     if (Object.keys(e).length > 0) return;
 
-    setRegLoading(true);
-    setRegError('');
+    setRegLoading(true); setRegError('');
     try {
       const res = await fetch('http://localhost:8000/api/auth/student-register/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          student_number:   reg.student_number,
-          first_name:       reg.first_name,
-          last_name:        reg.last_name,
-          email:            reg.email,
-          password:         reg.password,
-          program_strand:   reg.program_strand,
-          academic_level:   reg.academic_level,
-          academic_year:    reg.academic_year || null,
-          term_semester:    reg.term_semester || null,
-          contact_number:   reg.contact_number || null,
+          student_number: reg.student_number, first_name: reg.first_name,
+          last_name: reg.last_name, email: reg.email, password: reg.password,
+          program_strand: reg.program_strand, academic_level: reg.academic_level,
+          contact_number: reg.contact_number || null,
         }),
       });
       const data = await res.json();
@@ -102,7 +100,6 @@ export default function StudentLoginPage() {
         else setRegError(data.error || 'Registration failed.');
         return;
       }
-      // Auto login after register
       sessionStorage.setItem('student_token',   data.token);
       sessionStorage.setItem('student_name',    data.name);
       sessionStorage.setItem('student_number',  data.student_number);
@@ -111,261 +108,193 @@ export default function StudentLoginPage() {
       sessionStorage.setItem('student_program', data.program_strand);
       setRegSuccess(true);
       setTimeout(() => router.push('/student/landing'), 1500);
-    } catch {
-      setRegError('Could not connect to server. Make sure Django is running.');
-    } finally {
-      setRegLoading(false);
-    }
+    } catch { setRegError('Could not connect to server. Make sure Django is running.'); }
+    finally { setRegLoading(false); }
   }
 
-  const inputStyle = (err?: string): React.CSSProperties => ({
-    width: '100%', padding: '10px 12px', fontSize: 13,
-    border: `1px solid ${err ? '#E50019' : '#ddd'}`,
-    borderRadius: 8, fontFamily: 'var(--drms-font)',
-    outline: 'none', boxSizing: 'border-box',
-    transition: 'border-color .15s',
+  const inp = (err?: string): React.CSSProperties => ({
+    width: '100%', padding: '11px 14px', fontSize: 13,
+    border: `1.5px solid ${err ? '#E50019' : '#E0E0E0'}`,
+    borderRadius: 8, fontFamily: 'var(--drms-font)', outline: 'none',
+    boxSizing: 'border-box', color: '#001C43', background: 'white',
   });
 
-  const errStyle: React.CSSProperties = {
-    fontSize: 11, color: '#E50019', marginTop: 3, fontWeight: 600,
-  };
+  const Label = ({ t, req }: { t: string; req?: boolean }) => (
+    <div style={{ fontSize: 11, fontWeight: 700, color: '#555', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 5 }}>
+      {t}{req && <span style={{ color: '#E50019', marginLeft: 2 }}>*</span>}
+    </div>
+  );
+  const Err = ({ m }: { m?: string }) =>
+    m ? <div style={{ fontSize: 11, color: '#E50019', marginTop: 3, fontWeight: 600 }}>{m}</div> : null;
+
+  const PwBtn = ({ show, toggle }: { show: boolean; toggle: () => void }) => (
+    <button type="button" onClick={toggle} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#B1B1B1', display: 'flex', padding: 0 }}>
+      {show ? <EyeOffIcon /> : <EyeIcon />}
+    </button>
+  );
+
+  const PrimaryBtn = ({ onClick, loading, disabled, children }: any) => (
+    <button onClick={onClick} disabled={loading || disabled}
+      style={{ width: '100%', padding: 13, background: '#001C43', color: 'white', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, fontFamily: 'var(--drms-font)', marginTop: 4 }}>
+      {children}
+    </button>
+  );
 
   return (
-    <div className="login-screen drms-root">
-      <div className="login-left">
-        <div className="login-card" style={{ maxHeight: mode === 'register' ? '90vh' : 'auto', overflowY: mode === 'register' ? 'auto' : 'visible' }}>
+    <div style={{ minHeight: '100vh', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {/* Full background image */}
+      <div style={{ position: 'fixed', inset: 0, backgroundImage: `url('${CAMPUS_IMG}')`, backgroundSize: 'cover', backgroundPosition: 'center', zIndex: 0 }} />
+      {/* Subtle dark overlay — natural, not blue */}
+      <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1 }} />
 
-          {/* Mode toggle */}
-          <div className="login-mode-toggle">
-            <button className={`lmt-btn${mode === 'login' ? ' active' : ''}`} onClick={() => { setMode('login'); setLoginError(''); setRegError(''); }}>
-              🎓 Student Login
-            </button>
-            <button className={`lmt-btn${mode === 'register' ? ' active' : ''}`} onClick={() => { setMode('register'); setLoginError(''); setRegError(''); }}>
-              📝 Register
-            </button>
-          </div>
+      {/* Centered card */}
+      <div style={{ position: 'relative', zIndex: 2, width: '100%', maxWidth: 420, padding: '20px 16px', boxSizing: 'border-box' }}>
+        <div style={{ background: 'white', borderRadius: 16, boxShadow: '0 8px 40px rgba(0,0,0,0.3)', padding: 36, boxSizing: 'border-box' }}>
 
-          {/* Header */}
-          <div className="login-header">
-            <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'linear-gradient(135deg,#001C43,#114B9F)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, fontWeight: 900, color: 'white', border: '4px solid white', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>M</div>
-            <div className="login-office-tag">
-              <div className="login-office-icon">RO</div>
-              <span className="login-office-name">Registrar's Office · MMCM</span>
+            {/* Header */}
+            <div style={{ textAlign: 'center', marginBottom: 28 }}>
+              <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'linear-gradient(135deg,#001C43,#114B9F)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 900, color: 'white', margin: '0 auto 14px', boxShadow: '0 4px 12px rgba(0,28,67,0.25)' }}>M</div>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, marginBottom: 10, background: '#f5f7fa', padding: '4px 10px', borderRadius: 20 }}>
+                <div style={{ background: '#E50019', color: 'white', fontSize: 9, fontWeight: 800, padding: '2px 6px', borderRadius: 4, letterSpacing: 0.5 }}>RO</div>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#555', letterSpacing: 0.3 }}>Registrar's Office · MMCM</span>
+              </div>
+              <div style={{ fontSize: 22, fontWeight: 900, color: '#001C43', fontFamily: 'var(--drms-font)', marginBottom: 4 }}>
+                {mode === 'login' ? 'Student Portal' : 'Create Account'}
+              </div>
+              <div style={{ fontSize: 13, color: '#B1B1B1', lineHeight: 1.5 }}>
+                {mode === 'login' ? 'Sign in to submit and track your requests' : 'Register to access the student portal'}
+              </div>
             </div>
-            <div className="login-title">{mode === 'login' ? 'Student Portal' : 'Create Account'}</div>
-            <div className="login-sub">
-              {mode === 'login'
-                ? 'Sign in to submit and track your document requests'
-                : 'Register to access the student document request portal'}
-            </div>
-          </div>
 
-          {/* ── LOGIN FORM ── */}
-          {mode === 'login' && (
-            <div className="login-inputs">
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <div className="login-field">
-                  <span className="login-label">Student Number</span>
-                  <input style={inputStyle()} type="text" placeholder="e.g. 2024110012"
-                    maxLength={12} value={loginNumber}
+            {/* LOGIN */}
+            {mode === 'login' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div>
+                  <Label t="Student Number" req />
+                  <input style={inp()} type="text" placeholder="e.g. 2024110012" maxLength={12} value={loginNumber}
                     onChange={e => { setLoginNumber(e.target.value.replace(/\D/g, '')); setLoginError(''); }}
-                    onKeyDown={e => e.key === 'Enter' && handleLogin()}
-                  />
+                    onKeyDown={e => e.key === 'Enter' && handleLogin()} />
                 </div>
-                <div className="login-field">
-                  <div className="login-field-header">
-                    <span className="login-label">Password</span>
-                    <span className="login-forgot" style={{ cursor: 'pointer', fontSize: 11, color: '#114B9F' }}>
-                      Forgot password?
-                    </span>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
+                    <Label t="Password" req />
+                    <span style={{ fontSize: 11, color: '#114B9F', cursor: 'pointer', fontWeight: 600 }}>Forgot password?</span>
                   </div>
                   <div style={{ position: 'relative' }}>
-                    <input style={inputStyle()} type={showLoginPw ? 'text' : 'password'}
-                      placeholder="••••••••" value={loginPassword}
+                    <input style={inp()} type={showLoginPw ? 'text' : 'password'} placeholder="Enter your password"
+                      value={loginPassword}
                       onChange={e => { setLoginPassword(e.target.value); setLoginError(''); }}
-                      onKeyDown={e => e.key === 'Enter' && handleLogin()}
-                    />
-                    <span onClick={() => setShowLoginPw(p => !p)}
-                      style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', cursor: 'pointer', fontSize: 12, color: '#B1B1B1' }}>
-                      {showLoginPw ? '🙈' : '👁️'}
-                    </span>
+                      onKeyDown={e => e.key === 'Enter' && handleLogin()} />
+                    <PwBtn show={showLoginPw} toggle={() => setShowLoginPw(p => !p)} />
                   </div>
                 </div>
+
                 {loginError && (
-                  <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600, padding: '8px 12px', background: '#fff0f0', borderRadius: 6, border: '1px solid #ffd0d0' }}>
-                    ⚠️ {loginError}
-                  </div>
+                  <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600, padding: '10px 12px', background: '#fff0f0', borderRadius: 8, border: '1px solid #ffd0d0' }}>⚠️ {loginError}</div>
                 )}
-              </div>
-              <div className="login-btns">
-                <button className="btn-login-primary" onClick={handleLogin} disabled={loginLoading}>
+
+                <PrimaryBtn onClick={handleLogin} loading={loginLoading}>
                   {loginLoading ? 'Signing in...' : 'Login'}
-                </button>
-                <div style={{ textAlign: 'center', marginTop: 14 }}>
-                  <span style={{ fontSize: 12, color: '#B1B1B1' }}>Don't have an account? </span>
-                  <span style={{ fontSize: 12, color: '#114B9F', cursor: 'pointer', fontWeight: 700 }} onClick={() => setMode('register')}>
-                    Register here →
-                  </span>
-                </div>
-                <div style={{ textAlign: 'center', marginTop: 8 }}>
-                  <span style={{ fontSize: 12, color: '#B1B1B1' }}>Just want to track? </span>
-                  <span style={{ fontSize: 12, color: '#114B9F', cursor: 'pointer', fontWeight: 700 }} onClick={() => router.push('/student/track')}>
-                    Track Request →
-                  </span>
-                </div>
-                <div style={{ textAlign: 'center', marginTop: 12, paddingTop: 12, borderTop: '1px solid #eee' }}>
-                  <span style={{ fontSize: 12, color: '#B1B1B1' }}>Are you staff? </span>
-                  <span style={{ fontSize: 12, color: '#114B9F', cursor: 'pointer', fontWeight: 700 }} onClick={() => router.push('/staff/login')}>
-                    Staff Login →
-                  </span>
+                </PrimaryBtn>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 4 }}>
+                  <div style={{ textAlign: 'center', fontSize: 13 }}>
+                    <span style={{ color: '#114B9F', cursor: 'pointer', fontWeight: 600 }} onClick={() => setMode('register')}>Don't have an account?</span>
+                  </div>
+                  <div style={{ textAlign: 'center', fontSize: 13 }}>
+                    <span style={{ color: '#114B9F', cursor: 'pointer', fontWeight: 600 }} onClick={() => router.push('/student/track')}>Just want to track?</span>
+                  </div>
+                  <div style={{ textAlign: 'center', fontSize: 13, paddingTop: 10, borderTop: '1px solid #f0f0f0' }}>
+                    <span style={{ color: '#114B9F', cursor: 'pointer', fontWeight: 600 }} onClick={() => router.push('/staff/login')}>Are you staff?</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* ── REGISTER FORM ── */}
-          {mode === 'register' && (
-            <div className="login-inputs">
-              {regSuccess ? (
-                <div style={{ textAlign: 'center', padding: '20px 0' }}>
-                  <div style={{ fontSize: 40, marginBottom: 12 }}>🎉</div>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: '#198754', marginBottom: 6 }}>Account Created!</div>
-                  <div style={{ fontSize: 13, color: '#B1B1B1' }}>Redirecting to your portal...</div>
-                </div>
-              ) : (
-                <>
+            {/* REGISTER */}
+            {mode === 'register' && (
+              <>
+                {regSuccess ? (
+                  <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                    <div style={{ fontSize: 48, marginBottom: 12 }}>🎉</div>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: '#198754', marginBottom: 6 }}>Account Created!</div>
+                    <div style={{ fontSize: 13, color: '#B1B1B1' }}>Redirecting to your portal...</div>
+                  </div>
+                ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    {/* Student Number */}
                     <div>
-                      <label style={{ fontSize: 11, fontWeight: 700, color: '#001C43', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 4 }}>
-                        Student Number <span style={{ color: '#E50019' }}>*</span>
-                      </label>
-                      <input style={inputStyle(regErrors.student_number)} type="text" placeholder="e.g. 2024110012"
-                        maxLength={12} value={reg.student_number}
-                        onChange={e => { setR('student_number', e.target.value.replace(/\D/g, '')); setRegErrors(p => ({...p, student_number: ''})); }}
-                      />
-                      {regErrors.student_number && <div style={errStyle}>{regErrors.student_number}</div>}
+                      <Label t="Student Number" req />
+                      <input style={inp(regErrors.student_number)} type="text" placeholder="e.g. 2024110012" maxLength={12}
+                        value={reg.student_number} onChange={e => { setR('student_number', e.target.value.replace(/\D/g, '')); clrE('student_number'); }} />
+                      <Err m={regErrors.student_number} />
                     </div>
-
-                    {/* Name row */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                       <div>
-                        <label style={{ fontSize: 11, fontWeight: 700, color: '#001C43', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 4 }}>
-                          First Name <span style={{ color: '#E50019' }}>*</span>
-                        </label>
-                        <input style={inputStyle(regErrors.first_name)} type="text" value={reg.first_name}
-                          onChange={e => { setR('first_name', e.target.value); setRegErrors(p => ({...p, first_name: ''})); }}
-                        />
-                        {regErrors.first_name && <div style={errStyle}>{regErrors.first_name}</div>}
+                        <Label t="First Name" req />
+                        <input style={inp(regErrors.first_name)} type="text" value={reg.first_name} onChange={e => { setR('first_name', e.target.value); clrE('first_name'); }} />
+                        <Err m={regErrors.first_name} />
                       </div>
                       <div>
-                        <label style={{ fontSize: 11, fontWeight: 700, color: '#001C43', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 4 }}>
-                          Last Name <span style={{ color: '#E50019' }}>*</span>
-                        </label>
-                        <input style={inputStyle(regErrors.last_name)} type="text" value={reg.last_name}
-                          onChange={e => { setR('last_name', e.target.value); setRegErrors(p => ({...p, last_name: ''})); }}
-                        />
-                        {regErrors.last_name && <div style={errStyle}>{regErrors.last_name}</div>}
+                        <Label t="Last Name" req />
+                        <input style={inp(regErrors.last_name)} type="text" value={reg.last_name} onChange={e => { setR('last_name', e.target.value); clrE('last_name'); }} />
+                        <Err m={regErrors.last_name} />
                       </div>
                     </div>
-
-                    {/* Email */}
                     <div>
-                      <label style={{ fontSize: 11, fontWeight: 700, color: '#001C43', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 4 }}>
-                        Email Address <span style={{ color: '#E50019' }}>*</span>
-                      </label>
-                      <input style={inputStyle(regErrors.email)} type="email" placeholder="student@mcm.edu.ph"
-                        value={reg.email}
-                        onChange={e => { setR('email', e.target.value); setRegErrors(p => ({...p, email: ''})); }}
-                      />
-                      {regErrors.email && <div style={errStyle}>{regErrors.email}</div>}
+                      <Label t="Email Address" req />
+                      <input style={inp(regErrors.email)} type="email" placeholder="student@mcm.edu.ph"
+                        value={reg.email} onChange={e => { setR('email', e.target.value); clrE('email'); }} />
+                      <Err m={regErrors.email} />
                     </div>
-
-                    {/* Academic level + Program */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                       <div>
-                        <label style={{ fontSize: 11, fontWeight: 700, color: '#001C43', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 4 }}>
-                          Academic Level <span style={{ color: '#E50019' }}>*</span>
-                        </label>
-                        <select style={{ ...inputStyle(), appearance: 'auto' }} value={reg.academic_level}
-                          onChange={e => setR('academic_level', e.target.value)}>
+                        <Label t="Level" req />
+                        <select style={{ ...inp(), appearance: 'auto' as any }} value={reg.academic_level} onChange={e => setR('academic_level', e.target.value)}>
                           <option value="College">College</option>
-                          <option value="SHS">Senior High School</option>
+                          <option value="SHS">SHS</option>
                         </select>
                       </div>
                       <div>
-                        <label style={{ fontSize: 11, fontWeight: 700, color: '#001C43', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 4 }}>
-                          Program / Strand <span style={{ color: '#E50019' }}>*</span>
-                        </label>
-                        <input style={inputStyle(regErrors.program_strand)} type="text" placeholder="e.g. BSCS, STEM"
-                          value={reg.program_strand}
-                          onChange={e => { setR('program_strand', e.target.value); setRegErrors(p => ({...p, program_strand: ''})); }}
-                        />
-                        {regErrors.program_strand && <div style={errStyle}>{regErrors.program_strand}</div>}
+                        <Label t="Program / Strand" req />
+                        <input style={inp(regErrors.program_strand)} type="text" placeholder="e.g. BSCS"
+                          value={reg.program_strand} onChange={e => { setR('program_strand', e.target.value); clrE('program_strand'); }} />
+                        <Err m={regErrors.program_strand} />
                       </div>
                     </div>
-
-                    {/* Password */}
                     <div>
-                      <label style={{ fontSize: 11, fontWeight: 700, color: '#001C43', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 4 }}>
-                        Password <span style={{ color: '#E50019' }}>*</span>
-                      </label>
+                      <Label t="Password" req />
                       <div style={{ position: 'relative' }}>
-                        <input style={inputStyle(regErrors.password)} type={showRegPw ? 'text' : 'password'}
-                          placeholder="Min 8 characters" value={reg.password}
-                          onChange={e => { setR('password', e.target.value); setRegErrors(p => ({...p, password: ''})); }}
-                        />
-                        <span onClick={() => setShowRegPw(p => !p)}
-                          style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', cursor: 'pointer', fontSize: 12, color: '#B1B1B1' }}>
-                          {showRegPw ? '🙈' : '👁️'}
-                        </span>
+                        <input style={inp(regErrors.password)} type={showRegPw ? 'text' : 'password'} placeholder="Min 8 characters"
+                          value={reg.password} onChange={e => { setR('password', e.target.value); clrE('password'); }} />
+                        <PwBtn show={showRegPw} toggle={() => setShowRegPw(p => !p)} />
                       </div>
-                      {regErrors.password && <div style={errStyle}>{regErrors.password}</div>}
+                      <Err m={regErrors.password} />
                     </div>
-
-                    {/* Confirm password */}
                     <div>
-                      <label style={{ fontSize: 11, fontWeight: 700, color: '#001C43', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 4 }}>
-                        Confirm Password <span style={{ color: '#E50019' }}>*</span>
-                      </label>
-                      <input style={inputStyle(regErrors.confirm_password)} type="password"
-                        placeholder="Re-enter password" value={reg.confirm_password}
-                        onChange={e => { setR('confirm_password', e.target.value); setRegErrors(p => ({...p, confirm_password: ''})); }}
-                      />
-                      {regErrors.confirm_password && <div style={errStyle}>{regErrors.confirm_password}</div>}
+                      <Label t="Confirm Password" req />
+                      <div style={{ position: 'relative' }}>
+                        <input style={inp(regErrors.confirm_password)} type={showConfPw ? 'text' : 'password'} placeholder="Re-enter password"
+                          value={reg.confirm_password} onChange={e => { setR('confirm_password', e.target.value); clrE('confirm_password'); }} />
+                        <PwBtn show={showConfPw} toggle={() => setShowConfPw(p => !p)} />
+                      </div>
+                      <Err m={regErrors.confirm_password} />
                     </div>
 
                     {regError && (
-                      <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600, padding: '8px 12px', background: '#fff0f0', borderRadius: 6, border: '1px solid #ffd0d0' }}>
-                        ⚠️ {regError}
-                      </div>
+                      <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600, padding: '10px 12px', background: '#fff0f0', borderRadius: 8, border: '1px solid #ffd0d0' }}>⚠️ {regError}</div>
                     )}
-                  </div>
 
-                  <div className="login-btns">
-                    <button className="btn-login-primary" onClick={handleRegister} disabled={regLoading}>
+                    <PrimaryBtn onClick={handleRegister} loading={regLoading}>
                       {regLoading ? 'Creating account...' : 'Create Account'}
-                    </button>
-                    <div style={{ textAlign: 'center', marginTop: 14 }}>
-                      <span style={{ fontSize: 12, color: '#B1B1B1' }}>Already have an account? </span>
-                      <span style={{ fontSize: 12, color: '#114B9F', cursor: 'pointer', fontWeight: 700 }} onClick={() => setMode('login')}>
-                        Sign in →
-                      </span>
+                    </PrimaryBtn>
+
+                    <div style={{ textAlign: 'center', fontSize: 13 }}>
+                      <span style={{ color: '#114B9F', cursor: 'pointer', fontWeight: 600 }} onClick={() => setMode('login')}>Already have an account?</span>
                     </div>
                   </div>
-                </>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Right panel */}
-      <div className="login-right">
-        <div className="login-right-bg" style={{ backgroundImage: `url('${CAMPUS_IMG}')` }} />
-        <div className="login-right-text">
-          <h2>Mapúa Malayan<br />Colleges Mindanao</h2>
-          <p>Submit and track your document requests online — anytime, anywhere.</p>
+                )}
+              </>
+            )}
         </div>
       </div>
     </div>

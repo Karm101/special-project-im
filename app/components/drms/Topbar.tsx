@@ -131,7 +131,7 @@ export function Topbar({
             <div className="dd-sep" />
             <button className="dd-item danger" onClick={() => {
               sessionStorage.clear();
-              router.push('/');
+              router.push('/staff/login');
             }}>🚪 Sign Out</button>
           </div>
         </div>

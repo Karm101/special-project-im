@@ -5,122 +5,106 @@ import { useRouter } from 'next/navigation';
 
 const CAMPUS_IMG = 'https://images.unsplash.com/photo-1613688365965-8abc666fe1e2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080&q=80';
 
+const EyeIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}>
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+  </svg>
+);
+const EyeOffIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}>
+    <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+    <line x1="1" y1="1" x2="23" y2="23"/>
+  </svg>
+);
+
 export default function StaffLoginPage() {
   const router = useRouter();
-  const [username, setUsername]   = useState('');
-  const [password, setPassword]   = useState('');
-  const [error, setError]         = useState('');
-  const [loading, setLoading]     = useState(false);
-  const [showPw, setShowPw]       = useState(false);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError]       = useState('');
+  const [loading, setLoading]   = useState(false);
+  const [showPw, setShowPw]     = useState(false);
 
   async function handleLogin() {
-    if (!username.trim() || !password.trim()) {
-      setError('Please enter your username and password.');
-      return;
-    }
-    setLoading(true);
-    setError('');
+    if (!username.trim() || !password.trim()) { setError('Please enter your username and password.'); return; }
+    setLoading(true); setError('');
     try {
       const res = await fetch('http://localhost:8000/api/auth/staff-login/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error || 'Invalid credentials.'); return; }
-      sessionStorage.setItem('auth_token',  data.token);
-      sessionStorage.setItem('staff_name',  data.name);
-      sessionStorage.setItem('staff_id',    String(data.staff_id ?? ''));
-      sessionStorage.setItem('staff_role',  data.role ?? 'Staff');
-      sessionStorage.setItem('staff_dept',  data.department ?? '');
-      // Staff lands on Reports page
+      sessionStorage.setItem('auth_token', data.token);
+      sessionStorage.setItem('staff_name', data.name);
+      sessionStorage.setItem('staff_id',   String(data.staff_id ?? ''));
+      sessionStorage.setItem('staff_role', data.role ?? 'Staff');
+      sessionStorage.setItem('staff_dept', data.department ?? '');
       router.push('/staff/reports');
-    } catch {
-      setError('Could not connect to server. Make sure Django is running.');
-    } finally {
-      setLoading(false);
-    }
+    } catch { setError('Could not connect to server. Make sure Django is running.'); }
+    finally { setLoading(false); }
   }
 
+  const inp: React.CSSProperties = {
+    width: '100%', padding: '11px 14px', fontSize: 13,
+    border: '1.5px solid #E0E0E0', borderRadius: 8,
+    fontFamily: 'var(--drms-font)', outline: 'none',
+    boxSizing: 'border-box', color: '#001C43', background: 'white',
+  };
+
   return (
-    <div className="login-screen drms-root">
-      <div className="login-left">
-        <div className="login-card">
+    <div style={{ minHeight: '100vh', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ position: 'fixed', inset: 0, backgroundImage: `url('${CAMPUS_IMG}')`, backgroundSize: 'cover', backgroundPosition: 'center', zIndex: 0 }} />
+      <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1 }} />
 
-          {/* Header */}
-          <div className="login-header">
-            <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'linear-gradient(135deg,#001C43,#114B9F)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, fontWeight: 900, color: 'white', border: '4px solid white', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>M</div>
-            <div className="login-office-tag">
-              <div className="login-office-icon">RO</div>
-              <span className="login-office-name">Registrar's Office · MMCM</span>
-            </div>
-            <div className="login-title">Staff Login</div>
-            <div className="login-sub">Sign in to access the Document Request Monitoring System</div>
-          </div>
+      <div style={{ position: 'relative', zIndex: 2, width: '100%', maxWidth: 420, padding: '20px 16px', boxSizing: 'border-box' }}>
+        <div style={{ background: 'white', borderRadius: 16, boxShadow: '0 8px 40px rgba(0,0,0,0.3)', padding: 36, boxSizing: 'border-box' }}>
 
-          {/* Form */}
-          <div className="login-inputs">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <div className="login-field">
-                <div className="login-field-header">
-                  <span className="login-label">Username</span>
-                </div>
-                <input
-                  className="login-input"
-                  type="text"
-                  placeholder="Your Django username"
-                  value={username}
-                  onChange={e => { setUsername(e.target.value); setError(''); }}
-                  onKeyDown={e => e.key === 'Enter' && handleLogin()}
-                />
+            <div style={{ textAlign: 'center', marginBottom: 28 }}>
+              <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'linear-gradient(135deg,#001C43,#114B9F)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 900, color: 'white', margin: '0 auto 14px', boxShadow: '0 4px 12px rgba(0,28,67,0.25)' }}>M</div>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, marginBottom: 10, background: '#f5f7fa', padding: '4px 10px', borderRadius: 20 }}>
+                <div style={{ background: '#E50019', color: 'white', fontSize: 9, fontWeight: 800, padding: '2px 6px', borderRadius: 4, letterSpacing: 0.5 }}>RO</div>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#555', letterSpacing: 0.3 }}>Registrar's Office · MMCM</span>
               </div>
-              <div className="login-field">
-                <div className="login-field-header">
-                  <span className="login-label">Password</span>
-                  <span className="login-forgot">Forgot your password?</span>
+              <div style={{ fontSize: 22, fontWeight: 900, color: '#001C43', fontFamily: 'var(--drms-font)', marginBottom: 4 }}>Staff Login</div>
+              <div style={{ fontSize: 13, color: '#B1B1B1' }}>Sign in to access the Document Request Monitoring System</div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#555', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 5 }}>Username</div>
+                <input style={inp} type="text" placeholder="Your Django username" value={username}
+                  onChange={e => { setUsername(e.target.value); setError(''); }}
+                  onKeyDown={e => e.key === 'Enter' && handleLogin()} />
+              </div>
+              <div>
+                <div style={{ marginBottom: 5 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#555', textTransform: 'uppercase', letterSpacing: 0.5 }}>Password</div>
                 </div>
                 <div style={{ position: 'relative' }}>
-                  <input
-                    className="login-input"
-                    type={showPw ? 'text' : 'password'}
-                    placeholder="••••••••"
-                    value={password}
+                  <input style={inp} type={showPw ? 'text' : 'password'} placeholder="Enter your password" value={password}
                     onChange={e => { setPassword(e.target.value); setError(''); }}
-                    onKeyDown={e => e.key === 'Enter' && handleLogin()}
-                  />
-                  <span onClick={() => setShowPw(p => !p)}
-                    style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', cursor: 'pointer', fontSize: 12, color: '#B1B1B1' }}>
-                    {showPw ? '🙈' : '👁️'}
-                  </span>
+                    onKeyDown={e => e.key === 'Enter' && handleLogin()} />
+                  <button type="button" onClick={() => setShowPw(p => !p)}
+                    style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#B1B1B1', display: 'flex', padding: 0 }}>
+                    {showPw ? <EyeOffIcon /> : <EyeIcon />}
+                  </button>
                 </div>
               </div>
+
               {error && (
-                <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600, padding: '8px 12px', background: '#fff0f0', borderRadius: 6, border: '1px solid #ffd0d0' }}>
-                  ⚠️ {error}
-                </div>
+                <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600, padding: '10px 12px', background: '#fff0f0', borderRadius: 8, border: '1px solid #ffd0d0' }}>⚠️ {error}</div>
               )}
-            </div>
-            <div className="login-btns">
-              <button className="btn-login-primary" onClick={handleLogin} disabled={loading}>
+
+              <button onClick={handleLogin} disabled={loading}
+                style={{ width: '100%', padding: 13, background: '#001C43', color: 'white', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, fontFamily: 'var(--drms-font)', marginTop: 4 }}>
                 {loading ? 'Signing in...' : 'Login'}
               </button>
-              <div style={{ textAlign: 'center', marginTop: 14, paddingTop: 12, borderTop: '1px solid #eee' }}>
-                <span style={{ fontSize: 12, color: '#B1B1B1' }}>Are you a student? </span>
-                <span style={{ fontSize: 12, color: '#114B9F', cursor: 'pointer', fontWeight: 700 }} onClick={() => router.push('/')}>
-                  Student Portal →
-                </span>
+
+              <div style={{ textAlign: 'center', fontSize: 13, paddingTop: 10, borderTop: '1px solid #f0f0f0' }}>
+                <span style={{ color: '#114B9F', cursor: 'pointer', fontWeight: 600 }} onClick={() => router.push('/')}>Are you a student?</span>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Right panel */}
-      <div className="login-right">
-        <div className="login-right-bg" style={{ backgroundImage: `url('${CAMPUS_IMG}')` }} />
-        <div className="login-right-text">
-          <h2>Mapúa Malayan<br />Colleges Mindanao</h2>
-          <p>Centralized Document Request Monitoring System for the Registrar's Office.</p>
         </div>
       </div>
     </div>

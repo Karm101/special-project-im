@@ -158,7 +158,7 @@ export default function StudentTrackPage() {
           <div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.3)', margin: '0 4px' }} />
           <span
             style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13, cursor: 'pointer', padding: '8px 16px', borderRadius: 6, transition: 'background .15s' }}
-            onClick={() => router.push('/student/landing')}
+            onClick={() => router.back()}
             onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.15)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
           >← Back</span>

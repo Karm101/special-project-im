@@ -121,7 +121,7 @@ export function Sidebar() {
         </div>
 
         <div style={{ padding: '8px 7px', width: '100%', overflow: 'hidden' }}>
-          <div style={{ ...itemBase }} onClick={() => { sessionStorage.clear(); router.push('/'); }} title="Sign Out"
+          <div style={{ ...itemBase }} onClick={() => { sessionStorage.clear(); router.push('/staff/login'); }} title="Sign Out"
             onMouseEnter={e => (e.currentTarget.style.background = '#FEEAEA')}
             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
             <span style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#E50019' }}><IcoLogout /></span>
