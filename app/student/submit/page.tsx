@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
+import { useAuthGuard } from '../../../hooks/useAuthGuard';
 import { useRouter } from 'next/navigation';
 
 type DocType = {
@@ -33,6 +34,7 @@ function formatDate(d: Date): string {
 
 export default function StudentSubmitPage() {
   const router = useRouter();
+  useAuthGuard('student');
   const [step, setStep]           = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);

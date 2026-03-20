@@ -81,6 +81,26 @@ export default function PaymentMonitorPage() {
     fetchData();
   }, []);
 
+  // ── Set payment amount ───────────────────────────────────────────────────
+  async function handleSetAmount(paymentId: number, amount: number) {
+    setUpdating(paymentId);
+    try {
+      const res = await fetch(`http://localhost:8000/api/payments/${paymentId}/`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount }),
+      });
+      if (!res.ok) throw new Error('Update failed');
+      const refreshed = await fetch('http://localhost:8000/api/payments/');
+      const data = await refreshed.json();
+      setPayments(data.results ?? data);
+    } catch {
+      alert('Failed to set amount. Please try again.');
+    } finally {
+      setUpdating(null);
+    }
+  }
+
   // ── Mark payment as Paid ─────────────────────────────────────────────────
   async function handleMarkPaid(paymentId: number, orNumber: string) {
     setUpdating(paymentId);
@@ -231,7 +251,7 @@ export default function PaymentMonitorPage() {
                     >
                       <td><span className="req-id">#{reqId}</span></td>
                       <td>{requester}</td>
-                      <td style={{ fontWeight: 700 }}>₱{parseFloat(p.amount).toLocaleString()}</td>
+                      <td style={{ fontWeight: 700, color: parseFloat(p.amount) === 0 ? '#B1B1B1' : 'inherit' }}>{parseFloat(p.amount) === 0 ? 'Not set' : `₱${parseFloat(p.amount).toLocaleString()}`}</td>
                       <td style={{ color: '#B1B1B1' }}>{formatDate(p.payment_date)}</td>
                       <td><span className={`badge ${badge.cls}`}>{badge.label}</span></td>
                       <td style={{ color: '#B1B1B1' }}>{p.official_receipt_no ?? '—'}</td>
@@ -239,16 +259,33 @@ export default function PaymentMonitorPage() {
                         {p.payment_status === 'Paid' ? (
                           <button className="btn-outline btn-sm" onClick={() => router.push(`/staff/request/${reqId}`)}>View</button>
                         ) : (
-                          <button
-                            className={isOverdue ? 'btn-red btn-sm' : 'btn-outline btn-sm'}
-                            disabled={updating === p.payment_id}
-                            onClick={() => {
-                              const or = prompt('Enter Official Receipt number:');
-                              if (or !== null) handleMarkPaid(p.payment_id, or);
-                            }}
-                          >
-                            {updating === p.payment_id ? 'Updating...' : isOverdue ? 'Send Notice' : 'Mark Paid'}
-                          </button>
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            {parseFloat(p.amount) === 0 && (
+                              <button
+                                className="btn-outline btn-sm"
+                                disabled={updating === p.payment_id}
+                                onClick={() => {
+                                  const amt = prompt('Enter amount (₱):');
+                                  if (amt !== null && !isNaN(parseFloat(amt))) {
+                                    handleSetAmount(p.payment_id, parseFloat(amt));
+                                  }
+                                }}
+                              >
+                                Set Amount
+                              </button>
+                            )}
+                            <button
+                              className={isOverdue ? 'btn-red btn-sm' : 'btn-outline btn-sm'}
+                              disabled={updating === p.payment_id || parseFloat(p.amount) === 0}
+                              title={parseFloat(p.amount) === 0 ? 'Set amount first' : ''}
+                              onClick={() => {
+                                const or = prompt('Enter Official Receipt number:');
+                                if (or !== null) handleMarkPaid(p.payment_id, or);
+                              }}
+                            >
+                              {updating === p.payment_id ? 'Updating...' : isOverdue ? 'Send Notice' : 'Mark Paid'}
+                            </button>
+                          </div>
                         )}
                       </td>
                     </tr>
