@@ -6,16 +6,11 @@ import { useRouter } from 'next/navigation';
 /**
  * useAuthGuard — protects pages from unauthenticated access.
  *
- * Usage in any staff page:
- *   useAuthGuard('staff');
+ * Usage in any staff page:   useAuthGuard('staff');
+ * Usage in any student page: useAuthGuard('student');
  *
- * Usage in any student page:
- *   useAuthGuard('student');
- *
- * How it works:
- * - Checks sessionStorage for auth token (staff) or student name (student)
- * - If not found, redirects to login page immediately
- * - No UI change needed on the page itself
+ * Staff → redirects to /staff/login if not authenticated
+ * Student → redirects to / if not authenticated
  */
 export function useAuthGuard(role: 'staff' | 'student') {
   const router = useRouter();
@@ -23,14 +18,10 @@ export function useAuthGuard(role: 'staff' | 'student') {
   useEffect(() => {
     if (role === 'staff') {
       const token = sessionStorage.getItem('auth_token');
-      if (!token) {
-        router.replace('/');
-      }
+      if (!token) router.replace('/staff/login');
     } else {
-      const studentName = sessionStorage.getItem('student_name');
-      if (!studentName) {
-        router.replace('/');
-      }
+      const token = sessionStorage.getItem('student_token');
+      if (!token) router.replace('/');
     }
   }, [role, router]);
 }
