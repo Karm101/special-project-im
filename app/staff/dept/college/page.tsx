@@ -65,7 +65,7 @@ export default function CollegeDeptPage() {
     async function fetchData() {
       setLoading(true);
       try {
-        const res = await fetch('http://localhost:8000/api/requests/?academic_level=College');
+        const res = await fetch('${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/requests/?academic_level=College');
         if (!res.ok) throw new Error();
         const data = await res.json();
         setRequests(data.results ?? data);
