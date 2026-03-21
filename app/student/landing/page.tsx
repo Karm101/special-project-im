@@ -70,32 +70,32 @@ export default function StudentLandingPage() {
         <div style={{ textAlign: 'center', marginBottom: 36 }}>
           {studentName ? (
             <>
-              <div style={{ fontSize: 14, color: '#B1B1B1', marginBottom: 6, fontFamily: "'Montserrat', sans-serif" }}>
+              <div style={{ fontSize: 14, color: 'var(--mid-gray)', marginBottom: 6, fontFamily: "'Montserrat', sans-serif" }}>
                 Welcome back,
               </div>
-              <div style={{ fontSize: 26, fontWeight: 800, color: '#001C43', fontFamily: "'Montserrat', sans-serif" }}>
+              <div style={{ fontSize: 26, fontWeight: 800, color: 'var(--text-primary)', fontFamily: "'Montserrat', sans-serif" }}>
                 {studentName}
               </div>
               {studentNumber && (
-                <div style={{ fontSize: 13, color: '#B1B1B1', marginTop: 4, fontFamily: "'Montserrat', sans-serif" }}>
+                <div style={{ fontSize: 13, color: 'var(--mid-gray)', marginTop: 4, fontFamily: "'Montserrat', sans-serif" }}>
                   Student No. {studentNumber}
                   {studentProgram ? ` · ${studentProgram}` : ''}
                 </div>
               )}
             </>
           ) : (
-            <div style={{ fontSize: 26, fontWeight: 800, color: '#001C43', fontFamily: "'Montserrat', sans-serif" }}>
+            <div style={{ fontSize: 26, fontWeight: 800, color: 'var(--text-primary)', fontFamily: "'Montserrat', sans-serif" }}>
               What would you like to do?
             </div>
           )}
-          <div style={{ fontSize: 14, color: '#B1B1B1', marginTop: 8, lineHeight: 1.6, fontFamily: "'Montserrat', sans-serif" }}>
+          <div style={{ fontSize: 14, color: 'var(--mid-gray)', marginTop: 8, lineHeight: 1.6, fontFamily: "'Montserrat', sans-serif" }}>
             Select an option below to get started.
           </div>
         </div>
 
         <div className="landing-grid">
           <div className="landing-card" onClick={() => router.push('/student/submit')}>
-            <div className="landing-icon" style={{ background: '#EEF4FB' }}>
+            <div className="landing-icon" style={{ background: 'rgba(17,75,159,0.12)' }}>
               <svg viewBox="0 0 24 24" fill="none" stroke="#001C43" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 36, height: 36 }}>
                 <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
                 <polyline points="14 2 14 8 20 8"/>
@@ -111,7 +111,7 @@ export default function StudentLandingPage() {
           </div>
 
           <div className="landing-card" onClick={() => router.push('/student/track')}>
-            <div className="landing-icon" style={{ background: '#EAFAF1' }}>
+            <div className="landing-icon" style={{ background: 'rgba(25,135,84,0.12)' }}>
               <svg viewBox="0 0 24 24" fill="none" stroke="#198754" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 36, height: 36 }}>
                 <circle cx="11" cy="11" r="8"/>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -126,7 +126,7 @@ export default function StudentLandingPage() {
         </div>
 
         <div style={{ textAlign: 'center', marginTop: 28 }}>
-          <div style={{ fontSize: 12, color: '#B1B1B1', fontFamily: "'Montserrat', sans-serif" }}>
+          <div style={{ fontSize: 12, color: 'var(--mid-gray)', fontFamily: "'Montserrat', sans-serif" }}>
             Alumni, transferees, or authorized representatives?
           </div>
           <span

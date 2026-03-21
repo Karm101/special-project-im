@@ -101,10 +101,10 @@ export function Topbar({
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           {breadcrumbs.map((crumb, i) => (
             <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              {i > 0 && <span style={{ color: '#B1B1B1', margin: '0 2px', fontSize: 16 }}>/</span>}
+              {i > 0 && <span style={{ color: 'var(--mid-gray)', margin: '0 2px', fontSize: 16 }}>/</span>}
               <span
                 className="topbar-page-title"
-                style={crumb.href ? { cursor: 'pointer', color: '#B1B1B1', fontWeight: 400 } : {}}
+                style={crumb.href ? { cursor: 'pointer', color: 'var(--mid-gray)', fontWeight: 400 } : {}}
                 onClick={crumb.href ? () => router.push(crumb.href!) : undefined}
               >
                 {crumb.label}
@@ -122,16 +122,16 @@ export function Topbar({
           onClick={toggleTheme}
           title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, border: '1px solid rgba(0,0,0,0.08)', background: 'transparent', cursor: 'pointer', transition: 'background .15s', flexShrink: 0 }}
-          onMouseEnter={e => (e.currentTarget.style.background = '#F5F5F5')}
+          onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = 'var(--surface-2)')}
           onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
         >
-          {isDark ? <Sun size={15} color="#FFA323" /> : <Moon size={15} color="#001C43" />}
+          {isDark ? <Sun size={15} color="#FFA323" /> : <Moon size={15} color="var(--text-primary)" />}
         </button>
 
         <div className="topbar-bell" onClick={() => router.push('/staff/notifications')} style={{ cursor: 'pointer', position: 'relative', padding: 4 }}>
-          <Bell size={18} color="#001C43" />
+          <Bell size={18} color="var(--text-primary)" />
           {unreadCount > 0 && (
-            <span style={{ position: 'absolute', top: 3, right: 3, width: 7, height: 7, background: '#E50019', borderRadius: '50%', border: '1.5px solid #FCFCFC' }} />
+            <span style={{ position: 'absolute', top: 3, right: 3, width: 7, height: 7, background: '#E50019', borderRadius: '50%', border: '1.5px solid var(--bg-nav)' }} />
           )}
         </div>
 
@@ -139,7 +139,7 @@ export function Topbar({
           <div
             style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: '6px 10px 6px 6px', borderRadius: 50, transition: 'background .15s' }}
             onClick={() => setDdOpen(o => !o)}
-            onMouseEnter={e => (e.currentTarget.style.background = '#F5F5F5')}
+            onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = 'var(--surface-2)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
           >
             <div className="user-info-block">
@@ -147,7 +147,7 @@ export function Topbar({
               <span className="user-role">{finalRole}</span>
             </div>
             <div className="user-avatar">{finalInitials}</div>
-            <ChevronDown size={10} color="#B1B1B1" />
+            <ChevronDown size={10} color="var(--mid-gray)" />
           </div>
 
           <div className={`user-dropdown${ddOpen ? ' open' : ''}`} onClick={e => e.stopPropagation()}>

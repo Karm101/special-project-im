@@ -81,6 +81,18 @@ export default function DashboardPage() {
   const [dept, setDept]             = useState<'college' | 'shs'>('college');
   const [collegeTab, setCollegeTab] = useState<string>('all');
   const [shsTab, setShsTab]         = useState<string>('all');
+
+  // ── Restore dept + tab when navigating back from a request ────────────
+  useEffect(() => {
+    const savedDept = sessionStorage.getItem('dashboard_dept') as 'college' | 'shs' | null;
+    const savedTab  = sessionStorage.getItem('dashboard_tab');
+    if (savedDept) { setDept(savedDept); sessionStorage.removeItem('dashboard_dept'); }
+    if (savedTab) {
+      if (savedDept === 'shs') setShsTab(savedTab);
+      else setCollegeTab(savedTab);
+      sessionStorage.removeItem('dashboard_tab');
+    }
+  }, []);
   const [listView, setListView]     = useState<boolean>(() => {
     if (typeof window === 'undefined') return true;
     return localStorage.getItem('drms_view') !== 'card';
@@ -385,7 +397,11 @@ export default function DashboardPage() {
                   const badge = statusToBadge(r.current_status);
                   const reqId = `REQ-${String(r.request_id).padStart(3, '0')}`;
                   return (
-                    <tr key={r.request_id} onClick={() => router.push(`/staff/request/${reqId}`)}>
+                    <tr key={r.request_id} onClick={() => {
+                      sessionStorage.setItem('dashboard_dept', dept);
+                      sessionStorage.setItem('dashboard_tab', activeTab);
+                      router.push(`/staff/request/${reqId}`);
+                    }}>
                       <td style={{ textAlign: 'center' }} onClick={e => e.stopPropagation()}>
                         <input type="checkbox" className="cb" />
                       </td>
@@ -422,25 +438,29 @@ export default function DashboardPage() {
               const reqId = `REQ-${String(r.request_id).padStart(3, '0')}`;
               return (
                 <div key={r.request_id}
-                  onClick={() => router.push(`/staff/request/${reqId}`)}
-                  style={{ background: 'white', borderRadius: 10, border: '1px solid rgba(0,0,0,.08)', padding: 16, cursor: 'pointer', transition: 'all .18s', display: 'flex', flexDirection: 'column', gap: 10 }}
+                  onClick={() => {
+                    sessionStorage.setItem('dashboard_dept', dept);
+                    sessionStorage.setItem('dashboard_tab', activeTab);
+                    router.push(`/staff/request/${reqId}`);
+                  }}
+                  style={{ background: 'var(--surface)', borderRadius: 10, border: '1px solid var(--border-col)', padding: 16, cursor: 'pointer', transition: 'all .18s', display: 'flex', flexDirection: 'column', gap: 10 }}
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(0,28,67,.1)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'none'; (e.currentTarget as HTMLElement).style.transform = 'none'; }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: '#114B9F' }}>#{reqId}</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--blue)' }}>#{reqId}</span>
                     <span className={`badge ${badge.cls}`}>{badge.label}</span>
                   </div>
                   <div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#001C43' }}>{r.requester_name}</div>
-                    <div style={{ fontSize: 12, color: '#B1B1B1', marginTop: 2 }}>{r.form_type} · {r.academic_level}</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{r.requester_name}</div>
+                    <div style={{ fontSize: 12, color: 'var(--mid-gray)', marginTop: 2 }}>{r.form_type} · {r.academic_level}</div>
                   </div>
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 2 }}>
-                    <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 50, background: '#F5F5F5', color: '#001C43' }}>{r.form_type}</span>
-                    <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 50, background: '#F5F5F5', color: '#001C43' }}>{r.submission_mode}</span>
+                    <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 50, background: 'var(--surface-2)', color: 'var(--text-primary)' }}>{r.form_type}</span>
+                    <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 50, background: 'var(--surface-2)', color: 'var(--text-primary)' }}>{r.submission_mode}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(0,0,0,.05)', paddingTop: 10, marginTop: 2 }}>
-                    <span style={{ fontSize: 11, color: '#B1B1B1' }}>Submitted {formatShortDate(r.date_submitted)}</span>
+                    <span style={{ fontSize: 11, color: 'var(--mid-gray)' }}>Submitted {formatShortDate(r.date_submitted)}</span>
                     <button className="btn-outline btn-sm" onClick={e => { e.stopPropagation(); router.push(`/staff/request/${reqId}`); }}>View</button>
                   </div>
                 </div>

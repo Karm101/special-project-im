@@ -94,8 +94,8 @@ export default function ProfilePage() {
             {initials}
           </div>
           <div>
-            <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--navy)', fontFamily: "'Montserrat', sans-serif" }}>{name}</div>
-            <div style={{ fontSize: 13, color: '#B1B1B1', marginTop: 4 }}>{role} · {dept}</div>
+            <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-primary)', fontFamily: "'Montserrat', sans-serif" }}>{name}</div>
+            <div style={{ fontSize: 13, color: 'var(--mid-gray)', marginTop: 4 }}>{role} · {dept}</div>
             <div style={{ marginTop: 8 }}>
               <span className="badge b-rel" style={{ fontSize: 11 }}>Staff</span>
             </div>

@@ -126,7 +126,7 @@ export default function StudentSubmitPage() {
     setSubmitError(null);
     try {
       const payload = {
-        form_type:         'RO-0005',
+        form_type:         derivedFormType,
         academic_level:    academicLevel === 'Senior High School' ? 'SHS' : 'College',
         submission_mode:   'Online',
         purpose,
@@ -167,6 +167,11 @@ export default function StudentSubmitPage() {
       setSubmitting(false);
     }
   }
+
+  // ── Form type derived from enrollment status ───────────────────────────────
+  // Students never see "RO-0004" or "RO-0005" — system picks automatically
+  const isEnrolled   = enrollmentStatus === 'Enrolled';
+  const derivedFormType = isEnrolled ? 'RO-0005' : 'RO-0004';
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
@@ -210,6 +215,58 @@ export default function StudentSubmitPage() {
             <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--navy)', marginBottom: 4 }}>Document Request Form</div>
             <div style={{ fontSize: 13, color: 'var(--mid-gray)', marginBottom: 24 }}>Fill in the form below to submit your document request to the Registrar's Office.</div>
 
+            {/* ── Enrollment status — drives form type automatically ── */}
+            <div style={{ marginBottom: 24 }}>
+              <div className="section-title">What is your enrollment status?</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div
+                  className={`radio-card${enrollmentStatus === 'Enrolled' ? ' selected' : ''}`}
+                  onClick={() => { setEnrollmentStatus('Enrolled'); setSelectedDocs([]); }}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <input type="radio" readOnly checked={enrollmentStatus === 'Enrolled'} />
+                  <div>
+                    <div className="radio-label">Currently Enrolled</div>
+                    <div className="radio-sub">I am an active student this semester</div>
+                  </div>
+                </div>
+                <div
+                  className={`radio-card${enrollmentStatus !== 'Enrolled' ? ' selected' : ''}`}
+                  onClick={() => { setEnrollmentStatus('Alumni'); setSelectedDocs([]); }}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <input type="radio" readOnly checked={enrollmentStatus !== 'Enrolled'} />
+                  <div>
+                    <div className="radio-label">Alumni / No longer enrolled / Transferring out</div>
+                    <div className="radio-sub">I have already graduated, left, or am transferring</div>
+                  </div>
+                </div>
+              </div>
+              {/* Show which form will be used */}
+              <div className="info-box" style={{ marginTop: 12 }}>
+                <span className="info-icon">📋</span>
+                <div className="info-text" style={{ fontSize: 12 }}>
+                  {isEnrolled
+                    ? <span>You will be filing a <strong>Credential Request</strong> — for currently enrolled students.</span>
+                    : <span>You will be filing a <strong>Transfer Credential Request</strong> — includes clearance from 11 offices.</span>
+                  }
+                </div>
+              </div>
+              {enrollmentStatus !== 'Enrolled' && (
+                <div style={{ marginTop: 10 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--navy)', display: 'block', marginBottom: 6 }}>
+                    Specify status
+                  </label>
+                  <select className="drms-select" style={{ width: 220 }} value={enrollmentStatus}
+                    onChange={e => setEnrollmentStatus(e.target.value)}>
+                    <option value="Alumni">Alumni / Graduate</option>
+                    <option value="Not Enrolled">Not Enrolled</option>
+                    <option value="Transferee">Transferring Out</option>
+                  </select>
+                </div>
+              )}
+            </div>
+
             {/* Personal info */}
             <div style={{ marginBottom: 20 }}>
               <div className="section-title">Your Information</div>
@@ -243,14 +300,6 @@ export default function StudentSubmitPage() {
                   <input className={`drms-input${errors.programStrand ? ' input-error' : ''}`} type="text" placeholder="e.g. BSCS, STEM"
                     value={programStrand} onChange={e => { setProgramStrand(e.target.value); setErrors(p => ({...p, programStrand: ''})); }} />
                   {errors.programStrand && <div className="field-error">{errors.programStrand}</div>}
-                </div>
-                <div className="fg">
-                  <label>Enrollment Status</label>
-                  <select className="drms-select" value={enrollmentStatus} onChange={e => setEnrollmentStatus(e.target.value)}>
-                    <option>Enrolled</option>
-                    <option>Not Enrolled</option>
-                    <option>Alumni</option>
-                  </select>
                 </div>
                 <div className="fg">
                   <label>Academic Year</label>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 
 const IcoReports   = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" style={{ width: 20, height: 20, display: 'block' }}><path d="M18 20V10M12 20V4M6 20v-6"/></svg>;
@@ -46,6 +46,19 @@ export function Sidebar() {
   const pathname = usePathname();
   const [expanded, setExpanded] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const sidebarRef = useRef<HTMLDivElement>(null);
+
+  // Close sidebar when clicking outside — no overlay needed (doesn't block scroll)
+  useEffect(() => {
+    if (!expanded) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (sidebarRef.current && !sidebarRef.current.contains(e.target as Node)) {
+        setExpanded(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [expanded]);
 
   // Fetch live unread notification count
   useEffect(() => {
@@ -73,17 +86,17 @@ export function Sidebar() {
         style={{ ...itemBase, background: active ? '#001C43' : 'transparent' }}
         onClick={() => router.push(item.path)}
         title={item.label}
-        onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.background = '#F5F5F5'; }}
+        onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'; }}
         onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
       >
-        <span style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: active ? 'white' : '#001C43' }}>
+        <span style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: active ? 'white' : 'var(--text-primary)' }}>
           {item.icon}
         </span>
         {item.notif && unreadCount > 0 && (
-          <span style={{ position: 'absolute', top: 8, right: 8, width: 7, height: 7, background: '#E50019', borderRadius: '50%', border: '1.5px solid #FCFCFC' }} />
+          <span style={{ position: 'absolute', top: 8, right: 8, width: 7, height: 7, background: '#E50019', borderRadius: '50%', border: '1.5px solid var(--bg-nav)' }} />
         )}
         {expanded && (
-          <span style={{ fontSize: 13, fontWeight: 500, color: active ? 'white' : '#001C43', whiteSpace: 'nowrap', fontFamily: "'Montserrat', sans-serif" }}>
+          <span style={{ fontSize: 13, fontWeight: 500, color: active ? 'white' : 'var(--text-primary)', whiteSpace: 'nowrap', fontFamily: "'Montserrat', sans-serif" }}>
             {item.label}
           </span>
         )}
@@ -101,29 +114,29 @@ export function Sidebar() {
   return (
     <>
       <style>{`div:hover > .sb-tt { opacity: 1 !important; }`}</style>
-      <div className="drms-root" style={{ width: SBW, background: '#FCFCFC', borderRight: '1px solid rgba(0,0,0,.06)', display: 'flex', flexDirection: 'column', alignItems: expanded ? 'flex-start' : 'center', padding: '20px 0', flexShrink: 0, position: 'sticky', top: 0, height: '100vh', overflow: 'visible', transition: 'width .25s cubic-bezier(.4,0,.2,1)', zIndex: 200 }}>
+      <div ref={sidebarRef} className="drms-root" style={{ width: SBW, background: 'var(--bg-nav)', borderRight: '1px solid rgba(0,0,0,.06)', display: 'flex', flexDirection: 'column', alignItems: expanded ? 'flex-start' : 'center', padding: '20px 0', flexShrink: 0, position: 'sticky', top: 0, height: '100vh', overflow: 'visible', transition: 'width .25s cubic-bezier(.4,0,.2,1)', zIndex: 200 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: expanded ? 10 : 0, width: '100%', paddingLeft: expanded ? 14 : 10, marginBottom: 14 }}>
           <div style={{ width: 38, height: 38, minWidth: 38, borderRadius: 8, background: 'linear-gradient(135deg,#001C43,#114B9F)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 14, fontWeight: 900, flexShrink: 0 }}>M</div>
           {expanded && (
             <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-              <span style={{ fontSize: 12, fontWeight: 800, color: '#001C43', whiteSpace: 'nowrap', fontFamily: "'Montserrat', sans-serif" }}>Registrar's Office</span>
-              <span style={{ fontSize: 10, color: '#B1B1B1', whiteSpace: 'nowrap', fontFamily: "'Montserrat', sans-serif" }}>MMCM — DRMS</span>
+              <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-primary)', whiteSpace: 'nowrap', fontFamily: "'Montserrat', sans-serif" }}>Registrar's Office</span>
+              <span style={{ fontSize: 10, color: 'var(--mid-gray)', whiteSpace: 'nowrap', fontFamily: "'Montserrat', sans-serif" }}>MMCM — DRMS</span>
             </div>
           )}
         </div>
 
-        <div style={{ width: 'calc(100% - 20px)', height: 1, background: '#B1B1B1', margin: '0 10px 8px', opacity: 0.4 }} />
+        <div style={{ width: 'calc(100% - 20px)', height: 1, background: 'var(--mid-gray)', margin: '0 10px 8px', opacity: 0.4 }} />
 
         <div style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: 2, flex: 1, padding: '0 7px', overflow: 'hidden' }}>
           {topNav.map(item => <NavBtn key={item.path} item={item} />)}
-          <div style={{ width: 'calc(100% - 14px)', height: 1, background: '#B1B1B1', margin: '8px 7px', opacity: 0.4 }} />
+          <div style={{ width: 'calc(100% - 14px)', height: 1, background: 'var(--mid-gray)', margin: '8px 7px', opacity: 0.4 }} />
           {midNav.map(item => <NavBtn key={item.path} item={item} />)}
         </div>
 
         <div style={{ padding: '8px 7px', width: '100%', overflow: 'hidden' }}>
           <div style={{ ...itemBase }} onClick={() => { sessionStorage.clear(); router.push('/staff/login'); }} title="Sign Out"
-            onMouseEnter={e => (e.currentTarget.style.background = '#FEEAEA')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+            onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = '#FEEAEA')}
+            onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}>
             <span style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#E50019' }}><IcoLogout /></span>
             {expanded && <span style={{ fontSize: 13, fontWeight: 500, color: '#E50019', whiteSpace: 'nowrap', fontFamily: "'Montserrat', sans-serif" }}>Sign Out</span>}
             {!expanded && (
@@ -133,16 +146,13 @@ export function Sidebar() {
         </div>
 
         <button onClick={() => setExpanded(e => !e)} title={expanded ? 'Collapse' : 'Expand'}
-          style={{ position: 'absolute', right: -13, top: '50%', transform: 'translateY(-50%)', width: 13, height: 44, background: '#FCFCFC', border: '1px solid rgba(0,0,0,.10)', borderLeft: 'none', borderRadius: '0 8px 8px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 250, boxShadow: '2px 0 6px rgba(0,0,0,.07)', transition: 'background .15s' }}
-          onMouseEnter={e => (e.currentTarget.style.background = '#F5F5F5')}
-          onMouseLeave={e => (e.currentTarget.style.background = '#FCFCFC')}>
-          <span style={{ color: '#B1B1B1' }}>{expanded ? <IcoChevLeft /> : <IcoChevRight />}</span>
+          style={{ position: 'absolute', right: -13, top: '50%', transform: 'translateY(-50%)', width: 13, height: 44, background: 'var(--bg-nav)', border: '1px solid rgba(0,0,0,.10)', borderLeft: 'none', borderRadius: '0 8px 8px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 250, boxShadow: '2px 0 6px rgba(0,0,0,.07)', transition: 'background .15s' }}
+          onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = 'var(--surface-2)')}
+          onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'var(--bg-nav)')}>
+          <span style={{ color: 'var(--mid-gray)' }}>{expanded ? <IcoChevLeft /> : <IcoChevRight />}</span>
         </button>
       </div>
 
-      {expanded && (
-        <div onClick={() => setExpanded(false)} style={{ display: 'block', position: 'fixed', inset: `0 0 0 ${SBW}px`, zIndex: 199, cursor: 'default' }} />
-      )}
     </>
   );
 }

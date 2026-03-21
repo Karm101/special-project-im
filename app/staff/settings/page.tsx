@@ -10,8 +10,8 @@ function SettingRow({ label, description, children }: {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
       <div>
-        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy)', fontFamily: "'Montserrat', sans-serif" }}>{label}</div>
-        {description && <div style={{ fontSize: 11, color: '#B1B1B1', marginTop: 2 }}>{description}</div>}
+        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', fontFamily: "'Montserrat', sans-serif" }}>{label}</div>
+        {description && <div style={{ fontSize: 11, color: 'var(--mid-gray)', marginTop: 2 }}>{description}</div>}
       </div>
       <div style={{ flexShrink: 0, marginLeft: 24 }}>{children}</div>
     </div>
@@ -25,7 +25,7 @@ function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
       onClick={onToggle}
       style={{
         width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer',
-        background: on ? '#114B9F' : 'rgba(0,0,0,0.15)',
+        background: on ? '#114B9F' : 'rgba(255,255,255,0.15)',
         position: 'relative', transition: 'background .2s', padding: 0,
       }}
     >
@@ -54,9 +54,9 @@ function PillGroup({ options, value, onChange }: {
           style={{
             padding: '6px 14px', borderRadius: 50, fontSize: 12, fontWeight: 600,
             border: '1.5px solid',
-            borderColor: value === o.value ? '#114B9F' : 'rgba(0,0,0,0.12)',
-            background: value === o.value ? '#114B9F' : 'transparent',
-            color: value === o.value ? 'white' : '#001C43',
+            borderColor: value === o.value ? '#114B9F' : 'var(--border-col)',
+            background: value === o.value ? '#114B9F' : 'var(--surface-2)',
+            color: value === o.value ? 'white' : 'var(--text-primary)',
             cursor: 'pointer', transition: 'all .15s',
             fontFamily: "'Montserrat', sans-serif",
           }}
@@ -184,7 +184,7 @@ export default function SettingsPage() {
             ✓ Save Settings
           </button>
           {saved && (
-            <span style={{ fontSize: 13, color: '#198754', fontWeight: 600, animation: 'fadeIn .2s' }}>
+            <span style={{ fontSize: 13, color: '#4ade80', fontWeight: 600, animation: 'fadeIn .2s' }}>
               ✅ Settings saved!
             </span>
           )}

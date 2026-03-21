@@ -95,6 +95,13 @@ export default function StudentTrackPage() {
   const router = useRouter();
   const [trackingInput, setTrackingInput] = useState('');
 
+  // ── Logged-in student state ───────────────────────────────────────────────
+  const [studentName, setStudentName]       = useState<string | null>(null);
+  const [studentNumber, setStudentNumber]   = useState<string | null>(null);
+  const [myRequests, setMyRequests]         = useState<(TrackData & { _role: 'requester' | 'representative' })[]>([]);
+  const [myReqLoading, setMyReqLoading]     = useState(false);
+  const [selectedReqId, setSelectedReqId]   = useState<number | null>(null);
+
   // Pick up ID passed from submit success page
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -103,8 +110,83 @@ export default function StudentTrackPage() {
         setTrackingInput(stored);
         sessionStorage.removeItem('trackId');
       }
+      // Check if student is logged in
+      const token  = sessionStorage.getItem('student_token');
+      const name   = sessionStorage.getItem('student_name');
+      const number = sessionStorage.getItem('student_number');
+      if (token && number) {
+        setStudentName(name);
+        setStudentNumber(number);
+        fetchMyRequests(number, name);
+      }
     }
   }, []);
+
+  async function fetchMyRequests(number: string, name?: string | null) {
+    setMyReqLoading(true);
+    try {
+      // Fetch requests where this student is the requester (server-side filtered)
+      const requesterRes = await fetch(
+        `http://localhost:8000/api/requests/?student_number=${encodeURIComponent(number)}&page_size=100`
+      );
+
+      const requesterIds = new Set<number>();
+      const tagMap = new Map<number, 'requester' | 'representative'>();
+
+      if (requesterRes.ok) {
+        const json = await requesterRes.json();
+        (json.results ?? json).forEach((r: any) => {
+          requesterIds.add(r.request_id);
+          tagMap.set(r.request_id, 'requester');
+        });
+      }
+
+      // Fetch requests where this student is listed as representative (server-side filtered)
+      const repIds = new Set<number>();
+      if (name) {
+        // Try matching by last name for best results (names stored as "Last, First")
+        const nameParts = name.replace(',', '').trim().split(/\s+/);
+        const searchName = nameParts[0]; // Use first token (last name)
+        const repRes = await fetch(
+          `http://localhost:8000/api/requests/?representative_name=${encodeURIComponent(searchName)}&page_size=100`
+        );
+        if (repRes.ok) {
+          const json = await repRes.json();
+          (json.results ?? json).forEach((r: any) => {
+            if (!requesterIds.has(r.request_id)) {
+              repIds.add(r.request_id);
+              tagMap.set(r.request_id, 'representative');
+            }
+          });
+        }
+      }
+
+      const allIds = [...requesterIds, ...repIds];
+      if (allIds.length === 0) { setMyRequests([]); return; }
+
+      // Fetch full track detail for each matched request
+      const detailed = await Promise.all(
+        allIds.map(async id => {
+          try {
+            const d = await fetch(`http://localhost:8000/api/track/${id}/`);
+            if (d.ok) return { ...await d.json(), _role: tagMap.get(id) ?? 'requester' };
+          } catch {}
+          return null;
+        })
+      );
+
+      // Sort: requester requests first, then by date descending
+      const sorted = detailed
+        .filter(Boolean)
+        .sort((a, b) => {
+          if (a._role !== b._role) return a._role === 'requester' ? -1 : 1;
+          return new Date(b.date_submitted).getTime() - new Date(a.date_submitted).getTime();
+        });
+
+      setMyRequests(sorted);
+    } catch {}
+    finally { setMyReqLoading(false); }
+  }
   const [data, setData]       = useState<TrackData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState<string | null>(null);
@@ -124,7 +206,9 @@ export default function StudentTrackPage() {
         return;
       }
       if (!res.ok) throw new Error('API error');
-      setData(await res.json());
+      const result = await res.json();
+      setData(result);
+      setSelectedReqId(result.request_id);
     } catch {
       setError('Could not connect to the server. Please try again later.');
     } finally {
@@ -166,13 +250,128 @@ export default function StudentTrackPage() {
       </div>
 
       <div className="pub-body">
+        {/* ── My Requests (logged-in students only) ── */}
+        {studentNumber && (
+          <div style={{ marginTop: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--navy)', fontFamily: "'Montserrat',sans-serif" }}>
+                  My Requests
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--mid-gray)', marginTop: 2 }}>
+                  Logged in as <strong>{studentName ?? studentNumber}</strong>
+                </div>
+              </div>
+              <button
+                className="btn-outline btn-sm"
+                onClick={() => fetchMyRequests(studentNumber, studentName)}
+                disabled={myReqLoading}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 13, height: 13 }}><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+                &nbsp;Refresh
+              </button>
+            </div>
+
+            {myReqLoading ? (
+              <div className="track-card" style={{ padding: 24, textAlign: 'center', color: 'var(--mid-gray)', fontSize: 13 }}>
+                Loading your requests...
+              </div>
+            ) : myRequests.length === 0 ? (
+              <div className="track-card" style={{ padding: 24, textAlign: 'center', color: 'var(--mid-gray)', fontSize: 13 }}>
+                No requests found for your account yet.{' '}
+                <span style={{ color: 'var(--blue)', cursor: 'pointer', fontWeight: 600 }} onClick={() => router.push('/student/submit')}>
+                  Submit one →
+                </span>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {myRequests.map(req => {
+                  const b = statusToBadge(req.current_status);
+                  const reqId = `REQ-${String(req.request_id).padStart(3, '0')}`;
+                  const docs = req.requested_documents.map(d => d.document_name).join(', ') || '—';
+                  const isSelected = selectedReqId === req.request_id;
+                  return (
+                    <div
+                      key={req.request_id}
+                      onClick={() => {
+                        setSelectedReqId(req.request_id);
+                        setData(req);
+                        setSearched(true);
+                        setError(null);
+                        // Scroll down to result
+                        setTimeout(() => {
+                          document.getElementById('track-result')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }, 50);
+                      }}
+                      style={{
+                        background: isSelected ? 'rgba(17,75,159,0.06)' : 'white',
+                        border: `1.5px solid ${isSelected ? '#114B9F' : 'rgba(0,0,0,0.08)'}`,
+                        borderRadius: 10, padding: '14px 16px', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', gap: 14,
+                        transition: 'all .15s',
+                      }}
+                      onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.borderColor = 'rgba(17,75,159,0.3)'; }}
+                      onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0,0,0,0.08)'; }}
+                    >
+                      {/* Request ID */}
+                      <div style={{ flexShrink: 0 }}>
+                        <div style={{ fontSize: 12, fontWeight: 800, color: '#114B9F', fontFamily: "'Montserrat',sans-serif" }}>
+                          #{reqId}
+                        </div>
+                        <div style={{ fontSize: 10, color: 'var(--mid-gray)', marginTop: 2 }}>
+                          {formatDate(req.date_submitted)}
+                        </div>
+                      </div>
+
+                      {/* Divider */}
+                      <div style={{ width: 1, height: 36, background: 'rgba(0,0,0,0.06)', flexShrink: 0 }} />
+
+                      {/* Docs */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--navy)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {docs}
+                        </div>
+                        <div style={{ fontSize: 11, color: 'var(--mid-gray)', marginTop: 2 }}>
+                          {req.form_type} · {req.academic_level} · {req.submission_mode}
+                        </div>
+                      </div>
+
+                      {/* Badge + role */}
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
+                        <span className={`badge ${b.cls}`} style={{ fontSize: 11 }}>{b.label}</span>
+                        {req._role === 'representative' && (
+                          <span style={{ fontSize: 10, fontWeight: 600, color: '#FFA323', background: '#FFF8E1', border: '1px solid #FFE0A0', padding: '1px 7px', borderRadius: 50 }}>
+                            As Rep
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Chevron */}
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" style={{ width: 14, height: 14, color: '#B1B1B1', flexShrink: 0 }}>
+                        <polyline points="9 18 15 12 9 6"/>
+                      </svg>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <div style={{ margin: '20px 0 4px', height: 1, background: 'rgba(0,0,0,0.07)' }} />
+            <div style={{ fontSize: 12, color: 'var(--mid-gray)', textAlign: 'center', marginBottom: 4 }}>
+              — or search by Request ID below —
+            </div>
+          </div>
+        )}
+
         {/* Search card */}
         <div className="track-card">
           <div style={{ fontSize: 28, marginBottom: 12 }}>🔍</div>
           <div className="track-title">Track Your Request</div>
           <div className="track-sub">
-            Enter your Request ID to check the status of your document request.
-            Your Request ID was provided when you submitted your request.
+            {studentNumber
+              ? 'Your requests are shown above. You can also search any Request ID below.'
+              : 'Enter your Request ID to check the status of your document request. Your Request ID was provided when you submitted your request.'
+            }
           </div>
           <div className="track-input-row">
             <input
@@ -203,7 +402,7 @@ export default function StudentTrackPage() {
 
         {/* Result card */}
         {data && (
-          <div className="track-result">
+          <div className="track-result" id="track-result">
             {/* Result header */}
             <div className="result-header">
               <div>

@@ -449,7 +449,7 @@ export default function NewRequestPage() {
                 <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(0,0,0,0.06)' }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', textTransform: 'none', letterSpacing: 0 }}>
                     <input type="checkbox" style={{ width: 16, height: 16, accentColor: 'var(--navy)', flexShrink: 0 }} checked={form.hasRep} onChange={e => set('hasRep', e.target.checked)} />
-                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--navy)' }}>Filed by Authorized Representative</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Filed by Authorized Representative</span>
                   </label>
                   <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, opacity: form.hasRep ? 1 : 0.4, pointerEvents: form.hasRep ? 'auto' : 'none' }}>
                     <div className="fg"><label>Representative Name</label><input className="drms-input" type="text" placeholder="Full name" value={form.repName} onChange={e => set('repName', e.target.value)} /></div>

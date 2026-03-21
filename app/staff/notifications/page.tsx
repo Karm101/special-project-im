@@ -60,6 +60,8 @@ function getNotifStyle(notif: ApiNotification): {
 export default function NotificationsPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState(0);
+  const [filterRead, setFilterRead] = useState<'all' | 'unread' | 'read'>('all');
+  const [filterOpen, setFilterOpen] = useState(false);
 
   // ── API state ─────────────────────────────────────────────────────────────
   const [notifs, setNotifs]     = useState<ApiNotification[]>([]);
@@ -149,12 +151,14 @@ export default function NotificationsPage() {
     { label: 'System',            count: categoryCounts['System'],               filter: 'System'            },
   ];
 
-  // ── Filter by tab ─────────────────────────────────────────────────────────
+  // ── Filter by tab + read status ──────────────────────────────────────────
   const visible = useMemo(() => {
     const filter = TABS[activeTab]?.filter;
-    if (!filter) return notifs;
-    return notifs.filter(n => getNotifStyle(n).cat === filter);
-  }, [notifs, activeTab]);
+    let rows = !filter ? notifs : notifs.filter(n => getNotifStyle(n).cat === filter);
+    if (filterRead === 'unread') rows = rows.filter(n => !n.is_read);
+    if (filterRead === 'read')   rows = rows.filter(n =>  n.is_read);
+    return rows;
+  }, [notifs, activeTab, filterRead]);
 
   const unreadCount = notifs.filter(n => !n.is_read).length;
   const displayedNotifs = visible.slice(0, displayCount);
@@ -185,6 +189,44 @@ export default function NotificationsPage() {
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
+            {/* Filter button */}
+            <div style={{ position: 'relative' }}>
+              <button
+                className="btn-filter"
+                data-filter-btn="true"
+                onClick={() => setFilterOpen(o => !o)}
+                title="Filter"
+                style={{ position: 'relative' }}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
+                  <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+                </svg>
+                {filterRead !== 'all' && (
+                  <span style={{ position: 'absolute', top: -4, right: -4, width: 16, height: 16, background: '#114B9F', color: 'white', borderRadius: '50%', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>1</span>
+                )}
+              </button>
+
+              {filterOpen && (
+                <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', background: 'white', border: '1px solid rgba(0,0,0,.1)', borderRadius: 10, padding: 16, width: 200, zIndex: 300, boxShadow: '0 8px 24px rgba(0,0,0,.12)' }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#B1B1B1', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>Read Status</div>
+                  {(['all', 'unread', 'read'] as const).map(opt => (
+                    <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', cursor: 'pointer', fontSize: 13, color: 'var(--navy)' }}>
+                      <input type="radio" name="notif_read" checked={filterRead === opt}
+                        onChange={() => { setFilterRead(opt); setFilterOpen(false); }}
+                        style={{ accentColor: '#114B9F' }} />
+                      {opt === 'all' ? 'All notifications' : opt === 'unread' ? '🔵 Unread only' : '✓ Read only'}
+                    </label>
+                  ))}
+                  {filterRead !== 'all' && (
+                    <button className="btn-outline btn-sm" style={{ width: '100%', justifyContent: 'center', marginTop: 8 }}
+                      onClick={() => { setFilterRead('all'); setFilterOpen(false); }}>
+                      Clear filter
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
             <button className="btn-outline btn-sm" onClick={handleRefresh} title="Refresh">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
             </button>
@@ -214,6 +256,18 @@ export default function NotificationsPage() {
             </div>
           ))}
         </div>
+
+        {/* Active read filter chip */}
+        {filterRead !== 'all' && (
+          <div style={{ display: 'flex', gap: 8, padding: '10px 0 0' }}>
+            <span
+              style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 50, background: 'rgba(17,75,159,0.1)', color: '#114B9F', border: '1px solid rgba(17,75,159,0.2)', cursor: 'pointer' }}
+              onClick={() => setFilterRead('all')}
+            >
+              {filterRead === 'unread' ? '🔵 Unread only' : '✓ Read only'} ✕
+            </span>
+          </div>
+        )}
 
         {/* Loading */}
         {loading && (

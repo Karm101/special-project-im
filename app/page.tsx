@@ -116,11 +116,11 @@ export default function StudentLoginPage() {
     width: '100%', padding: '11px 14px', fontSize: 13,
     border: `1.5px solid ${err ? '#E50019' : '#E0E0E0'}`,
     borderRadius: 8, fontFamily: 'var(--drms-font)', outline: 'none',
-    boxSizing: 'border-box', color: '#001C43', background: 'white',
+    boxSizing: 'border-box', color: 'var(--text-primary)', background: 'var(--surface)',
   });
 
   const Label = ({ t, req }: { t: string; req?: boolean }) => (
-    <div style={{ fontSize: 11, fontWeight: 700, color: '#555', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 5 }}>
+    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--mid-gray)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 5 }}>
       {t}{req && <span style={{ color: '#E50019', marginLeft: 2 }}>*</span>}
     </div>
   );
@@ -128,7 +128,7 @@ export default function StudentLoginPage() {
     m ? <div style={{ fontSize: 11, color: '#E50019', marginTop: 3, fontWeight: 600 }}>{m}</div> : null;
 
   const PwBtn = ({ show, toggle }: { show: boolean; toggle: () => void }) => (
-    <button type="button" onClick={toggle} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#B1B1B1', display: 'flex', padding: 0 }}>
+    <button type="button" onClick={toggle} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--mid-gray)', display: 'flex', padding: 0 }}>
       {show ? <EyeOffIcon /> : <EyeIcon />}
     </button>
   );
@@ -149,19 +149,19 @@ export default function StudentLoginPage() {
 
       {/* Centered card */}
       <div style={{ position: 'relative', zIndex: 2, width: '100%', maxWidth: 420, padding: '20px 16px', boxSizing: 'border-box' }}>
-        <div style={{ background: 'white', borderRadius: 16, boxShadow: '0 8px 40px rgba(0,0,0,0.3)', padding: 36, boxSizing: 'border-box' }}>
+        <div style={{ background: 'var(--surface)', borderRadius: 16, boxShadow: '0 8px 40px rgba(0,0,0,0.3)', padding: 36, boxSizing: 'border-box' }}>
 
             {/* Header */}
             <div style={{ textAlign: 'center', marginBottom: 28 }}>
               <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'linear-gradient(135deg,#001C43,#114B9F)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 900, color: 'white', margin: '0 auto 14px', boxShadow: '0 4px 12px rgba(0,28,67,0.25)' }}>M</div>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, marginBottom: 10, background: '#f5f7fa', padding: '4px 10px', borderRadius: 20 }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, marginBottom: 10, background: 'var(--surface-2)', padding: '4px 10px', borderRadius: 20 }}>
                 <div style={{ background: '#E50019', color: 'white', fontSize: 9, fontWeight: 800, padding: '2px 6px', borderRadius: 4, letterSpacing: 0.5 }}>RO</div>
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#555', letterSpacing: 0.3 }}>Registrar's Office · MMCM</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--mid-gray)', letterSpacing: 0.3 }}>Registrar's Office · MMCM</span>
               </div>
-              <div style={{ fontSize: 22, fontWeight: 900, color: '#001C43', fontFamily: 'var(--drms-font)', marginBottom: 4 }}>
+              <div style={{ fontSize: 22, fontWeight: 900, color: 'var(--text-primary)', fontFamily: 'var(--drms-font)', marginBottom: 4 }}>
                 {mode === 'login' ? 'Student Portal' : 'Create Account'}
               </div>
-              <div style={{ fontSize: 13, color: '#B1B1B1', lineHeight: 1.5 }}>
+              <div style={{ fontSize: 13, color: 'var(--mid-gray)', lineHeight: 1.5 }}>
                 {mode === 'login' ? 'Sign in to submit and track your requests' : 'Register to access the student portal'}
               </div>
             </div>
@@ -190,7 +190,7 @@ export default function StudentLoginPage() {
                 </div>
 
                 {loginError && (
-                  <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600, padding: '10px 12px', background: '#fff0f0', borderRadius: 8, border: '1px solid #ffd0d0' }}>⚠️ {loginError}</div>
+                  <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600, padding: '10px 12px', background: 'rgba(229,0,25,0.08)', borderRadius: 8, border: '1px solid #ffd0d0' }}>⚠️ {loginError}</div>
                 )}
 
                 <PrimaryBtn onClick={handleLogin} loading={loginLoading}>
@@ -204,7 +204,7 @@ export default function StudentLoginPage() {
                   <div style={{ textAlign: 'center', fontSize: 13 }}>
                     <span style={{ color: '#114B9F', cursor: 'pointer', fontWeight: 600 }} onClick={() => router.push('/student/track')}>Just want to track?</span>
                   </div>
-                  <div style={{ textAlign: 'center', fontSize: 13, paddingTop: 10, borderTop: '1px solid #f0f0f0' }}>
+                  <div style={{ textAlign: 'center', fontSize: 13, paddingTop: 10, borderTop: '1px solid var(--border-col)' }}>
                     <span style={{ color: '#114B9F', cursor: 'pointer', fontWeight: 600 }} onClick={() => router.push('/staff/login')}>Are you staff?</span>
                   </div>
                 </div>
@@ -218,7 +218,7 @@ export default function StudentLoginPage() {
                   <div style={{ textAlign: 'center', padding: '20px 0' }}>
                     <div style={{ fontSize: 48, marginBottom: 12 }}>🎉</div>
                     <div style={{ fontSize: 18, fontWeight: 800, color: '#198754', marginBottom: 6 }}>Account Created!</div>
-                    <div style={{ fontSize: 13, color: '#B1B1B1' }}>Redirecting to your portal...</div>
+                    <div style={{ fontSize: 13, color: 'var(--mid-gray)' }}>Redirecting to your portal...</div>
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -281,7 +281,7 @@ export default function StudentLoginPage() {
                     </div>
 
                     {regError && (
-                      <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600, padding: '10px 12px', background: '#fff0f0', borderRadius: 8, border: '1px solid #ffd0d0' }}>⚠️ {regError}</div>
+                      <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600, padding: '10px 12px', background: 'rgba(229,0,25,0.08)', borderRadius: 8, border: '1px solid #ffd0d0' }}>⚠️ {regError}</div>
                     )}
 
                     <PrimaryBtn onClick={handleRegister} loading={regLoading}>

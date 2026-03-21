@@ -224,7 +224,7 @@ export default function PaymentMonitorPage() {
           <div className="stat-card c-orange"><div className="stat-top"><div><div className="stat-num c-orange">{loading ? '—' : stats.pending}</div><div className="stat-label">Awaiting Payment</div></div><div className="stat-icon" style={{ background: '#FFF8E1', color: '#FFA323' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div></div></div>
           <div className="stat-card c-red"><div className="stat-top"><div><div className="stat-num c-red">{loading ? '—' : stats.overdue}</div><div className="stat-label">Overdue</div></div><div className="stat-icon" style={{ background: '#FEEAEA', color: '#E50019' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div></div></div>
           <div className="stat-card c-green"><div className="stat-top"><div><div className="stat-num c-green">{loading ? '—' : stats.paid}</div><div className="stat-label">Paid This Month</div></div><div className="stat-icon" style={{ background: '#EAFAF1', color: '#198754' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}><polyline points="20 6 9 17 4 12"/></svg></div></div></div>
-          <div className="stat-card c-navy"><div className="stat-top"><div><div className="stat-num c-navy" style={{ fontSize: 22 }}>{loading ? '—' : `₱${stats.collected.toLocaleString()}`}</div><div className="stat-label">Total Collected</div></div><div className="stat-icon" style={{ background: '#EEF4FB', color: '#001C43' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div></div></div>
+          <div className="stat-card c-navy"><div className="stat-top"><div><div className="stat-num c-navy" style={{ fontSize: 22 }}>{loading ? '—' : `₱${stats.collected.toLocaleString()}`}</div><div className="stat-label">Total Collected</div></div><div className="stat-icon" style={{ background: '#EEF4FB', color: 'var(--navy)' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div></div></div>
         </div>
 
         {/* Tabs */}
@@ -256,14 +256,14 @@ export default function PaymentMonitorPage() {
             </div>
             <div className="search-box" style={{ minWidth: 340 }}>
               <input type="text" placeholder="Search by requester, request ID, or OR number..." value={search} onChange={e => setSearch(e.target.value)} />
-              <Search size={13} color="#B1B1B1" />
+              <Search size={13} color="var(--mid-gray)" />
             </div>
           </div>
         </div>
 
         {/* Loading */}
         {loading && (
-          <div style={{ textAlign: 'center', padding: 60, color: '#B1B1B1', fontSize: 14 }}>Loading payments...</div>
+          <div style={{ textAlign: 'center', padding: 60, color: 'var(--mid-gray)', fontSize: 14 }}>Loading payments...</div>
         )}
 
         {/* Table */}
@@ -295,10 +295,10 @@ export default function PaymentMonitorPage() {
                     >
                       <td><span className="req-id">#{reqId}</span></td>
                       <td>{requester}</td>
-                      <td style={{ fontWeight: 700, color: parseFloat(p.amount) === 0 ? '#B1B1B1' : 'inherit' }}>{parseFloat(p.amount) === 0 ? 'Not set' : `₱${parseFloat(p.amount).toLocaleString()}`}</td>
-                      <td style={{ color: '#B1B1B1' }}>{formatDate(p.payment_date)}</td>
+                      <td style={{ fontWeight: 700, color: parseFloat(p.amount) === 0 ? 'var(--mid-gray)' : 'var(--text-primary)' }}>{parseFloat(p.amount) === 0 ? 'Not set' : `₱${parseFloat(p.amount).toLocaleString()}`}</td>
+                      <td style={{ color: 'var(--mid-gray)' }}>{formatDate(p.payment_date)}</td>
                       <td><span className={`badge ${badge.cls}`}>{badge.label}</span></td>
-                      <td style={{ color: '#B1B1B1' }}>{p.official_receipt_no ?? '—'}</td>
+                      <td style={{ color: 'var(--mid-gray)' }}>{p.official_receipt_no ?? '—'}</td>
                       <td onClick={e => e.stopPropagation()}>
                         {p.payment_status === 'Paid' ? (
                           <button className="btn-outline btn-sm" onClick={() => router.push(`/staff/request/${reqId}`)}>View</button>
@@ -337,7 +337,7 @@ export default function PaymentMonitorPage() {
                   );
                 })}
                 {pagedRows.length === 0 && (
-                  <tr><td colSpan={7} style={{ textAlign: 'center', padding: 24, color: '#B1B1B1', fontSize: 13 }}>No records found.</td></tr>
+                  <tr><td colSpan={7} style={{ textAlign: 'center', padding: 24, color: 'var(--mid-gray)', fontSize: 13 }}>No records found.</td></tr>
                 )}
               </tbody>
             </table>
@@ -348,12 +348,12 @@ export default function PaymentMonitorPage() {
       {modal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           onClick={() => setModal(null)}>
-          <div style={{ background: 'white', borderRadius: 12, padding: 28, width: 380, boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}
+          <div style={{ background: 'var(--surface)', borderRadius: 12, padding: 28, width: 380, boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}
             onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: 16, fontWeight: 800, color: '#001C43', marginBottom: 6 }}>
+            <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 6 }}>
               {modal.type === 'setAmount' ? 'Set Payment Amount' : 'Mark as Paid'}
             </div>
-            <div style={{ fontSize: 13, color: '#B1B1B1', marginBottom: 20 }}>
+            <div style={{ fontSize: 13, color: 'var(--mid-gray)', marginBottom: 20 }}>
               {modal.type === 'setAmount'
                 ? 'Enter the billing amount set by the Treasury Office.'
                 : 'Enter the Official Receipt number to confirm payment.'}
@@ -361,7 +361,7 @@ export default function PaymentMonitorPage() {
 
             {modal.type === 'setAmount' && (
               <div style={{ marginBottom: 16 }}>
-                <label style={{ fontSize: 11, fontWeight: 700, color: '#555', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 5 }}>
+                <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--mid-gray)', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 5 }}>
                   Amount (₱) <span style={{ color: '#E50019' }}>*</span>
                 </label>
                 <input
@@ -378,7 +378,7 @@ export default function PaymentMonitorPage() {
 
             {modal.type === 'markPaid' && (
               <div style={{ marginBottom: 16 }}>
-                <label style={{ fontSize: 11, fontWeight: 700, color: '#555', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 5 }}>
+                <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--mid-gray)', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 5 }}>
                   Official Receipt No. <span style={{ color: '#B1B1B1', fontWeight: 400, textTransform: 'none' }}>(optional)</span>
                 </label>
                 <input

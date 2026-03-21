@@ -50,6 +50,19 @@ export default function ReportsPage() {
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState<string | null>(null);
 
+  // ── Export modal state ────────────────────────────────────────────────────
+  const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [exportMode, setExportMode]           = useState<'all' | 'current' | 'pick'>('current');
+  const [pickedMonths, setPickedMonths]       = useState<Set<string>>(new Set());
+
+  function togglePickedMonth(val: string) {
+    setPickedMonths(prev => {
+      const next = new Set(prev);
+      next.has(val) ? next.delete(val) : next.add(val);
+      return next;
+    });
+  }
+
   // ── Fetch all data ────────────────────────────────────────────────────────
   useEffect(() => {
     async function fetchAll() {
@@ -148,8 +161,9 @@ export default function ReportsPage() {
 
   // ── Form type breakdown ───────────────────────────────────────────────────
   const formBreakdown = useMemo(() => ([
-    { label: 'RO-0005 (Enrolled)', count: filteredRequests.filter(r => r.form_type === 'RO-0005').length, color: '#114B9F' },
-    { label: 'RO-0004 (Transfer)', count: filteredRequests.filter(r => r.form_type === 'RO-0004').length, color: '#E50019' },
+    { label: 'RO-0005 · College', count: filteredRequests.filter(r => r.form_type === 'RO-0005' && r.academic_level === 'College').length, color: '#114B9F' },
+    { label: 'RO-0005 · SHS',     count: filteredRequests.filter(r => r.form_type === 'RO-0005' && r.academic_level === 'SHS').length,     color: '#6D4DF5' },
+    { label: 'RO-0004 · Transfer',count: filteredRequests.filter(r => r.form_type === 'RO-0004').length,                                   color: '#E50019' },
   ]), [filteredRequests]);
 
   // ── Submission mode breakdown ─────────────────────────────────────────────
@@ -178,6 +192,106 @@ export default function ReportsPage() {
 
   const maxMonthly = Math.max(...monthlyVolume.map(([, c]) => c), 1);
 
+  // ── PDF generator — accepts custom dataset + label ────────────────────────
+  function generatePDF(exportReqs: ApiRequest[], exportPays: ApiPayment[], periodLabel: string) {
+    const total      = exportReqs.length;
+    const released   = exportReqs.filter(r => r.current_status === 'Released').length;
+    const inProgress = exportReqs.filter(r => ['Pending','Verifying','For Payment','Processing','Ready for Release'].includes(r.current_status)).length;
+    const college    = exportReqs.filter(r => r.academic_level === 'College').length;
+    const shs        = exportReqs.filter(r => r.academic_level === 'SHS').length;
+    const revenue    = exportPays.filter(p => p.payment_status === 'Paid').reduce((s, p) => s + parseFloat(p.amount || '0'), 0);
+
+    const statusCounts: Record<string, number> = {};
+    exportReqs.forEach(r => { statusCounts[r.current_status] = (statusCounts[r.current_status] || 0) + 1; });
+    const statusRows = Object.entries(statusCounts).sort((a,b) => b[1]-a[1]).map(([s,c]) =>
+      `<tr><td>${s}</td><td style="text-align:right;font-weight:700">${c}</td><td style="text-align:right">${total > 0 ? Math.round(c/total*100) : 0}%</td></tr>`
+    ).join('');
+
+    const fBreakdown = [
+      { label: 'RO-0005 · College', count: exportReqs.filter(r => r.form_type==='RO-0005' && r.academic_level==='College').length, color:'#114B9F' },
+      { label: 'RO-0005 · SHS',     count: exportReqs.filter(r => r.form_type==='RO-0005' && r.academic_level==='SHS').length,     color:'#6D4DF5' },
+      { label: 'RO-0004 · Transfer',count: exportReqs.filter(r => r.form_type==='RO-0004').length,                                 color:'#E50019' },
+    ];
+    const formRows = fBreakdown.map(f =>
+      `<tr><td>${f.label}</td><td style="text-align:right;font-weight:700;color:${f.color}">${f.count}</td><td style="text-align:right">${total > 0 ? Math.round(f.count/total*100) : 0}%</td></tr>`
+    ).join('');
+
+    // Monthly breakdown from the export set
+    const monthMap: Record<string, number> = {};
+    exportReqs.forEach(r => {
+      if (!r.date_submitted) return;
+      const d = new Date(r.date_submitted);
+      const key = d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+      monthMap[key] = (monthMap[key] || 0) + 1;
+    });
+    const monthRows = Object.entries(monthMap).sort().map(([m, c]) =>
+      `<tr><td>${m}</td><td style="text-align:right;font-weight:700">${c}</td></tr>`
+    ).join('');
+
+    const css = `*{box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:12px;margin:0;padding:24px;color:#000}.page{max-width:780px;margin:0 auto}.header{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #001C43;padding-bottom:12px;margin-bottom:20px}.school{font-size:16px;font-weight:900;color:#001C43}.sub{font-size:11px;color:#666;margin-top:2px}.report-title{font-size:20px;font-weight:900;color:#001C43;text-align:right}.period{font-size:12px;color:#666;text-align:right}.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px}.kpi{border:1px solid #ddd;border-radius:8px;padding:14px}.kpi-num{font-size:24px;font-weight:900;color:#001C43}.kpi-label{font-size:11px;color:#666;margin-top:2px}.revenue{font-size:28px;font-weight:900;color:#198754}.section{margin-bottom:24px}.section-title{font-size:13px;font-weight:700;color:#001C43;border-bottom:1px solid #ddd;padding-bottom:6px;margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px}.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px}table{width:100%;border-collapse:collapse;font-size:12px}th{background:#001C43;color:white;padding:7px 10px;text-align:left}td{padding:7px 10px;border-bottom:1px solid #eee}tr:nth-child(even) td{background:#f9f9f9}.footer{margin-top:32px;font-size:10px;color:#999;text-align:center;border-top:1px solid #eee;padding-top:12px}@media print{body{padding:10px}@page{margin:12mm}}`;
+
+    const html = `<!DOCTYPE html><html><head><title>DRMS Reports — ${periodLabel}</title><style>${css}</style></head><body><div class="page">
+<div class="header"><div><div class="school">MAPÚA MALAYAN COLLEGES MINDANAO</div><div class="sub">Registrar's Office — Document Request Monitoring System</div></div><div><div class="report-title">Reports &amp; Analytics</div><div class="period">Period: ${periodLabel}</div><div class="period">Generated: ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</div></div></div>
+<div class="kpi-grid">
+  <div class="kpi"><div class="kpi-num">${total}</div><div class="kpi-label">Total Requests</div></div>
+  <div class="kpi"><div class="kpi-num" style="color:#198754">${released}</div><div class="kpi-label">Released</div></div>
+  <div class="kpi"><div class="kpi-num" style="color:#FFA323">${inProgress}</div><div class="kpi-label">In Progress</div></div>
+  <div class="kpi"><div class="kpi-num" style="color:#114B9F">${college}</div><div class="kpi-label">College Requests</div></div>
+  <div class="kpi"><div class="kpi-num" style="color:#6D4DF5">${shs}</div><div class="kpi-label">SHS Requests</div></div>
+</div>
+<div class="section"><div class="kpi" style="display:inline-block;min-width:200px"><div class="kpi-label">Total Revenue Collected</div><div class="revenue">₱${revenue.toLocaleString()}</div></div></div>
+<div class="two-col">
+  <div class="section"><div class="section-title">By Form Type</div><table><thead><tr><th>Form Type</th><th>Count</th><th>Share</th></tr></thead><tbody>${formRows}</tbody></table></div>
+  <div class="section"><div class="section-title">By Status</div><table><thead><tr><th>Status</th><th>Count</th><th>Share</th></tr></thead><tbody>${statusRows || '<tr><td colspan="3" style="color:#999">No data</td></tr>'}</tbody></table></div>
+</div>
+<div class="section"><div class="section-title">Monthly Breakdown</div><table><thead><tr><th>Month</th><th>Requests</th></tr></thead><tbody>${monthRows || '<tr><td colspan="2" style="color:#999">No data</td></tr>'}</tbody></table></div>
+<div class="section"><div class="section-title">Completion Rate</div><div style="font-size:14px;font-weight:700;color:#198754">${total > 0 ? Math.round(released/total*100) : 0}% <span style="font-weight:400;color:#666;font-size:12px">— ${released} of ${total} requests released</span></div></div>
+<div class="footer">DRMS — Registrar's Office, MMCM &nbsp;|&nbsp; System-generated report for internal use only.</div>
+</div></body></html>`;
+
+    const win = window.open('', '_blank');
+    if (win) { win.document.write(html); win.document.close(); setTimeout(() => win.print(), 500); }
+  }
+
+  // ── Confirm export — resolve dataset based on mode ─────────────────────────
+  function handleConfirmExport() {
+    let exportReqs: ApiRequest[];
+    let exportPays: ApiPayment[];
+    let label: string;
+
+    if (exportMode === 'all') {
+      exportReqs = requests;
+      exportPays = payments;
+      label = 'All Time';
+    } else if (exportMode === 'current') {
+      exportReqs = filteredRequests;
+      exportPays = filteredPayments;
+      label = period ? (availableMonths.find(m => m.value === period)?.label ?? period) : 'All Time';
+    } else {
+      // 'pick' — combine selected months
+      exportReqs = requests.filter(r => {
+        if (!r.date_submitted) return false;
+        const d = new Date(r.date_submitted);
+        const val = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+        return pickedMonths.has(val);
+      });
+      exportPays = payments.filter(p => {
+        if (!p.payment_date) return false;
+        const d = new Date(p.payment_date);
+        const val = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+        return pickedMonths.has(val);
+      });
+      const pickedLabels = [...pickedMonths].sort().map(v =>
+        availableMonths.find(m => m.value === v)?.label ?? v
+      );
+      label = pickedLabels.join(', ') || 'Selected Months';
+    }
+
+    setExportModalOpen(false);
+    setPickedMonths(new Set());
+    generatePDF(exportReqs, exportPays, label);
+  }
+
   return (
     <>
       <Topbar breadcrumbs={[{ label: 'Reports & Analytics' }]} showNotifDot />
@@ -198,7 +312,11 @@ export default function ReportsPage() {
               <option key={m.value} value={m.value}>{m.label}</option>
             ))}
           </select>
-          <button className="btn-outline" style={{ height: 36, padding: '0 14px', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <button
+            className="btn-outline"
+            style={{ height: 36, padding: '0 14px', display: 'flex', alignItems: 'center', gap: 6 }}
+            onClick={() => { setExportMode(period ? 'current' : 'all'); setPickedMonths(new Set()); setExportModalOpen(true); }}
+          >
             <Download size={14} /> Export PDF
           </button>
         </div>
@@ -354,6 +472,121 @@ export default function ReportsPage() {
           </div>
         </div>
       </div>
+
+      {/* ── Export PDF Modal ── */}
+      {exportModalOpen && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          onClick={() => setExportModalOpen(false)}
+        >
+          <div
+            style={{ background: 'var(--surface)', borderRadius: 14, padding: 28, width: 420, boxShadow: '0 12px 40px rgba(0,0,0,0.2)', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Modal header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', fontFamily: "'Montserrat',sans-serif" }}>
+                Export Report as PDF
+              </div>
+              <button onClick={() => setExportModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--mid-gray)', fontSize: 18, lineHeight: 1 }}>✕</button>
+            </div>
+
+            {/* Options */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
+
+              {/* All Time */}
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 14px', borderRadius: 10, border: `1.5px solid ${exportMode === 'all' ? '#114B9F' : 'rgba(0,0,0,0.1)'}`, background: exportMode === 'all' ? 'rgba(17,75,159,0.04)' : 'transparent', cursor: 'pointer', transition: 'all .15s' }}>
+                <input type="radio" name="exportMode" checked={exportMode === 'all'} onChange={() => setExportMode('all')} style={{ accentColor: '#114B9F', marginTop: 2 }} />
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>All Time</div>
+                  <div style={{ fontSize: 11, color: 'var(--mid-gray)', marginTop: 2 }}>Export all {requests.length} requests across every month</div>
+                </div>
+              </label>
+
+              {/* Current period */}
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 14px', borderRadius: 10, border: `1.5px solid ${exportMode === 'current' ? '#114B9F' : 'rgba(0,0,0,0.1)'}`, background: exportMode === 'current' ? 'rgba(17,75,159,0.04)' : 'transparent', cursor: 'pointer', transition: 'all .15s' }}>
+                <input type="radio" name="exportMode" checked={exportMode === 'current'} onChange={() => setExportMode('current')} style={{ accentColor: '#114B9F', marginTop: 2 }} />
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
+                    Current View — {period ? (availableMonths.find(m => m.value === period)?.label ?? period) : 'All Time'}
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--mid-gray)', marginTop: 2 }}>
+                    Export the {filteredRequests.length} request{filteredRequests.length !== 1 ? 's' : ''} currently shown on the dashboard
+                  </div>
+                </div>
+              </label>
+
+              {/* Pick months */}
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 14px', borderRadius: 10, border: `1.5px solid ${exportMode === 'pick' ? '#114B9F' : 'rgba(0,0,0,0.1)'}`, background: exportMode === 'pick' ? 'rgba(17,75,159,0.04)' : 'transparent', cursor: 'pointer', transition: 'all .15s' }}>
+                <input type="radio" name="exportMode" checked={exportMode === 'pick'} onChange={() => setExportMode('pick')} style={{ accentColor: '#114B9F', marginTop: 2 }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>Select Specific Months</div>
+                  <div style={{ fontSize: 11, color: 'var(--mid-gray)', marginTop: 2 }}>Manually choose which months to include</div>
+                </div>
+              </label>
+
+              {/* Month checkboxes — only visible when pick is selected */}
+              {exportMode === 'pick' && (
+                <div style={{ marginLeft: 14, marginTop: 4, display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 200, overflowY: 'auto', paddingRight: 4 }}>
+                  {availableMonths.length === 0 ? (
+                    <div style={{ fontSize: 12, color: 'var(--mid-gray)', padding: '8px 0' }}>No months available yet.</div>
+                  ) : (
+                    <>
+                      <div style={{ display: 'flex', gap: 10, marginBottom: 4 }}>
+                        <button style={{ fontSize: 11, color: 'var(--blue)', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                          onClick={() => setPickedMonths(new Set(availableMonths.map(m => m.value)))}>
+                          Select all
+                        </button>
+                        <span style={{ color: '#B1B1B1' }}>·</span>
+                        <button style={{ fontSize: 11, color: 'var(--mid-gray)', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                          onClick={() => setPickedMonths(new Set())}>
+                          Clear
+                        </button>
+                      </div>
+                      {availableMonths.map(m => (
+                        <label key={m.value} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-primary)', cursor: 'pointer', padding: '4px 0' }}>
+                          <input
+                            type="checkbox"
+                            checked={pickedMonths.has(m.value)}
+                            onChange={() => togglePickedMonth(m.value)}
+                            style={{ accentColor: '#114B9F', width: 14, height: 14 }}
+                          />
+                          {m.label}
+                          <span style={{ fontSize: 11, color: 'var(--mid-gray)', marginLeft: 'auto' }}>
+                            {requests.filter(r => {
+                              if (!r.date_submitted) return false;
+                              const d = new Date(r.date_submitted);
+                              return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}` === m.value;
+                            }).length} requests
+                          </span>
+                        </label>
+                      ))}
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Footer buttons */}
+            <div style={{ display: 'flex', gap: 10, marginTop: 'auto' }}>
+              <button
+                className="btn-primary"
+                style={{ flex: 1, justifyContent: 'center', padding: 11, display: 'flex', alignItems: 'center', gap: 6 }}
+                onClick={handleConfirmExport}
+                disabled={exportMode === 'pick' && pickedMonths.size === 0}
+              >
+                <Download size={13} />
+                {exportMode === 'pick'
+                  ? pickedMonths.size === 0 ? 'Select at least one month' : `Export ${pickedMonths.size} month${pickedMonths.size > 1 ? 's' : ''}`
+                  : 'Export PDF'}
+              </button>
+              <button className="btn-outline" style={{ padding: '0 18px' }} onClick={() => setExportModalOpen(false)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

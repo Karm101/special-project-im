@@ -208,7 +208,7 @@ export default function ClearancePage() {
                     value={search}
                     onChange={e => setSearch(e.target.value)}
                   />
-                  <Search size={13} color="#B1B1B1" />
+                  <Search size={13} color="var(--mid-gray)" />
                 </div>
               </div>
               <div style={{ padding: '4px 0' }}>
@@ -230,8 +230,8 @@ export default function ClearancePage() {
                       onClick={() => setSelectedId(r.request_id)}
                       style={{
                         padding: '12px 16px',
-                        borderBottom: i < pagedRequests.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none',
-                        background: isSelected ? '#F0F4FF' : 'white',
+                        borderBottom: i < pagedRequests.length - 1 ? '1px solid var(--border-col)' : 'none',
+                        background: isSelected ? 'rgba(125,179,255,0.1)' : 'var(--surface)',
                         borderLeft: isSelected ? '3px solid var(--navy)' : '3px solid transparent',
                         cursor: 'pointer',
                         transition: 'all 0.12s',
@@ -255,7 +255,7 @@ export default function ClearancePage() {
                   );
                 })}
                 {visibleRequests.length === 0 && (
-                  <div style={{ padding: 20, textAlign: 'center', color: '#B1B1B1', fontSize: 13 }}>
+                  <div style={{ padding: 20, textAlign: 'center', color: 'var(--mid-gray)', fontSize: 13 }}>
                     No requests match your search.
                   </div>
                 )}
@@ -296,7 +296,7 @@ export default function ClearancePage() {
                 {/* Office rows */}
                 <div style={{ padding: '12px 20px' }}>
                   {selectedClearances.length === 0 ? (
-                    <div style={{ padding: '20px 0', textAlign: 'center', color: '#B1B1B1', fontSize: 13 }}>
+                    <div style={{ padding: '20px 0', textAlign: 'center', color: 'var(--mid-gray)', fontSize: 13 }}>
                       No clearance records found for this request.
                       <br />
                       <span style={{ fontSize: 12 }}>Clearance records are created when a TC request is submitted.</span>
@@ -314,7 +314,7 @@ export default function ClearancePage() {
                             </div>
                           )}
                           {c.remarks && (
-                            <div style={{ fontSize: 11, color: '#666', fontStyle: 'italic', marginTop: 2 }}>
+                            <div style={{ fontSize: 11, color: 'var(--mid-gray)', fontStyle: 'italic', marginTop: 2 }}>
                               {c.remarks}
                             </div>
                           )}
