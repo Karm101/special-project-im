@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Topbar } from '../../../components/drms/Topbar';
 
@@ -225,6 +225,14 @@ export default function NewRequestPage() {
   // ── Validation errors state ──────────────────────────────────────────────
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // ── Refs for scroll-to-error ──────────────────────────────────────────────
+  const firstNameRef    = useRef<HTMLDivElement>(null);
+  const lastNameRef     = useRef<HTMLDivElement>(null);
+  const emailRef        = useRef<HTMLDivElement>(null);
+  const programRef      = useRef<HTMLDivElement>(null);
+  const docsRef         = useRef<HTMLDivElement>(null);
+  const purposeRef      = useRef<HTMLDivElement>(null);
+
   function validateStep1(): boolean {
     const e: Record<string, string> = {};
     if (!form.firstName.trim())    e.firstName    = 'First name is required.';
@@ -232,7 +240,13 @@ export default function NewRequestPage() {
     if (!form.email.trim())        e.email        = 'Email is required.';
     if (!form.programStrand.trim()) e.programStrand = 'Program / Strand is required.';
     setErrors(e);
-    return Object.keys(e).length === 0;
+    if (Object.keys(e).length > 0) {
+      // Scroll to the first error field
+      const firstRef = e.firstName ? firstNameRef : e.lastName ? lastNameRef : e.programStrand ? programRef : emailRef;
+      setTimeout(() => firstRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+      return false;
+    }
+    return true;
   }
 
   function validateStep2(): boolean {
@@ -240,7 +254,12 @@ export default function NewRequestPage() {
     if (form.selectedDocs.length === 0) e.docs    = 'Please select at least one document.';
     if (!form.purpose.trim())           e.purpose  = 'Purpose is required.';
     setErrors(e);
-    return Object.keys(e).length === 0;
+    if (Object.keys(e).length > 0) {
+      const firstRef = e.docs ? docsRef : purposeRef;
+      setTimeout(() => firstRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+      return false;
+    }
+    return true;
   }
 
   // ── Submit to API ─────────────────────────────────────────────────────────
@@ -383,17 +402,17 @@ export default function NewRequestPage() {
                       <option>Online</option>
                     </select>
                   </div>
-                  <div className="fg">
+                  <div className="fg" ref={firstNameRef}>
                     <label>First Name <span className="req-asterisk">*</span></label>
                     <input className={`drms-input${errors.firstName ? ' input-error' : ''}`} type="text" value={form.firstName} onChange={e => { set('firstName', e.target.value); setErrors(p => ({...p, firstName: ''})); }} />
                     {errors.firstName && <div className="field-error">{errors.firstName}</div>}
                   </div>
-                  <div className="fg">
+                  <div className="fg" ref={lastNameRef}>
                     <label>Last Name <span className="req-asterisk">*</span></label>
                     <input className={`drms-input${errors.lastName ? ' input-error' : ''}`} type="text" value={form.lastName} onChange={e => { set('lastName', e.target.value); setErrors(p => ({...p, lastName: ''})); }} />
                     {errors.lastName && <div className="field-error">{errors.lastName}</div>}
                   </div>
-                  <div className="fg">
+                  <div className="fg" ref={programRef}>
                     <label>Program / Strand <span className="req-asterisk">*</span></label>
                     <input className={`drms-input${errors.programStrand ? ' input-error' : ''}`} type="text" placeholder="e.g. BSCS, STEM" value={form.programStrand} onChange={e => { set('programStrand', e.target.value); setErrors(p => ({...p, programStrand: ''})); }} />
                     {errors.programStrand && <div className="field-error">{errors.programStrand}</div>}
@@ -419,7 +438,7 @@ export default function NewRequestPage() {
                     <label>Contact Number</label>
                     <input className="drms-input" type="text" placeholder="09XXXXXXXXX" value={form.contactNumber} onChange={e => set('contactNumber', e.target.value)} />
                   </div>
-                  <div className="fg">
+                  <div className="fg" ref={emailRef}>
                     <label>Email Address <span className="req-asterisk">*</span></label>
                     <input className={`drms-input${errors.email ? ' input-error' : ''}`} type="email" placeholder="student@mcm.edu.ph" value={form.email} onChange={e => { set('email', e.target.value); setErrors(p => ({...p, email: ''})); }} />
                     {errors.email && <div className="field-error">{errors.email}</div>}
@@ -471,7 +490,7 @@ export default function NewRequestPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 18 }}>
             <div className="drms-card" style={{ padding: 20 }}>
               <div className="section-title">Documents to Request</div>
-              {errors.docs && <div className="field-error" style={{ marginBottom: 8 }}>{errors.docs}</div>}
+              <div ref={docsRef}>{errors.docs && <div className="field-error" style={{ marginBottom: 8 }}>{errors.docs}</div>}</div>
               {docsLoading ? (
                 <div style={{ color: '#B1B1B1', padding: 20 }}>Loading document types...</div>
               ) : (
@@ -507,7 +526,7 @@ export default function NewRequestPage() {
                 </div>
               )}
 
-              <div className="fg" style={{ marginTop: 16 }}>
+              <div className="fg" ref={purposeRef} style={{ marginTop: 16 }}>
                 <label>Purpose / Reason for Request <span className="req-asterisk">*</span></label>
                 <textarea className={`drms-textarea${errors.purpose ? ' input-error' : ''}`} placeholder="State the specific purpose of this request..." value={form.purpose} onChange={e => { set('purpose', e.target.value); setErrors(p => ({...p, purpose: ''})); }} />
                 {errors.purpose && <div className="field-error">{errors.purpose}</div>}

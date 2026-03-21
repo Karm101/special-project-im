@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Bell, ChevronDown } from 'lucide-react';
+import { Bell, ChevronDown, Sun, Moon } from 'lucide-react';
 
 interface BreadcrumbItem { label: string; href?: string; }
 
@@ -27,6 +27,19 @@ export function Topbar({
   const [ddOpen, setDdOpen] = useState(false);
   const ddRef = useRef<HTMLDivElement>(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isDark, setIsDark] = useState(false);
+
+  // ── Sync dark state from documentElement ──────────────────────────────────
+  useEffect(() => {
+    setIsDark(document.documentElement.getAttribute('data-theme') === 'dark');
+  }, []);
+
+  const toggleTheme = useCallback(() => {
+    const next = isDark ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('drms_theme', next);
+    setIsDark(!isDark);
+  }, [isDark]);
 
   // ── Read auth from sessionStorage ──────────────────────────────────────────
   const [displayName, setDisplayName]       = useState(userName ?? 'Staff');
@@ -103,6 +116,18 @@ export function Topbar({
 
       <div className="topbar-right">
         {rightExtras}
+
+        {/* Theme toggle */}
+        <button
+          onClick={toggleTheme}
+          title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, border: '1px solid rgba(0,0,0,0.08)', background: 'transparent', cursor: 'pointer', transition: 'background .15s', flexShrink: 0 }}
+          onMouseEnter={e => (e.currentTarget.style.background = '#F5F5F5')}
+          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+        >
+          {isDark ? <Sun size={15} color="#FFA323" /> : <Moon size={15} color="#001C43" />}
+        </button>
+
         <div className="topbar-bell" onClick={() => router.push('/staff/notifications')} style={{ cursor: 'pointer', position: 'relative', padding: 4 }}>
           <Bell size={18} color="#001C43" />
           {unreadCount > 0 && (
@@ -126,8 +151,8 @@ export function Topbar({
           </div>
 
           <div className={`user-dropdown${ddOpen ? ' open' : ''}`} onClick={e => e.stopPropagation()}>
-            <button className="dd-item">👤 View Profile</button>
-            <button className="dd-item">⚙️ Settings</button>
+            <button className="dd-item" onClick={() => { setDdOpen(false); router.push('/staff/profile'); }}>👤 View Profile</button>
+            <button className="dd-item" onClick={() => { setDdOpen(false); router.push('/staff/settings'); }}>⚙️ Settings</button>
             <div className="dd-sep" />
             <button className="dd-item danger" onClick={() => {
               sessionStorage.clear();

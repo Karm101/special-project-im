@@ -81,7 +81,10 @@ export default function DashboardPage() {
   const [dept, setDept]             = useState<'college' | 'shs'>('college');
   const [collegeTab, setCollegeTab] = useState<string>('all');
   const [shsTab, setShsTab]         = useState<string>('all');
-  const [listView, setListView]     = useState(true);
+  const [listView, setListView]     = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    return localStorage.getItem('drms_view') !== 'card';
+  });
   const [filterOpen, setFilterOpen] = useState(false);
   const [bulkVisible, setBulkVisible] = useState(false);
   const [search, setSearch]         = useState('');
@@ -317,13 +320,13 @@ export default function DashboardPage() {
         {/* Toolbar */}
         <div className="toolbar">
           <div className="view-toggle">
-            <button className={`view-btn${listView ? ' active' : ''}`} onClick={() => setListView(true)} title="List view">
+            <button className={`view-btn${listView ? ' active' : ''}`} onClick={() => { setListView(true); localStorage.setItem('drms_view', 'list'); }} title="List view">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" style={{ width: 16, height: 16 }}>
                 <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
                 <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
               </svg>
             </button>
-            <button className={`view-btn${!listView ? ' active' : ''}`} onClick={() => setListView(false)} title="Card view">
+            <button className={`view-btn${!listView ? ' active' : ''}`} onClick={() => { setListView(false); localStorage.setItem('drms_view', 'card'); }} title="Card view">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" style={{ width: 16, height: 16 }}>
                 <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
                 <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
