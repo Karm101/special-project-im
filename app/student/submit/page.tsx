@@ -86,7 +86,7 @@ export default function StudentSubmitPage() {
   useEffect(() => {
     async function fetchDocs() {
       try {
-        const res = await fetch('`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}`/api/document-types/');
+        const res = await fetch('https://web-production-5905e.up.railway.app/api/document-types/');
         if (!res.ok) throw new Error();
         const data = await res.json();
         setDocTypes(data.results ?? data);
@@ -172,7 +172,7 @@ export default function StudentSubmitPage() {
         })),
       };
 
-      const res = await fetch('`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}`/api/requests/', {
+      const res = await fetch('https://web-production-5905e.up.railway.app/api/requests/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

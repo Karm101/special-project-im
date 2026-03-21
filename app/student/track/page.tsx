@@ -148,7 +148,7 @@ export default function StudentTrackPage() {
     try {
       // Fetch requests where this student is the requester (server-side filtered)
       const requesterRes = await fetch(
-        ``${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}`/api/requests/?student_number=${encodeURIComponent(number)}&page_size=100`
+        `https://web-production-5905e.up.railway.app/api/requests/?student_number=${encodeURIComponent(number)}&page_size=100`
       );
 
       const requesterIds = new Set<number>();
@@ -169,7 +169,7 @@ export default function StudentTrackPage() {
         const nameParts = name.replace(',', '').trim().split(/\s+/);
         const searchName = nameParts[0]; // Use first token (last name)
         const repRes = await fetch(
-          ``${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}`/api/requests/?representative_name=${encodeURIComponent(searchName)}&page_size=100`
+          `https://web-production-5905e.up.railway.app/api/requests/?representative_name=${encodeURIComponent(searchName)}&page_size=100`
         );
         if (repRes.ok) {
           const json = await repRes.json();
@@ -189,7 +189,7 @@ export default function StudentTrackPage() {
       const detailed = await Promise.all(
         allIds.map(async id => {
           try {
-            const d = await fetch(``${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}`/api/track/${id}/`);
+            const d = await fetch(`https://web-production-5905e.up.railway.app/api/track/${id}/`);
             if (d.ok) return { ...await d.json(), _role: tagMap.get(id) ?? 'requester' };
           } catch {}
           return null;
@@ -221,7 +221,7 @@ export default function StudentTrackPage() {
     setData(null);
     setSearched(true);
     try {
-      const res = await fetch(``${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}`/api/track/${parseInt(raw)}/`);
+      const res = await fetch(`https://web-production-5905e.up.railway.app/api/track/${parseInt(raw)}/`);
       if (res.status === 404) {
         setError(`Request REQ-${raw.padStart(3, '0')} was not found. Please check your Tracking ID.`);
         return;

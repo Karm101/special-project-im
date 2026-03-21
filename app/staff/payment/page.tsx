@@ -78,7 +78,7 @@ export default function PaymentMonitorPage() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch('`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}`/api/payments/');
+        const res = await fetch('https://web-production-5905e.up.railway.app/api/payments/');
         if (!res.ok) throw new Error('API error');
         const data = await res.json();
         const rows: ApiPayment[] = data.results ?? data;
@@ -89,7 +89,7 @@ export default function PaymentMonitorPage() {
         const reqMap: Record<number, any> = {};
         await Promise.all(
           uniqueIds.map(async id => {
-            const r = await fetch(``${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}`/api/requests/${id}/`);
+            const r = await fetch(`https://web-production-5905e.up.railway.app/api/requests/${id}/`);
             if (r.ok) {
               const d = await r.json();
               reqMap[id] = d;
@@ -144,13 +144,13 @@ export default function PaymentMonitorPage() {
       }
       setUpdating(modal.paymentId);
       try {
-        const res = await fetch(``${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}`/api/payments/${modal.paymentId}/`, {
+        const res = await fetch(`https://web-production-5905e.up.railway.app/api/payments/${modal.paymentId}/`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ amount: amt }),
         });
         if (!res.ok) throw new Error();
-        const refreshed = await fetch('`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}`/api/payments/');
+        const refreshed = await fetch('https://web-production-5905e.up.railway.app/api/payments/');
         const data = await refreshed.json();
         setPayments(data.results ?? data);
         setModal(null);
@@ -160,7 +160,7 @@ export default function PaymentMonitorPage() {
     } else if (modal.type === 'markPaid') {
       setUpdating(modal.paymentId);
       try {
-        const res = await fetch(``${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}`/api/payments/${modal.paymentId}/`, {
+        const res = await fetch(`https://web-production-5905e.up.railway.app/api/payments/${modal.paymentId}/`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -170,7 +170,7 @@ export default function PaymentMonitorPage() {
           }),
         });
         if (!res.ok) throw new Error();
-        const refreshed = await fetch('`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}`/api/payments/');
+        const refreshed = await fetch('https://web-production-5905e.up.railway.app/api/payments/');
         const data = await refreshed.json();
         setPayments(data.results ?? data);
         setModal(null);

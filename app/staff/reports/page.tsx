@@ -71,8 +71,8 @@ export default function ReportsPage() {
       try {
         // Fetch all requests (paginated — get up to 200)
         const [reqRes, payRes] = await Promise.all([
-          fetch('`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}`/api/requests/?page_size=200'),
-          fetch('`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}`/api/payments/?page_size=200'),
+          fetch('https://web-production-5905e.up.railway.app/api/requests/?page_size=200'),
+          fetch('https://web-production-5905e.up.railway.app/api/payments/?page_size=200'),
         ]);
         if (!reqRes.ok || !payRes.ok) throw new Error('API error');
         const reqData = await reqRes.json();

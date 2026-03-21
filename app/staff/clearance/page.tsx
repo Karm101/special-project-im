@@ -80,7 +80,7 @@ export default function ClearancePage() {
       setError(null);
       try {
         // Get all requests filtered by RO-0004 form type
-        const res = await fetch('`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}`/api/requests/?search=RO-0004');
+        const res = await fetch('https://web-production-5905e.up.railway.app/api/requests/?search=RO-0004');
         if (!res.ok) throw new Error('API error');
         const data = await res.json();
         const all: ApiRequest[] = data.results ?? data;
@@ -94,7 +94,7 @@ export default function ClearancePage() {
           const clrMap: Record<number, ApiClearance[]> = {};
           await Promise.all(
             filtered.map(async r => {
-              const clrRes = await fetch(``${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}`/api/clearances/?request=${r.request_id}`);
+              const clrRes = await fetch(`https://web-production-5905e.up.railway.app/api/clearances/?request=${r.request_id}`);
               if (clrRes.ok) {
                 const clrData = await clrRes.json();
                 clrMap[r.request_id] = clrData.results ?? clrData;
@@ -119,7 +119,7 @@ export default function ClearancePage() {
     setUpdating(clearanceId);
     try {
       const processedBy = prompt('Processed by (name):') ?? 'RO Staff';
-      const res = await fetch(``${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}`/api/clearances/${clearanceId}/`, {
+      const res = await fetch(`https://web-production-5905e.up.railway.app/api/clearances/${clearanceId}/`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -130,7 +130,7 @@ export default function ClearancePage() {
       });
       if (!res.ok) throw new Error('Update failed');
       // Refresh clearances for this request
-      const refreshed = await fetch(``${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}`/api/clearances/?request=${requestId}`);
+      const refreshed = await fetch(`https://web-production-5905e.up.railway.app/api/clearances/?request=${requestId}`);
       const data = await refreshed.json();
       setClearances(prev => ({ ...prev, [requestId]: data.results ?? data }));
     } catch {

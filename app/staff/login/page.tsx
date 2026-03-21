@@ -29,7 +29,7 @@ export default function StaffLoginPage() {
     if (!username.trim() || !password.trim()) { setError('Please enter your username and password.'); return; }
     setLoading(true); setError('');
     try {
-      const res = await fetch('`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}`/api/auth/staff-login/', {
+      const res = await fetch('https://web-production-5905e.up.railway.app/api/auth/staff-login/', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
