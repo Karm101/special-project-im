@@ -35,7 +35,7 @@ function StatCard({ num, label, color, bg, icon, loading }: {
           </div>
           <div className="stat-label" style={{ fontSize: 12 }}>{label}</div>
         </div>
-        <div className="stat-icon" style={{ background: bg, width: 32, height: 32, fontSize: 14 }}>
+        <div className="stat-icon" style={{ background: bg, width: 32, height: 32, fontSize: 14, color }}>
           {icon}
         </div>
       </div>
@@ -323,11 +323,11 @@ export default function ReportsPage() {
 
         {/* KPI stat cards */}
         <div className="stat-grid stat-grid-5" style={{ marginBottom: 22 }}>
-          <StatCard loading={loading} num={stats.total}      label="Total Requests"    color="#001C43" bg="#EEF4FB" icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>} />
-          <StatCard loading={loading} num={stats.released}   label="Released"          color="#198754" bg="#EAFAF1" icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>} />
-          <StatCard loading={loading} num={stats.inProgress} label="In Progress"       color="#FFA323" bg="#FFF8E1" icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>} />
-          <StatCard loading={loading} num={stats.college}    label="College Requests"  color="#114B9F" bg="#EBF5FB" icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"/></svg>} />
-          <StatCard loading={loading} num={stats.shs}        label="SHS Requests"      color="#6D4DF5" bg="#F0EDFF" icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>} />
+          <StatCard loading={loading} num={stats.total}      label="Total Requests"    color="#114B9F" bg="rgba(241, 246, 253, 0.12)"   icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>} />
+          <StatCard loading={loading} num={stats.released}   label="Released"          color="#198754" bg="rgba(25,135,84,0.12)"   icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>} />
+          <StatCard loading={loading} num={stats.inProgress} label="In Progress"       color="#FFA323" bg="rgba(255,163,35,0.12)"  icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>} />
+          <StatCard loading={loading} num={stats.college}    label="College Requests"  color="#114B9F" bg="rgba(17,75,159,0.12)"   icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"/></svg>} />
+          <StatCard loading={loading} num={stats.shs}        label="SHS Requests"      color="#6D4DF5" bg="rgba(109,77,245,0.12)"  icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>} />
         </div>
 
         {/* Revenue + breakdown row */}
@@ -351,11 +351,11 @@ export default function ReportsPage() {
             </div>
             {formBreakdown.map(f => (
               <div key={f.label} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-                <div style={{ flex: 1, fontSize: 12, color: 'var(--navy)' }}>{f.label}</div>
+                <div style={{ flex: 1, fontSize: 12, color: 'var(--text-primary)' }}>{f.label}</div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: f.color, minWidth: 24, textAlign: 'right' }}>
                   {loading ? '—' : f.count}
                 </div>
-                <div style={{ width: 80, height: 6, background: 'var(--light-gray)', borderRadius: 3 }}>
+                <div style={{ width: 80, height: 6, background: 'var(--surface-2)', borderRadius: 3 }}>
                   <div style={{ height: '100%', width: stats.total > 0 ? `${Math.round(f.count / stats.total * 100)}%` : '0%', background: f.color, borderRadius: 3 }} />
                 </div>
               </div>
@@ -368,15 +368,15 @@ export default function ReportsPage() {
               By Status
             </div>
             {loading ? (
-              <div style={{ color: '#B1B1B1', fontSize: 13 }}>Loading...</div>
+              <div style={{ color: 'var(--mid-gray)', fontSize: 13 }}>Loading...</div>
             ) : statusBreakdown.length === 0 ? (
-              <div style={{ color: '#B1B1B1', fontSize: 13 }}>No data yet.</div>
+              <div style={{ color: 'var(--mid-gray)', fontSize: 13 }}>No data yet.</div>
             ) : (
               statusBreakdown.map(([status, count], i) => (
                 <div key={status} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                  <div style={{ flex: 1, fontSize: 12, color: 'var(--navy)' }}>{status}</div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: COLORS[i % COLORS.length], minWidth: 24, textAlign: 'right' }}>{count}</div>
-                  <div style={{ width: 80, height: 6, background: 'var(--light-gray)', borderRadius: 3 }}>
+                  <div style={{ flex: 1, fontSize: 12, color: 'var(--text-primary)' }}>{status}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, minWidth: 24, textAlign: 'right', color: COLORS[i % COLORS.length] }}>{count}</div>
+                  <div style={{ width: 80, height: 6, background: 'var(--surface-2)', borderRadius: 3 }}>
                     <div style={{ height: '100%', width: stats.total > 0 ? `${Math.round(count / stats.total * 100)}%` : '0%', background: COLORS[i % COLORS.length], borderRadius: 3 }} />
                   </div>
                 </div>
@@ -394,12 +394,12 @@ export default function ReportsPage() {
               <span className="drms-card-title">Request Volume (Last 6 Months)</span>
             </div>
             {loading ? (
-              <div style={{ color: '#B1B1B1', fontSize: 13, textAlign: 'center', padding: 40 }}>Loading...</div>
+              <div style={{ color: 'var(--mid-gray)', fontSize: 13, textAlign: 'center', padding: 40 }}>Loading...</div>
             ) : (
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, height: 160, paddingBottom: 24, position: 'relative' }}>
                 {monthlyVolume.map(([month, count]) => (
                   <div key={month} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--navy)' }}>{count || ''}</div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-primary)' }}>{count || ''}</div>
                     <div style={{
                       width: '100%',
                       height: count > 0 ? `${Math.round(count / maxMonthly * 120)}px` : '4px',
@@ -422,9 +422,9 @@ export default function ReportsPage() {
             </div>
             <div style={{ padding: '12px 20px' }}>
               {loading ? (
-                <div style={{ color: '#B1B1B1', fontSize: 13 }}>Loading...</div>
+                <div style={{ color: 'var(--mid-gray)', fontSize: 13 }}>Loading...</div>
               ) : requests.length === 0 ? (
-                <div style={{ color: '#B1B1B1', fontSize: 13, padding: '20px 0' }}>
+                <div style={{ color: 'var(--mid-gray)', fontSize: 13, padding: '20px 0' }}>
                   No request data available yet.
                 </div>
               ) : (
@@ -432,12 +432,12 @@ export default function ReportsPage() {
                   {/* College vs SHS */}
                   {[
                     { label: 'College', count: stats.college, color: '#114B9F' },
-                    { label: 'Senior High School', count: stats.shs, color: '#001C43' },
+                    { label: 'Senior High School', count: stats.shs, color: 'var(--shs-bar-color)' },
                   ].map(d => (
                     <div key={d.label} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
-                      <div style={{ flex: 1, fontSize: 13, color: 'var(--navy)' }}>{d.label}</div>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy)', minWidth: 30, textAlign: 'right' }}>{d.count}</div>
-                      <div style={{ width: 120, height: 8, background: 'var(--light-gray)', borderRadius: 4 }}>
+                      <div style={{ flex: 1, fontSize: 13, color: 'var(--text-primary)' }}>{d.label}</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', minWidth: 30, textAlign: 'right' }}>{d.count}</div>
+                      <div style={{ width: 120, height: 8, background: 'var(--surface-2)', borderRadius: 4 }}>
                         <div style={{ height: '100%', width: stats.total > 0 ? `${Math.round(d.count / stats.total * 100)}%` : '0%', background: d.color, borderRadius: 4 }} />
                       </div>
                     </div>

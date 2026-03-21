@@ -36,6 +36,24 @@ function formatDate(d: string | null) {
   return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+function StatCard({ num, label, color, bg, icon, loading }: {
+  num: string | number; label: string; color: string; bg: string; icon: React.ReactNode; loading: boolean;
+}) {
+  return (
+    <div style={{ background: 'var(--surface)', borderRadius: 10, padding: 18, border: '1px solid var(--border-col)', borderBottom: `3px solid ${color}` }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+        <div>
+          <div style={{ fontSize: 26, fontWeight: 800, color }}>{loading ? '—' : num}</div>
+          <div style={{ fontSize: 12, color: 'var(--mid-gray)' }}>{label}</div>
+        </div>
+        <div style={{ width: 36, height: 36, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: bg, color }}>
+          {icon}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function statusBadge(s: string) {
   if (s === 'Cleared')         return <span className="badge badge-cleared"  style={{ fontSize: 12 }}>Cleared</span>;
   if (s === 'Not Applicable')  return <span className="badge badge-na"        style={{ fontSize: 12 }}>Not Applicable</span>;
@@ -170,10 +188,10 @@ export default function ClearancePage() {
 
         {/* Stat cards */}
         <div className="stat-grid stat-grid-4">
-          <div className="stat-card c-navy"><div className="stat-top"><div><div className="stat-num c-navy">{loading ? '—' : stats.active}</div><div className="stat-label">Active TC Requests</div></div><div className="stat-icon" style={{ background: '#EEF4FB', color: '#001C43' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div></div></div>
-          <div className="stat-card c-orange"><div className="stat-top"><div><div className="stat-num c-orange">{loading ? '—' : stats.pending}</div><div className="stat-label">Pending Clearances</div></div><div className="stat-icon" style={{ background: '#FFF8E1', color: '#FFA323' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div></div></div>
-          <div className="stat-card c-green"><div className="stat-top"><div><div className="stat-num c-green">{loading ? '—' : stats.cleared}</div><div className="stat-label">Cleared This Month</div></div><div className="stat-icon" style={{ background: '#EAFAF1', color: '#198754' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}><path d="M12 2l8 4v6c0 4.4-3.3 8.5-8 10-4.7-1.5-8-5.6-8-10V6l8-4z"/><polyline points="9 12 11 14 15 10"/></svg></div></div></div>
-          <div className="stat-card c-red"><div className="stat-top"><div><div className="stat-num c-red">{loading ? '—' : stats.overdue}</div><div className="stat-label">Overdue Clearances</div></div><div className="stat-icon" style={{ background: '#FEEAEA', color: '#E50019' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div></div></div>
+          <StatCard loading={loading} num={stats.active}   label="Active TC Requests"   color="#114B9F" bg="rgba(17,75,159,0.12)"  icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>} />
+          <StatCard loading={loading} num={stats.pending}  label="Pending Clearances"   color="#FFA323" bg="rgba(255,163,35,0.12)" icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>} />
+          <StatCard loading={loading} num={stats.cleared}  label="Cleared This Month"   color="#198754" bg="rgba(25,135,84,0.12)"  icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><path d="M12 2l8 4v6c0 4.4-3.3 8.5-8 10-4.7-1.5-8-5.6-8-10V6l8-4z"/><polyline points="9 12 11 14 15 10"/></svg>} />
+          <StatCard loading={loading} num={stats.overdue}  label="Overdue Clearances"   color="#E50019" bg="rgba(240, 97, 116, 0.12)"   icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>} />
         </div>
 
         {loading && (
@@ -201,7 +219,7 @@ export default function ClearancePage() {
               </div>
               {/* Search */}
               <div style={{ padding: '10px 12px 4px' }}>
-                <div className="search-box">
+                <div className="search-box" style={{ minWidth: 0, width: '100%', boxSizing: 'border-box' }}>
                   <input
                     type="text"
                     placeholder="Search requester..."
@@ -237,7 +255,7 @@ export default function ClearancePage() {
                         transition: 'all 0.12s',
                       }}
                     >
-                      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy)' }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
                         #{reqId} — {name}
                       </div>
                       <div style={{ fontSize: 11, color: 'var(--mid-gray)', marginTop: 3 }}>

@@ -47,18 +47,8 @@ export function Sidebar() {
   const [expanded, setExpanded] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const sidebarRef = useRef<HTMLDivElement>(null);
-
-  // Close sidebar when clicking outside — no overlay needed (doesn't block scroll)
-  useEffect(() => {
-    if (!expanded) return;
-    function handleClickOutside(e: MouseEvent) {
-      if (sidebarRef.current && !sidebarRef.current.contains(e.target as Node)) {
-        setExpanded(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [expanded]);
+  // Sidebar only collapses via the toggle button — no click-outside collapse
+  // so users can keep it expanded while working on any page
 
   // Fetch live unread notification count
   useEffect(() => {
@@ -84,6 +74,7 @@ export function Sidebar() {
     return (
       <div
         style={{ ...itemBase, background: active ? '#001C43' : 'transparent' }}
+        className={active ? 'sb-nav-active' : ''}
         onClick={() => router.push(item.path)}
         title={item.label}
         onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'; }}

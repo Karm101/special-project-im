@@ -26,6 +26,26 @@ function formatDate(d: string | null) {
   return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+function StatCard({ num, label, color, bg, icon, loading }: {
+  num: string | number; label: string; color: string; bg: string; icon: React.ReactNode; loading: boolean;
+}) {
+  return (
+    <div className="stat-card" style={{ padding: 16, borderBottom: `3px solid ${color}` }}>
+      <div className="stat-top">
+        <div>
+          <div className="stat-num" style={{ fontSize: 24, color }}>
+            {loading ? '—' : num}
+          </div>
+          <div className="stat-label" style={{ fontSize: 12 }}>{label}</div>
+        </div>
+        <div className="stat-icon" style={{ background: bg, width: 32, height: 32, fontSize: 14, color }}>
+          {icon}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function statusBadge(status: string) {
   switch (status) {
     case 'Paid':    return { cls: 'b-done', label: 'Paid' };
@@ -173,10 +193,10 @@ export default function PaymentMonitorPage() {
 
   // ── Tab definitions ──────────────────────────────────────────────────────
   const TABS = [
-    { label: 'All',     filter: 'all',     count: payments.length },
-    { label: 'Pending', filter: 'Pending', count: stats.pending   },
-    { label: 'Overdue', filter: 'Overdue', count: stats.overdue   },
-    { label: 'Paid',    filter: 'Paid',    count: stats.paid      },
+    { label: 'All',     filter: 'all',     count: payments.length, color: '#7eb3ff' },
+    { label: 'Pending', filter: 'Pending', count: stats.pending,   color: '#FFA323' },
+    { label: 'Overdue', filter: 'Overdue', count: stats.overdue,   color: '#ff7a7a' },
+    { label: 'Paid',    filter: 'Paid',    count: stats.paid,      color: '#4ade80' },
   ];
 
   // ── Filter rows ──────────────────────────────────────────────────────────
@@ -221,19 +241,27 @@ export default function PaymentMonitorPage() {
 
         {/* Stat cards */}
         <div className="stat-grid stat-grid-4">
-          <div className="stat-card c-orange"><div className="stat-top"><div><div className="stat-num c-orange">{loading ? '—' : stats.pending}</div><div className="stat-label">Awaiting Payment</div></div><div className="stat-icon" style={{ background: '#FFF8E1', color: '#FFA323' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div></div></div>
-          <div className="stat-card c-red"><div className="stat-top"><div><div className="stat-num c-red">{loading ? '—' : stats.overdue}</div><div className="stat-label">Overdue</div></div><div className="stat-icon" style={{ background: '#FEEAEA', color: '#E50019' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div></div></div>
-          <div className="stat-card c-green"><div className="stat-top"><div><div className="stat-num c-green">{loading ? '—' : stats.paid}</div><div className="stat-label">Paid This Month</div></div><div className="stat-icon" style={{ background: '#EAFAF1', color: '#198754' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}><polyline points="20 6 9 17 4 12"/></svg></div></div></div>
-          <div className="stat-card c-navy"><div className="stat-top"><div><div className="stat-num c-navy" style={{ fontSize: 22 }}>{loading ? '—' : `₱${stats.collected.toLocaleString()}`}</div><div className="stat-label">Total Collected</div></div><div className="stat-icon" style={{ background: '#EEF4FB', color: 'var(--navy)' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div></div></div>
+          <StatCard loading={loading} num={stats.pending}                               label="Awaiting Payment" color="#FFA323" bg="rgba(255,163,35,0.12)" icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>} />
+          <StatCard loading={loading} num={stats.overdue}                               label="Overdue"          color="#E50019" bg="rgba(240, 97, 116, 0.12)"   icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>} />
+          <StatCard loading={loading} num={stats.paid}                                  label="Paid This Month"  color="#198754" bg="rgba(25,135,84,0.12)"   icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><polyline points="20 6 9 17 4 12"/></svg>} />
+          <StatCard loading={loading} num={`₱${stats.collected.toLocaleString()}`}      label="Total Collected"  color="#114B9F" bg="rgba(59, 124, 216, 0.12)"   icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>} />
         </div>
 
         {/* Tabs */}
         <div className="tab-bar">
-          {TABS.map(t => (
-            <div key={t.filter} className={`tab${activeTab === t.filter ? ' active' : ''}`} onClick={() => setActiveTab(t.filter)}>
-              {t.label} <span className="tab-count">{t.count}</span>
-            </div>
-          ))}
+          {TABS.map(t => {
+            const isActive = activeTab === t.filter;
+            return (
+              <div
+                key={t.filter}
+                className={`tab${isActive ? ' active' : ''}`}
+                style={{ borderBottomColor: isActive ? t.color : 'transparent', color: isActive ? t.color : undefined }}
+                onClick={() => setActiveTab(t.filter)}
+              >
+                {t.label} <span className="tab-count" style={{ color: isActive ? t.color : undefined }}>{t.count}</span>
+              </div>
+            );
+          })}
         </div>
 
         {/* Toolbar */}

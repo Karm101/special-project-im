@@ -462,12 +462,12 @@ export default function NewRequestPage() {
             {/* Summary sidebar */}
             <div style={{ position: 'sticky', top: 'calc(var(--topbar-h) + 28px)', height: 'fit-content', display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div className="drms-card" style={{ padding: 20 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy)', marginBottom: 14 }}>Request Summary</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 14 }}>Request Summary</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Form Type</span><span style={{ fontWeight: 600 }}>{form.formType}</span></div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Level</span><span style={{ fontWeight: 600 }}>{form.academicLevel}</span></div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Mode</span><span style={{ fontWeight: 600 }}>{form.submissionMode}</span></div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Requester</span><span style={{ fontWeight: 600 }}>{form.firstName || '—'} {form.lastName}</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Form Type</span><span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{form.formType}</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Level</span><span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{form.academicLevel}</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Mode</span><span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{form.submissionMode}</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Requester</span><span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{form.firstName || '—'} {form.lastName}</span></div>
                 </div>
               </div>
               <div className="info-box">
@@ -517,7 +517,7 @@ export default function NewRequestPage() {
                               onChange={e => setCopies(dt.document_type_id, Number(e.target.value))}
                               disabled={!isChecked}
                             />
-                            <span style={{ color: 'var(--mid-gray)' }}>copies</span>
+                            <span style={{ color: 'var(--text-primary)' }}>copies</span>
                           </div>
                         )}
                       </div>
@@ -536,7 +536,7 @@ export default function NewRequestPage() {
             {/* Summary sidebar */}
             <div style={{ position: 'sticky', top: 'calc(var(--topbar-h) + 24px)', display: 'flex', flexDirection: 'column', gap: 12, height: 'fit-content' }}>
               <div className="drms-card" style={{ padding: 18 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy)', marginBottom: 10 }}>Selected Documents</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 10 }}>Selected Documents</div>
                 <div style={{ fontSize: 12, color: 'var(--navy)' }}>
                   {form.selectedDocs.length === 0 ? (
                     <div style={{ color: 'var(--mid-gray)', fontStyle: 'italic' }}>No documents selected</div>
@@ -633,15 +633,15 @@ export default function NewRequestPage() {
             {/* Final summary sidebar */}
             <div style={{ position: 'sticky', top: 'calc(var(--topbar-h) + 24px)', display: 'flex', flexDirection: 'column', gap: 12, height: 'fit-content' }}>
               <div className="drms-card" style={{ padding: 18 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy)', marginBottom: 10 }}>Request Summary</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 10 }}>Request Summary</div>
                 <div style={{ fontSize: 12, display: 'flex', flexDirection: 'column', gap: 7 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Form Type</span><span style={{ fontWeight: 600 }}>{form.formType}</span></div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Requester</span><span style={{ fontWeight: 600 }}>{form.lastName}, {form.firstName}</span></div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Documents</span><span style={{ fontWeight: 600 }}>{form.selectedDocs.length} item(s)</span></div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Processing</span><span style={{ fontWeight: 600 }}>{maxDays} working days</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Form Type</span><span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{form.formType}</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Requester</span><span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{form.lastName}, {form.firstName}</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Documents</span><span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{form.selectedDocs.length} item(s)</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Processing</span><span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{maxDays} working days</span></div>
                   <div style={{ height: 1, background: 'rgba(0,0,0,.06)' }} />
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Amount Due</span><span style={{ fontWeight: 800, color: '#B1B1B1' }}>Set at Treasury</span></div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Expected Claim</span><span style={{ fontWeight: 600 }}>{expectedClaim}</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Amount Due</span><span style={{ fontWeight: 800, color: 'var(--mid-gray)' }}>Set at Treasury</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Expected Claim</span><span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{expectedClaim}</span></div>
                 </div>
               </div>
               <div className="info-box warn">

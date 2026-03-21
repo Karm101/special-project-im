@@ -253,13 +253,13 @@ export default function DashboardPage() {
   const StatCard = ({ borderColor, num, numColor, label, bg, icon }: {
     borderColor: string; num: number; numColor: string; label: string; bg: string; icon: React.ReactNode;
   }) => (
-    <div style={{ background: 'white', borderRadius: 10, padding: 18, border: '1px solid rgba(0,0,0,.06)', borderBottom: `3px solid ${borderColor}` }}>
+    <div style={{ background: 'var(--surface)', borderRadius: 10, padding: 18, border: '1px solid var(--border-col)', borderBottom: `3px solid ${borderColor}` }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
         <div>
           <div style={{ fontSize: 26, fontWeight: 800, color: numColor }}>{loading ? '—' : num}</div>
-          <div style={{ fontSize: 12, color: '#B1B1B1' }}>{label}</div>
+          <div style={{ fontSize: 12, color: 'var(--mid-gray)' }}>{label}</div>
         </div>
-        <div style={{ width: 36, height: 36, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: bg }}>
+        <div style={{ width: 36, height: 36, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: bg, color: numColor }}>
           {icon}
         </div>
       </div>
@@ -288,17 +288,17 @@ export default function DashboardPage() {
         {/* Stat cards */}
         {isCollege ? (
           <div className="stat-grid stat-grid-4">
-            <StatCard borderColor="#001C43" num={stats.tor}      numColor="#001C43" label="TOR Requests"         bg="#EEF4FB" icon={<svg viewBox="0 0 24 24" fill="none" stroke="#001C43" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:20,height:20}}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>} />
-            <StatCard borderColor="#E50019" num={stats.hd}       numColor="#E50019" label="Honorable Dismissal"  bg="#FEEAEA" icon={<svg viewBox="0 0 24 24" fill="none" stroke="#E50019" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:20,height:20}}><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>} />
-            <StatCard borderColor="#FFA323" num={stats.pending}  numColor="#FFA323" label="Pending Verification"  bg="#FFF8E1" icon={<svg viewBox="0 0 24 24" fill="none" stroke="#FFA323" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:20,height:20}}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>} />
-            <StatCard borderColor="#198754" num={stats.released} numColor="#198754" label="Released This Month"   bg="#EAFAF1" icon={<svg viewBox="0 0 24 24" fill="none" stroke="#198754" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:20,height:20}}><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>} />
+            <StatCard borderColor="#114B9F" num={stats.tor}      numColor="#114B9F" label="TOR Requests"         bg="rgba(200, 206, 214, 0.12)" icon={<svg viewBox="0 0 24 24" fill="none" stroke="#114B9F" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:20,height:20}}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>} />
+            <StatCard borderColor="#E50019" num={stats.hd}       numColor="#E50019" label="Honorable Dismissal"  bg="rgba(240, 97, 116, 0.12)" icon={<svg viewBox="0 0 24 24" fill="none" stroke="#E50019" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:20,height:20}}><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>} />
+            <StatCard borderColor="#FFA323" num={stats.pending}  numColor="#FFA323" label="Pending Verification"  bg="rgba(255,163,35,0.12)" icon={<svg viewBox="0 0 24 24" fill="none" stroke="#FFA323" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:20,height:20}}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>} />
+            <StatCard borderColor="#198754" num={stats.released} numColor="#198754" label="Released This Month"   bg="rgba(25,135,84,0.12)" icon={<svg viewBox="0 0 24 24" fill="none" stroke="#198754" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:20,height:20}}><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>} />
           </div>
         ) : (
           <div className="stat-grid stat-grid-4">
-            <StatCard borderColor="#001C43" num={stats.sf9}      numColor="#001C43" label="SF9 Requests"          bg="#EEF4FB" icon={<svg viewBox="0 0 24 24" fill="none" stroke="#001C43" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:20,height:20}}><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>} />
-            <StatCard borderColor="#114B9F" num={stats.sf10}     numColor="#114B9F" label="SF10 Requests"          bg="#EBF5FB" icon={<svg viewBox="0 0 24 24" fill="none" stroke="#114B9F" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:20,height:20}}><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>} />
-            <StatCard borderColor="#FFA323" num={stats.pending}  numColor="#FFA323" label="Pending Verification"   bg="#FFF8E1" icon={<svg viewBox="0 0 24 24" fill="none" stroke="#FFA323" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:20,height:20}}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>} />
-            <StatCard borderColor="#198754" num={stats.released} numColor="#198754" label="Released This Month"    bg="#EAFAF1" icon={<svg viewBox="0 0 24 24" fill="none" stroke="#198754" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:20,height:20}}><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>} />
+            <StatCard borderColor="#001C43" num={stats.sf9}      numColor="#114B9F" label="SF9 Requests"          bg="rgba(17,75,159,0.12)" icon={<svg viewBox="0 0 24 24" fill="none" stroke="#001C43" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:20,height:20}}><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>} />
+            <StatCard borderColor="#E50019" num={stats.sf10}     numColor="#E50019" label="SF10 Requests"          bg="rgba(240, 97, 116, 0.12)" icon={<svg viewBox="0 0 24 24" fill="none" stroke="#E50019" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:20,height:20}}><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>} />
+            <StatCard borderColor="#FFA323" num={stats.pending}  numColor="#FFA323" label="Pending Verification"   bg="rgba(255,163,35,0.12)" icon={<svg viewBox="0 0 24 24" fill="none" stroke="#FFA323" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:20,height:20}}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>} />
+            <StatCard borderColor="#198754" num={stats.released} numColor="#198754" label="Released This Month"    bg="rgba(25,135,84,0.12)" icon={<svg viewBox="0 0 24 24" fill="none" stroke="#198754" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:20,height:20}}><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>} />
           </div>
         )}
 

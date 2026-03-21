@@ -181,7 +181,7 @@ export default function NotificationsPage() {
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <div>
-            <div className="page-heading" style={{ fontSize: 24, fontWeight: 800, color: 'var(--navy)' }}>
+            <div className="page-heading" style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)' }}>
               Notifications
             </div>
             <div className="page-sub" style={{ fontSize: 14, color: 'var(--mid-gray)' }}>

@@ -26,6 +26,24 @@ function formatDate(d: string | null) {
   return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+function StatCard({ num, label, color, bg, icon, loading }: {
+  num: string | number; label: string; color: string; bg: string; icon: React.ReactNode; loading: boolean;
+}) {
+  return (
+    <div style={{ background: 'var(--surface)', borderRadius: 10, padding: 18, border: '1px solid var(--border-col)', borderBottom: `3px solid ${color}` }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+        <div>
+          <div style={{ fontSize: 26, fontWeight: 800, color }}>{loading ? '—' : num}</div>
+          <div style={{ fontSize: 12, color: 'var(--mid-gray)' }}>{label}</div>
+        </div>
+        <div style={{ width: 36, height: 36, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: bg, color }}>
+          {icon}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function getSlipStatus(slip: ApiClaimSlip): {
   label: string; badgeCls: string;
   daysLabel: string; daysColor: string;
@@ -36,7 +54,7 @@ function getSlipStatus(slip: ApiClaimSlip): {
     return {
       label: 'Claimed', badgeCls: 'b-done',
       daysLabel: 'Claimed', daysColor: '#198754',
-      rowBg: undefined, expiryColor: '#B1B1B1',
+      rowBg: undefined, expiryColor: 'var(--mid-gray)',
       actionLabel: 'View', actionCls: 'btn-outline btn-sm',
     };
   }
@@ -52,14 +70,14 @@ function getSlipStatus(slip: ApiClaimSlip): {
     return {
       label: 'Expiring Soon', badgeCls: 'b-rev',
       daysLabel: `${slip.days_remaining} day${slip.days_remaining !== 1 ? 's' : ''}`, daysColor: '#FFA323',
-      rowBg: '#FFFBF0', expiryColor: '#FFA323',
+      rowBg: 'rgba(255,163,35,0.06)', expiryColor: '#FFA323',
       actionLabel: 'Send Reminder', actionCls: 'btn-red btn-sm',
     };
   }
   return {
     label: 'Awaiting Claim', badgeCls: 'b-rel',
     daysLabel: `${slip.days_remaining} days`, daysColor: '#198754',
-    rowBg: undefined, expiryColor: '#B1B1B1',
+    rowBg: undefined, expiryColor: 'var(--mid-gray)',
     actionLabel: 'Mark Claimed', actionCls: 'btn-outline btn-sm',
   };
 }
@@ -167,11 +185,11 @@ export default function ClaimSlipsPage() {
 
   // ── Tab definitions ───────────────────────────────────────────────────────
   const TABS = [
-    { label: 'All',            filter: 'all',      count: slips.length   },
-    { label: 'Awaiting Claim', filter: 'awaiting', count: stats.awaiting },
-    { label: 'Expiring Soon',  filter: 'expiring', count: stats.expiring },
-    { label: 'Expired',        filter: 'expired',  count: stats.expired  },
-    { label: 'Claimed',        filter: 'claimed',  count: stats.claimed  },
+    { label: 'All',            filter: 'all',      count: slips.length,   color: '#7eb3ff' },
+    { label: 'Awaiting Claim', filter: 'awaiting', count: stats.awaiting, color: '#7eb3ff' },
+    { label: 'Expiring Soon',  filter: 'expiring', count: stats.expiring, color: '#FFA323' },
+    { label: 'Expired',        filter: 'expired',  count: stats.expired,  color: '#ff7a7a' },
+    { label: 'Claimed',        filter: 'claimed',  count: stats.claimed,  color: '#4ade80' },
   ];
 
   // ── Filter rows ───────────────────────────────────────────────────────────
@@ -229,19 +247,27 @@ export default function ClaimSlipsPage() {
 
         {/* Stat cards */}
         <div className="stat-grid stat-grid-4">
-          <div className="stat-card c-green"><div className="stat-top"><div><div className="stat-num c-green">{loading ? '—' : stats.claimed}</div><div className="stat-label">Claimed</div></div><div className="stat-icon" style={{ background: '#EAFAF1', color: '#198754' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div></div></div>
-          <div className="stat-card c-navy"><div className="stat-top"><div><div className="stat-num c-navy">{loading ? '—' : stats.awaiting}</div><div className="stat-label">Awaiting Claim</div></div><div className="stat-icon" style={{ background: '#EEF4FB', color: '#001C43' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}><path d="M4 3l1.5 1.5L7 3l1.5 1.5L10 3l1.5 1.5L13 3l1.5 1.5L16 3l1.5 1.5L19 3v16l-1.5-1.5L16 19l-1.5 1.5L13 19l-1.5 1.5L10 19l-1.5 1.5L7 19l-1.5 1.5L4 19V3z"/></svg></div></div></div>
-          <div className="stat-card c-orange"><div className="stat-top"><div><div className="stat-num c-orange">{loading ? '—' : stats.expiring}</div><div className="stat-label">Expiring in 7 days</div></div><div className="stat-icon" style={{ background: '#FFF8E1', color: '#FFA323' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div></div></div>
-          <div className="stat-card c-red"><div className="stat-top"><div><div className="stat-num c-red">{loading ? '—' : stats.expired}</div><div className="stat-label">Expired</div></div><div className="stat-icon" style={{ background: '#FEEAEA', color: '#E50019' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></div></div></div>
+          <StatCard loading={loading} num={stats.claimed}  label="Claimed"           color="#198754" bg="rgba(25,135,84,0.12)"  icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>} />
+          <StatCard loading={loading} num={stats.awaiting} label="Awaiting Claim"    color="#114B9F" bg="rgba(17,75,159,0.12)"  icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><path d="M4 3l1.5 1.5L7 3l1.5 1.5L10 3l1.5 1.5L13 3l1.5 1.5L16 3l1.5 1.5L19 3v16l-1.5-1.5L16 19l-1.5 1.5L13 19l-1.5 1.5L10 19l-1.5 1.5L7 19l-1.5 1.5L4 19V3z"/></svg>} />
+          <StatCard loading={loading} num={stats.expiring} label="Expiring in 7 days" color="#FFA323" bg="rgba(255,163,35,0.12)" icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>} />
+          <StatCard loading={loading} num={stats.expired}  label="Expired"           color="#E50019" bg="rgba(240, 97, 116, 0.12)"   icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>} />
         </div>
 
         {/* Tabs */}
         <div className="tab-bar">
-          {TABS.map(t => (
-            <div key={t.filter} className={`tab${activeTab === t.filter ? ' active' : ''}`} onClick={() => setActiveTab(t.filter)}>
-              {t.label} <span className="tab-count">{t.count}</span>
-            </div>
-          ))}
+          {TABS.map(t => {
+            const isActive = activeTab === t.filter;
+            return (
+              <div
+                key={t.filter}
+                className={`tab${isActive ? ' active' : ''}`}
+                style={{ borderBottomColor: isActive ? t.color : 'transparent', color: isActive ? t.color : undefined }}
+                onClick={() => setActiveTab(t.filter)}
+              >
+                {t.label} <span className="tab-count" style={{ color: isActive ? t.color : undefined }}>{t.count}</span>
+              </div>
+            );
+          })}
         </div>
 
         {/* Toolbar */}
@@ -264,14 +290,14 @@ export default function ClaimSlipsPage() {
             </div>
             <div className="search-box" style={{ minWidth: 320 }}>
               <input type="text" placeholder="Search by name, request ID, or claim slip..." value={search} onChange={e => setSearch(e.target.value)} />
-              <Search size={13} color="#B1B1B1" />
+              <Search size={13} color="var(--mid-gray)" />
             </div>
           </div>
         </div>
 
         {/* Loading */}
         {loading && (
-          <div style={{ textAlign: 'center', padding: 60, color: '#B1B1B1', fontSize: 14 }}>
+          <div style={{ textAlign: 'center', padding: 60, color: 'var(--mid-gray)', fontSize: 14 }}>
             Loading claim slips...
           </div>
         )}
@@ -307,7 +333,7 @@ export default function ClaimSlipsPage() {
                       <td><span className="req-id">{slipId}</span></td>
                       <td>#{reqId}</td>
                       <td>{requester}</td>
-                      <td style={{ color: '#B1B1B1' }}>{formatDate(s.issued_date)}</td>
+                      <td style={{ color: 'var(--mid-gray)' }}>{formatDate(s.issued_date)}</td>
                       <td style={{ color: slipStatus.expiryColor, fontWeight: 700 }}>{formatDate(s.expiry_date)}</td>
                       <td style={{ color: slipStatus.daysColor, fontWeight: 700 }}>{slipStatus.daysLabel}</td>
                       <td><span className={`badge ${slipStatus.badgeCls}`}>{slipStatus.label}</span></td>
@@ -335,7 +361,7 @@ export default function ClaimSlipsPage() {
                 })}
                 {pagedRows.length === 0 && (
                   <tr>
-                    <td colSpan={8} style={{ textAlign: 'center', padding: 24, color: '#B1B1B1', fontSize: 13 }}>
+                    <td colSpan={8} style={{ textAlign: 'center', padding: 24, color: 'var(--mid-gray)', fontSize: 13 }}>
                       No claim slips found.
                     </td>
                   </tr>
@@ -351,15 +377,15 @@ export default function ClaimSlipsPage() {
       {modal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           onClick={() => setModal(null)}>
-          <div style={{ background: 'white', borderRadius: 12, padding: 28, width: 380, boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}
+          <div style={{ background: 'var(--surface)', borderRadius: 12, padding: 28, width: 380, boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}
             onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: 16, fontWeight: 800, color: '#001C43', marginBottom: 6 }}>Mark as Claimed</div>
-            <div style={{ fontSize: 13, color: '#B1B1B1', marginBottom: 20 }}>
+            <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 6 }}>Mark as Claimed</div>
+            <div style={{ fontSize: 13, color: 'var(--mid-gray)', marginBottom: 20 }}>
               Enter the name of the person claiming the documents. Leave blank if the student claimed personally.
             </div>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ fontSize: 11, fontWeight: 700, color: '#555', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 5 }}>
-                Claimed By <span style={{ color: '#B1B1B1', fontWeight: 400, textTransform: 'none' }}>(optional)</span>
+              <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--mid-gray)', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 5 }}>
+                Claimed By <span style={{ color: 'var(--mid-gray)', fontWeight: 400, textTransform: 'none' }}>(optional)</span>
               </label>
               <input
                 className="drms-input"

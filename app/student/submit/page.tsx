@@ -4,6 +4,27 @@ import { useState, useEffect, useMemo } from 'react';
 import { useAuthGuard } from '../../../hooks/useAuthGuard';
 import { useRouter } from 'next/navigation';
 
+// ── Inline theme toggle ───────────────────────────────────────────────────────
+function PubThemeToggle() {
+  const [isDark, setIsDark] = useState(false);
+  useEffect(() => { setIsDark(document.documentElement.getAttribute('data-theme') === 'dark'); }, []);
+  function toggle() {
+    const next = isDark ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('drms_theme', next);
+    setIsDark(!isDark);
+  }
+  return (
+    <button onClick={toggle} title={isDark ? 'Light Mode' : 'Dark Mode'}
+      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', cursor: 'pointer', flexShrink: 0 }}>
+      {isDark
+        ? <svg viewBox="0 0 24 24" fill="none" stroke="#FFA323" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 15, height: 15 }}><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        : <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 15, height: 15 }}><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      }
+    </button>
+  );
+}
+
 type DocType = {
   document_type_id: number;
   document_name: string;
@@ -183,6 +204,7 @@ export default function StudentSubmitPage() {
           <div className="pub-sub">Online Document Request</div>
         </div>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 12, alignItems: 'center' }}>
+          <PubThemeToggle />
           <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, cursor: 'pointer' }} onClick={() => router.push('/student/track')}>
             Track My Request
           </span>
@@ -212,7 +234,7 @@ export default function StudentSubmitPage() {
         {/* ── STEP 1: Request Details ── */}
         {step === 1 && (
           <div className="drms-card" style={{ padding: 28 }}>
-            <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--navy)', marginBottom: 4 }}>Document Request Form</div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 4 }}>Document Request Form</div>
             <div style={{ fontSize: 13, color: 'var(--mid-gray)', marginBottom: 24 }}>Fill in the form below to submit your document request to the Registrar's Office.</div>
 
             {/* ── Enrollment status — drives form type automatically ── */}
@@ -343,7 +365,7 @@ export default function StudentSubmitPage() {
                         {sel && (
                           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }} onClick={e => e.stopPropagation()}>
                             <input type="number" value={sel.copies} min={1} max={10}
-                              style={{ width: 48, padding: '4px 6px', fontSize: 12, border: '1px solid var(--mid-gray)', borderRadius: 6 }}
+                              style={{ width: 48, padding: '4px 6px', fontSize: 12, border: '1px solid var(--border-col)', borderRadius: 6 }}
                               onChange={e => setCopies(dt.document_type_id, Number(e.target.value))} />
                             <span style={{ color: 'var(--mid-gray)' }}>copies</span>
                           </div>
@@ -371,7 +393,7 @@ export default function StudentSubmitPage() {
             <div style={{ marginBottom: 20 }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', textTransform: 'none', letterSpacing: 0, marginBottom: 12 }}>
                 <input type="checkbox" style={{ width: 16, height: 16, accentColor: 'var(--navy)' }} checked={hasRep} onChange={e => setHasRep(e.target.checked)} />
-                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--navy)' }}>Someone else will claim on my behalf (Authorized Representative)</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Someone else will claim on my behalf (Authorized Representative)</span>
               </label>
               <div style={{ opacity: hasRep ? 1 : 0.4, pointerEvents: hasRep ? 'auto' : 'none' }}>
                 <div className="form-grid">
@@ -396,7 +418,7 @@ export default function StudentSubmitPage() {
         {/* ── STEP 2: Review ── */}
         {step === 2 && (
           <div className="drms-card" style={{ padding: 28 }}>
-            <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--navy)', marginBottom: 4 }}>Review Your Request</div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 4 }}>Review Your Request</div>
             <div style={{ fontSize: 13, color: 'var(--mid-gray)', marginBottom: 20 }}>Please confirm all details before submitting.</div>
 
             <div className="info-box" style={{ marginBottom: 20 }}>

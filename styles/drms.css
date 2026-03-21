@@ -806,14 +806,15 @@ div:hover > .sb-tooltip { opacity: 1 !important; }
    ═══════════════════════════════════════════════════════════════════ */
 [data-theme="dark"] {
   --bg-base:    #0f1117;
-  --bg-nav:     #1a1d27;
-  --surface:    #1a1d27;
-  --surface-2:  #252839;
+  --bg-nav:     #151929;
+  --surface:    #1c2236;
+  --surface-2:  #252e45;
   --text-primary: #dde1ed;
   --mid-gray:   #8890a4;
-  --light-gray: #252839;
+  --light-gray: #252e45;
   --border-col: rgba(255,255,255,0.07);
   --shadow-card: 0 4px 24px rgba(0,0,0,0.55);
+  --shs-bar-color: #ff7a7a;
 }
 
 /* ── Layout ── */
@@ -1029,7 +1030,7 @@ div:hover > .sb-tooltip { opacity: 1 !important; }
 
 /* Stat icon background override — !important beats inline styles */
 [data-theme="dark"] .stat-icon {
-  background: rgba(255,255,255,0.07) !important;
+  background: rgba(255,255,255,0.07);
 }
 
 /* Notif icon wrap — use subtle dark tint instead of bright pastel */
@@ -1148,3 +1149,101 @@ div:hover > .sb-tooltip { opacity: 1 !important; }
 [data-theme="dark"] div[style*="background: 'transparent'"] {
   color: var(--text-primary);
 }
+
+/* ── Sidebar active state in dark mode ─────────────────────────────── */
+[data-theme="dark"] .sb-nav-active {
+  background: rgba(125,179,255,0.15) !important;
+}
+[data-theme="dark"] .sb-nav-active span { color: white !important; }
+
+/* ── Force light mode on public/login pages ────────────────────────── */
+/* Login pages reset all variables back to light */
+.force-light-mode,
+.force-light-mode * {
+  --bg-base:      #F3F3F3;
+  --bg-nav:       #FCFCFC;
+  --surface:      #ffffff;
+  --surface-2:    #F5F5F5;
+  --text-primary: #001C43;
+  --mid-gray:     #B1B1B1;
+  --light-gray:   #F5F5F5;
+  --border-col:   rgba(0,0,0,0.06);
+}
+
+/* ── Filter button visibility in dark mode ─────────────────────────── */
+[data-theme="dark"] .btn-filter svg,
+[data-theme="dark"] .btn-filter svg * {
+  stroke: var(--text-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+/* ── Stat icon — specifically override navy icon color in dark mode ── */
+[data-theme="dark"] .stat-icon {
+  background: rgba(255,255,255,0.08);
+}
+/* Navy-colored icons become light blue in dark mode */
+[data-theme="dark"] .c-navy .stat-icon { color: #7eb3ff !important; }
+
+/* ── Generic inline color: #001C43 used as text/icon ─────────────── */
+/* removed: was overriding inline color on stat-card children */
+
+/* ── Breakdown bar backgrounds (reports, clearance progress) ──────── */
+[data-theme="dark"] .breakdown-bar-bg { background: var(--surface-2) !important; }
+
+/* ── Clearance search box padding fix ─────────────────────────────── */
+[data-theme="dark"] .clearance-search-wrap { padding: 10px 12px; }
+
+/* ── Reports inline chart text/lines ──────────────────────────────── */
+[data-theme="dark"] .reports-chart-label { color: var(--text-primary) !important; }
+
+/* ── Filter button full dark mode fix ─────────────────────────────── */
+[data-theme="dark"] .btn-filter {
+  background: var(--surface-2) !important;
+  border-color: var(--border-col) !important;
+}
+[data-theme="dark"] .btn-filter:hover {
+  background: rgba(255,255,255,0.1) !important;
+}
+[data-theme="dark"] .btn-filter svg {
+  stroke: var(--text-primary) !important;
+}
+
+/* ── Reports SVG icons — force currentColor inheritance ───────────── */
+[data-theme="dark"] .stat-card svg {
+  stroke: currentColor !important;
+}
+[data-theme="dark"] .stat-card .stat-icon {
+  color: inherit;
+}
+/* Specifically navy-colored icons get lighter stroke in dark */
+[data-theme="dark"] .stat-card.c-navy .stat-icon svg { stroke: #7eb3ff !important; }
+[data-theme="dark"] .stat-card.c-blue .stat-icon svg { stroke: #7eb3ff !important; }
+
+/* ── Search icon (lucide Search) in dark mode ─────────────────────── */
+[data-theme="dark"] .search-box svg { stroke: var(--mid-gray) !important; }
+
+/* ── Notif icon wrap — ensure emoji shows without bright bg ──────── */
+[data-theme="dark"] .notif-icon-wrap { 
+  background: var(--surface-2) !important; 
+}
+
+/* ── SHS bar color variable (light/dark) ──────────────────────────── */
+:root { --shs-bar-color: #E50019; }
+
+/* ── Consistent inactive tab label in dark mode ───────────────────── */
+[data-theme="dark"] .tab { color: var(--mid-gray); }
+/* Active tab label color is handled inline in each page's JSX */
+
+/* ── Reports StatCard icon dark mode overrides ─────────────────────── */
+/* navy/blue cards use light blue in dark mode */
+[data-theme="dark"] .stat-card.c-navy .stat-icon { color: #7eb3ff !important; }
+[data-theme="dark"] .stat-card.c-blue .stat-icon { color: #7eb3ff !important; }
+/* green stays green but lighter */
+[data-theme="dark"] .stat-card.c-green .stat-icon { color: #4ade80 !important; }
+/* orange stays orange */
+[data-theme="dark"] .stat-card.c-orange .stat-icon { color: #FFA323 !important; }
+/* red stays red but lighter */
+[data-theme="dark"] .stat-card.c-red .stat-icon { color: #ff7a7a !important; }
+/* purple (SHS) - lighter purple */
+[data-theme="dark"] .stat-card [style*="color: #6D4DF5"] { color: #9b85f5 !important; }
+[data-theme="dark"] .stat-card [style*="color: rgb(109, 77, 245)"] { color: #9b85f5 !important; }

@@ -3,6 +3,27 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
+// ── Inline theme toggle ───────────────────────────────────────────────────────
+function PubThemeToggle() {
+  const [isDark, setIsDark] = useState(false);
+  useEffect(() => { setIsDark(document.documentElement.getAttribute('data-theme') === 'dark'); }, []);
+  function toggle() {
+    const next = isDark ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('drms_theme', next);
+    setIsDark(!isDark);
+  }
+  return (
+    <button onClick={toggle} title={isDark ? 'Light Mode' : 'Dark Mode'}
+      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', cursor: 'pointer', flexShrink: 0 }}>
+      {isDark
+        ? <svg viewBox="0 0 24 24" fill="none" stroke="#FFA323" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 15, height: 15 }}><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        : <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 15, height: 15 }}><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      }
+    </button>
+  );
+}
+
 // ── API types ─────────────────────────────────────────────────────────────────
 type StatusLog = {
   log_id: number;
@@ -240,6 +261,8 @@ export default function StudentTrackPage() {
             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
           >Submit a Request</span>
           <div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.3)', margin: '0 4px' }} />
+          <PubThemeToggle />
+          <div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.3)', margin: '0 4px' }} />
           <span
             style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13, cursor: 'pointer', padding: '8px 16px', borderRadius: 6, transition: 'background .15s' }}
             onClick={() => router.back()}
@@ -255,7 +278,7 @@ export default function StudentTrackPage() {
           <div style={{ marginTop: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
               <div>
-                <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--navy)', fontFamily: "'Montserrat',sans-serif" }}>
+                <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', fontFamily: "'Montserrat',sans-serif" }}>
                   My Requests
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--mid-gray)', marginTop: 2 }}>
@@ -328,7 +351,7 @@ export default function StudentTrackPage() {
 
                       {/* Docs */}
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--navy)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {docs}
                         </div>
                         <div style={{ fontSize: 11, color: 'var(--mid-gray)', marginTop: 2 }}>
@@ -442,7 +465,7 @@ export default function StudentTrackPage() {
                         {stageType === 'done' ? '✓' : stageType === 'active' ? '…' : stage.num}
                       </div>
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: stageType === 'pending' ? 'var(--mid-gray)' : 'var(--navy)' }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: stageType === 'pending' ? 'var(--mid-gray)' : 'var(--text-primary)' }}>
                           {stage.name}
                         </div>
                         {log && (
@@ -450,7 +473,7 @@ export default function StudentTrackPage() {
                             {formatDateTime(log.timestamp)}
                           </div>
                         )}
-                        <div style={{ fontSize: 12, color: stageType === 'pending' ? 'var(--mid-gray)' : '#444', marginTop: 4, lineHeight: 1.5 }}>
+                        <div style={{ fontSize: 12, color: stageType === 'pending' ? 'var(--mid-gray)' : 'var(--text-primary)', marginTop: 4, lineHeight: 1.5 }}>
                           {desc}
                           {/* Show payment info on billing stage */}
                           {stage.num === 3 && stageType === 'done' && data.payment_info?.official_receipt_no && (
@@ -468,8 +491,8 @@ export default function StudentTrackPage() {
               </div>
 
               {/* Expected claim date */}
-              <div style={{ marginTop: 14, padding: 12, background: '#F0F4FF', borderRadius: 'var(--drms-radius-sm)' }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--navy)' }}>
+              <div style={{ marginTop: 14, padding: 12, background: 'rgba(125,179,255,0.08)', borderRadius: 'var(--drms-radius-sm)' }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}>
                   📅 Expected Claim Date: {formatDate(data.expected_claim_date)}
                 </div>
                 <div style={{ fontSize: 11, color: 'var(--mid-gray)', marginTop: 4 }}>

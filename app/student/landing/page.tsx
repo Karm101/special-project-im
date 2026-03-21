@@ -4,6 +4,32 @@ import { useState, useEffect } from 'react';
 import { useAuthGuard } from '../../../hooks/useAuthGuard';
 import { useRouter } from 'next/navigation';
 
+// ── Inline theme toggle for public pages ──────────────────────────────────────
+function PubThemeToggle() {
+  const [isDark, setIsDark] = useState(false);
+  useEffect(() => {
+    setIsDark(document.documentElement.getAttribute('data-theme') === 'dark');
+  }, []);
+  function toggle() {
+    const next = isDark ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('drms_theme', next);
+    setIsDark(!isDark);
+  }
+  return (
+    <button
+      onClick={toggle}
+      title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', cursor: 'pointer', flexShrink: 0 }}
+    >
+      {isDark
+        ? <svg viewBox="0 0 24 24" fill="none" stroke="#FFA323" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 15, height: 15 }}><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        : <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 15, height: 15 }}><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      }
+    </button>
+  );
+}
+
 export default function StudentLandingPage() {
   const router = useRouter();
   useAuthGuard('student');
@@ -42,6 +68,7 @@ export default function StudentLandingPage() {
           <div className="pub-sub">Document Request Portal</div>
         </div>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 12, alignItems: 'center' }}>
+          <PubThemeToggle />
           {studentName && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 12, fontWeight: 700 }}>
@@ -96,7 +123,7 @@ export default function StudentLandingPage() {
         <div className="landing-grid">
           <div className="landing-card" onClick={() => router.push('/student/submit')}>
             <div className="landing-icon" style={{ background: 'rgba(17,75,159,0.12)' }}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="#001C43" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 36, height: 36 }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 36, height: 36 }}>
                 <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
                 <polyline points="14 2 14 8 20 8"/>
                 <line x1="12" y1="18" x2="12" y2="12"/>
