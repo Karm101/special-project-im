@@ -66,7 +66,7 @@ export function Topbar({
   useEffect(() => {
     async function fetchUnread() {
       try {
-        const res = await fetch('${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/notifications/');
+        const res = await fetch('`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}`/api/notifications/');
         if (!res.ok) return;
         const data = await res.json();
         const notifs = data.results ?? data;

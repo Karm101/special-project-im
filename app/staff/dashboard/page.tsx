@@ -121,8 +121,8 @@ export default function DashboardPage() {
       setError(null);
       try {
         const [collegeRes, shsRes] = await Promise.all([
-          fetch('${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/requests/?academic_level=College'),
-          fetch('${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/requests/?academic_level=SHS'),
+          fetch('`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}`/api/requests/?academic_level=College'),
+          fetch('`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}`/api/requests/?academic_level=SHS'),
         ]);
         if (!collegeRes.ok || !shsRes.ok) throw new Error('API error');
         const collegeData = await collegeRes.json();

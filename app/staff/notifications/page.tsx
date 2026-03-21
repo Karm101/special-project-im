@@ -81,7 +81,7 @@ export default function NotificationsPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/notifications/');
+      const res = await fetch('`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}`/api/notifications/');
       if (!res.ok) throw new Error('API error');
       const data = await res.json();
       setNotifs(data.results ?? data);
@@ -95,7 +95,7 @@ export default function NotificationsPage() {
   // ── Mark single notification as read ─────────────────────────────────────
   async function markRead(id: number) {
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/notifications/${id}/mark_read/`, {
+      await fetch(``${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}`/api/notifications/${id}/mark_read/`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -114,7 +114,7 @@ export default function NotificationsPage() {
       const unread = notifs.filter(n => !n.is_read);
       await Promise.all(
         unread.map(n =>
-          fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/notifications/${n.notification_id}/mark_read/`, {
+          fetch(``${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}`/api/notifications/${n.notification_id}/mark_read/`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
           })

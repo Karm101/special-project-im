@@ -53,7 +53,7 @@ export default function StudentLoginPage() {
     }
     setLoginLoading(true); setLoginError('');
     try {
-      const res = await fetch('${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/auth/student-login/', {
+      const res = await fetch('`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}`/api/auth/student-login/', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ student_number: loginNumber, password: loginPassword }),
       });
@@ -85,7 +85,7 @@ export default function StudentLoginPage() {
 
     setRegLoading(true); setRegError('');
     try {
-      const res = await fetch('${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/auth/student-register/', {
+      const res = await fetch('`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}`/api/auth/student-register/', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           student_number: reg.student_number, first_name: reg.first_name,

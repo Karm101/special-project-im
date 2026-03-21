@@ -52,7 +52,7 @@ export default function ProfilePage() {
     setPwLoading(true);
     try {
       const token = sessionStorage.getItem('auth_token');
-      const res = await fetch('${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/auth/staff-change-password/', {
+      const res = await fetch('`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}`/api/auth/staff-change-password/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

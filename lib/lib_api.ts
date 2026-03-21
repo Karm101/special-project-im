@@ -4,10 +4,10 @@
  * Place this file at: special-project-im/lib/api.ts
  *
  * All Next.js pages import from here instead of writing fetch() directly.
- * Base URL: ${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api
+ * Base URL: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}`/api
  */
 
-const BASE = "${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api";
+const BASE = "`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}`/api";
 
 async function apiFetch(path: string, options?: RequestInit) {
   const token =

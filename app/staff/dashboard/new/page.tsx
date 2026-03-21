@@ -101,7 +101,7 @@ export default function NewRequestPage() {
   useEffect(() => {
     async function fetchDocTypes() {
       try {
-        const res = await fetch('${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/document-types/');
+        const res = await fetch('`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}`/api/document-types/');
         if (!res.ok) throw new Error();
         const data = await res.json();
         setDocTypes(data.results ?? data);
@@ -151,7 +151,7 @@ export default function NewRequestPage() {
     setLookupError(null);
     setLookupResult(null);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/requesters/?search=${form.studentNumber}`);
+      const res = await fetch(``${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}`/api/requesters/?search=${form.studentNumber}`);
       if (!res.ok) throw new Error();
       const data = await res.json();
       const results: RequesterResult[] = data.results ?? data;
@@ -293,7 +293,7 @@ export default function NewRequestPage() {
         })),
       };
 
-      const res = await fetch('${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/requests/', {
+      const res = await fetch('`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}`/api/requests/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
