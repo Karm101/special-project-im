@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { API_BASE } from '@/lib/lib_api';
 
 // ── Replace with your MMCM campus photo ───────────────────────────────────────
 // To use a local photo: put the file in special-project-im/public/campus.jpg
