@@ -122,8 +122,8 @@ export default function DashboardPage() {
       setError(null);
       try {
         const [collegeRes, shsRes] = await Promise.all([
-          fetch('${API_BASE}/requests/?academic_level=College'),
-          fetch('${API_BASE}/requests/?academic_level=SHS'),
+          fetch(`${API_BASE}/requests/?academic_level=College`),
+          fetch(`${API_BASE}/requests/?academic_level=SHS`),
         ]);
         if (!collegeRes.ok || !shsRes.ok) throw new Error('API error');
         const collegeData = await collegeRes.json();

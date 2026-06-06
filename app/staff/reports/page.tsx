@@ -72,8 +72,8 @@ export default function ReportsPage() {
       try {
         // Fetch all requests (paginated — get up to 200)
         const [reqRes, payRes] = await Promise.all([
-          fetch('${API_BASE}/requests/?page_size=200'),
-          fetch('${API_BASE}/payments/?page_size=200'),
+          fetch(`${API_BASE}/requests/?page_size=200`),
+          fetch(`${API_BASE}/payments/?page_size=200`),
         ]);
         if (!reqRes.ok || !payRes.ok) throw new Error('API error');
         const reqData = await reqRes.json();

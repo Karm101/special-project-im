@@ -53,7 +53,7 @@ export default function StudentLoginPage() {
     }
     setLoginLoading(true); setLoginError('');
     try {
-      const res = await fetch('${API_BASE}/auth/student-login/', {
+      const res = await fetch(`${API_BASE}/auth/student-login/`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ student_number: loginNumber, password: loginPassword }),
       });
@@ -85,7 +85,7 @@ export default function StudentLoginPage() {
 
     setRegLoading(true); setRegError('');
     try {
-      const res = await fetch('${API_BASE}/auth/student-register/', {
+      const res = await fetch(`${API_BASE}/auth/student-register/`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           student_number: reg.student_number, first_name: reg.first_name,
