@@ -173,7 +173,7 @@ export default function StudentSubmitPage() {
         })),
       };
 
-      const res = await fetch('${API_BASE}/requests/', {
+      const res = await fetch(`${API_BASE}/requests/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

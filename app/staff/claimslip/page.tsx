@@ -114,7 +114,7 @@ export default function ClaimSlipsPage() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch('${API_BASE}/claimslips/');
+        const res = await fetch(`${API_BASE}/claimslips/`);
         if (!res.ok) throw new Error('API error');
         const data = await res.json();
         const rows: ApiClaimSlip[] = data.results ?? data;
@@ -165,7 +165,7 @@ export default function ClaimSlipsPage() {
         }),
       });
       if (!res.ok) throw new Error();
-      const refreshed = await fetch('${API_BASE}/claimslips/');
+      const refreshed = await fetch(`${API_BASE}/claimslips/`);
       const data = await refreshed.json();
       setSlips(data.results ?? data);
       setModal(null);

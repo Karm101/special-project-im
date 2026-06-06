@@ -81,7 +81,7 @@ export default function ClearancePage() {
       setError(null);
       try {
         // Get all requests filtered by RO-0004 form type
-        const res = await fetch('${API_BASE}/requests/?search=RO-0004');
+        const res = await fetch(`${API_BASE}/requests/?search=RO-0004`);
         if (!res.ok) throw new Error('API error');
         const data = await res.json();
         const all: ApiRequest[] = data.results ?? data;

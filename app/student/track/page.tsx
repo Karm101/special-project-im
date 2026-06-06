@@ -148,9 +148,7 @@ export default function StudentTrackPage() {
     setMyReqLoading(true);
     try {
       // Fetch requests where this student is the requester (server-side filtered)
-      const requesterRes = await fetch(
-        `${API_BASE}/requests/?student_number=${encodeURIComponent(number)}&page_size=100`
-      );
+      const requesterRes = await fetch(`${API_BASE}/requests/?student_number=${encodeURIComponent(number)}&page_size=100`);
 
       const requesterIds = new Set<number>();
       const tagMap = new Map<number, 'requester' | 'representative'>();

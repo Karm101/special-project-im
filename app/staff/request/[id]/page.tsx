@@ -515,7 +515,7 @@ export default function RequestPage() {
   useEffect(() => {
     async function fetchStaff() {
       try {
-        const res = await fetch('${API_BASE}/staff/');
+        const res = await fetch(`${API_BASE}/staff/`);
         if (!res.ok) return;
         const data = await res.json();
         setStaffList(data.results ?? data);
