@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Download } from 'lucide-react';
 import { Topbar } from '../../components/drms/Topbar';
+import { API_BASE } from '@/lib/lib_api';
 
 type ApiRequest = {
   request_id: number;
