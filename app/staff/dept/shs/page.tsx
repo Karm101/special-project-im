@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search } from 'lucide-react';
 import { Topbar } from '../../../components/drms/Topbar';
+import { API_BASE } from '@/lib/lib_api';
 
 type ApiRequest = {
   request_id: number;
@@ -64,7 +65,7 @@ export default function ShsDeptPage() {
     async function fetchData() {
       setLoading(true);
       try {
-        const res = await fetch('https://web-production-5905e.up.railway.app/api/requests/?academic_level=SHS');
+        const res = await fetch(`${API_BASE}/requests/?academic_level=SHS`);
         if (!res.ok) throw new Error();
         const data = await res.json();
         setRequests(data.results ?? data);

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Bell, ChevronDown, Sun, Moon } from 'lucide-react';
+import { API_BASE } from '@/lib/lib_api';
 
 interface BreadcrumbItem { label: string; href?: string; }
 
@@ -66,7 +67,7 @@ export function Topbar({
   useEffect(() => {
     async function fetchUnread() {
       try {
-        const res = await fetch('https://web-production-5905e.up.railway.app/api/notifications/');
+        const res = await fetch(`${API_BASE}/notifications/`);
         if (!res.ok) return;
         const data = await res.json();
         const notifs = data.results ?? data;

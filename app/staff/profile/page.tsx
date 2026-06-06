@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Topbar } from '../../components/drms/Topbar';
+import { API_BASE } from '@/lib/lib_api';
 
 export default function ProfilePage() {
   // ── Staff info from sessionStorage ────────────────────────────────────────
@@ -52,7 +53,7 @@ export default function ProfilePage() {
     setPwLoading(true);
     try {
       const token = sessionStorage.getItem('auth_token');
-      const res = await fetch('https://web-production-5905e.up.railway.app/api/auth/staff-change-password/', {
+      const res = await fetch(`${API_BASE}/auth/staff-change-password/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

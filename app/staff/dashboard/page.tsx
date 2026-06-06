@@ -6,6 +6,7 @@ import { Search } from 'lucide-react';
 import { Topbar } from '../../components/drms/Topbar';
 import { Pagination } from '../../components/drms/Pagination';
 import { FilterPanel } from '../../components/drms/FilterPanel';
+import { API_BASE } from '@/lib/lib_api';
 
 // ── API response type (matches DocumentRequestListSerializer) ─────────────
 type ApiRow = {
@@ -121,8 +122,8 @@ export default function DashboardPage() {
       setError(null);
       try {
         const [collegeRes, shsRes] = await Promise.all([
-          fetch('https://web-production-5905e.up.railway.app/api/requests/?academic_level=College'),
-          fetch('https://web-production-5905e.up.railway.app/api/requests/?academic_level=SHS'),
+          fetch('${API_BASE}/requests/?academic_level=College'),
+          fetch('${API_BASE}/requests/?academic_level=SHS'),
         ]);
         if (!collegeRes.ok || !shsRes.ok) throw new Error('API error');
         const collegeData = await collegeRes.json();

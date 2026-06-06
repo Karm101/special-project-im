@@ -6,6 +6,7 @@ import { Search } from 'lucide-react';
 import { Topbar } from '../../components/drms/Topbar';
 import { Pagination } from '../../components/drms/Pagination';
 import { FilterPanel } from '../../components/drms/FilterPanel';
+import { API_BASE } from '@/lib/lib_api';
 
 // ── API type ──────────────────────────────────────────────────────────────────
 type ApiClaimSlip = {
@@ -113,7 +114,7 @@ export default function ClaimSlipsPage() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch('https://web-production-5905e.up.railway.app/api/claimslips/');
+        const res = await fetch('${API_BASE}/claimslips/');
         if (!res.ok) throw new Error('API error');
         const data = await res.json();
         const rows: ApiClaimSlip[] = data.results ?? data;
@@ -124,7 +125,7 @@ export default function ClaimSlipsPage() {
         const reqMap: Record<number, any> = {};
         await Promise.all(
           uniqueIds.map(async id => {
-            const r = await fetch(`https://web-production-5905e.up.railway.app/api/requests/${id}/`);
+            const r = await fetch(`${API_BASE}/requests/${id}/`);
             if (r.ok) reqMap[id] = await r.json();
           })
         );
@@ -155,7 +156,7 @@ export default function ClaimSlipsPage() {
     setUpdating(modal.slipId);
     setModalError('');
     try {
-      const res = await fetch(`https://web-production-5905e.up.railway.app/api/claimslips/${modal.slipId}/`, {
+      const res = await fetch(`${API_BASE}/claimslips/${modal.slipId}/`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -164,7 +165,7 @@ export default function ClaimSlipsPage() {
         }),
       });
       if (!res.ok) throw new Error();
-      const refreshed = await fetch('https://web-production-5905e.up.railway.app/api/claimslips/');
+      const refreshed = await fetch('${API_BASE}/claimslips/');
       const data = await refreshed.json();
       setSlips(data.results ?? data);
       setModal(null);

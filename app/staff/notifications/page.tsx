@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Topbar } from '../../components/drms/Topbar';
+import { API_BASE } from '@/lib/lib_api';
 
 // ── API type ──────────────────────────────────────────────────────────────────
 type ApiNotification = {
@@ -81,7 +82,7 @@ export default function NotificationsPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('https://web-production-5905e.up.railway.app/api/notifications/');
+      const res = await fetch(`${API_BASE}/notifications/`);
       if (!res.ok) throw new Error('API error');
       const data = await res.json();
       setNotifs(data.results ?? data);
@@ -95,7 +96,7 @@ export default function NotificationsPage() {
   // ── Mark single notification as read ─────────────────────────────────────
   async function markRead(id: number) {
     try {
-      await fetch(`https://web-production-5905e.up.railway.app/api/notifications/${id}/mark_read/`, {
+      await fetch(`${API_BASE}/notifications/${id}/mark_read/`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -114,7 +115,7 @@ export default function NotificationsPage() {
       const unread = notifs.filter(n => !n.is_read);
       await Promise.all(
         unread.map(n =>
-          fetch(`https://web-production-5905e.up.railway.app/api/notifications/${n.notification_id}/mark_read/`, {
+          fetch(`${API_BASE}/notifications/${n.notification_id}/mark_read/`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
           })

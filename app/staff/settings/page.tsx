@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Topbar } from '../../components/drms/Topbar';
+import { API_BASE } from '@/lib/lib_api';
 
 // ── Setting row component ─────────────────────────────────────────────────────
 function SettingRow({ label, description, children }: {

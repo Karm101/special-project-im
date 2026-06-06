@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Download, X, Send, FileDown } from 'lucide-react';
 import { Topbar } from '../../../components/drms/Topbar';
+import { API_BASE } from '@/lib/lib_api';
 
 // ── API types ─────────────────────────────────────────────────────────────────
 type Requester = {
@@ -514,7 +515,7 @@ export default function RequestPage() {
   useEffect(() => {
     async function fetchStaff() {
       try {
-        const res = await fetch('https://web-production-5905e.up.railway.app/api/staff/');
+        const res = await fetch('${API_BASE}/staff/');
         if (!res.ok) return;
         const data = await res.json();
         setStaffList(data.results ?? data);
@@ -535,7 +536,7 @@ export default function RequestPage() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`https://web-production-5905e.up.railway.app/api/requests/${numericId}/`);
+        const res = await fetch(`${API_BASE}/requests/${numericId}/`);
         if (!res.ok) throw new Error('Request not found');
         const json = await res.json();
         setData(json);
@@ -551,13 +552,13 @@ export default function RequestPage() {
   // ── Assign staff ──────────────────────────────────────────────────────────
   async function handleAssignStaff(staffId: number) {
     try {
-      const res = await fetch(`https://web-production-5905e.up.railway.app/api/requests/${numericId}/assign_staff/`, {
+      const res = await fetch(`${API_BASE}/requests/${numericId}/assign_staff/`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ staff_id: staffId }),
       });
       if (!res.ok) throw new Error();
-      const updated = await fetch(`https://web-production-5905e.up.railway.app/api/requests/${numericId}/`);
+      const updated = await fetch(`${API_BASE}/requests/${numericId}/`);
       setData(await updated.json());
     } catch {
       alert('Failed to assign staff.');
@@ -569,14 +570,14 @@ export default function RequestPage() {
     if (!data) return;
     setUpdating(true);
     try {
-      const res = await fetch(`https://web-production-5905e.up.railway.app/api/requests/${numericId}/update_status/`, {
+      const res = await fetch(`${API_BASE}/requests/${numericId}/update_status/`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus, remarks, staff_id: data.assigned_staff?.staff_id ?? null }),
       });
       if (!res.ok) throw new Error('Update failed');
       // Re-fetch to get updated data
-      const updated = await fetch(`https://web-production-5905e.up.railway.app/api/requests/${numericId}/`);
+      const updated = await fetch(`${API_BASE}/requests/${numericId}/`);
       setData(await updated.json());
     } catch (err) {
       alert('Failed to update status. Please try again.');

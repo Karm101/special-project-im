@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Download } from 'lucide-react';
 import { Topbar } from '../../components/drms/Topbar';
+import { API_BASE } from '@/lib/lib_api';
 
 type ApiRequest = {
   request_id: number;
@@ -71,8 +72,8 @@ export default function ReportsPage() {
       try {
         // Fetch all requests (paginated — get up to 200)
         const [reqRes, payRes] = await Promise.all([
-          fetch('https://web-production-5905e.up.railway.app/api/requests/?page_size=200'),
-          fetch('https://web-production-5905e.up.railway.app/api/payments/?page_size=200'),
+          fetch('${API_BASE}/requests/?page_size=200'),
+          fetch('${API_BASE}/payments/?page_size=200'),
         ]);
         if (!reqRes.ok || !payRes.ok) throw new Error('API error');
         const reqData = await reqRes.json();

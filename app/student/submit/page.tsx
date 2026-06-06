@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuthGuard } from '../../../hooks/useAuthGuard';
 import { useRouter } from 'next/navigation';
+import { API_BASE } from '@/lib/lib_api';
 
 // ── Inline theme toggle ───────────────────────────────────────────────────────
 function PubThemeToggle() {
@@ -86,7 +87,7 @@ export default function StudentSubmitPage() {
   useEffect(() => {
     async function fetchDocs() {
       try {
-        const res = await fetch('https://web-production-5905e.up.railway.app/api/document-types/');
+        const res = await fetch(`${API_BASE}/document-types/`);
         if (!res.ok) throw new Error();
         const data = await res.json();
         setDocTypes(data.results ?? data);
@@ -172,7 +173,7 @@ export default function StudentSubmitPage() {
         })),
       };
 
-      const res = await fetch('https://web-production-5905e.up.railway.app/api/requests/', {
+      const res = await fetch('${API_BASE}/requests/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

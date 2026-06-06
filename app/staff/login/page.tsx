@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { API_BASE } from '@/lib/lib_api';
 
 const CAMPUS_IMG = 'https://images.unsplash.com/photo-1613688365965-8abc666fe1e2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080&q=80';
 
@@ -29,7 +30,7 @@ export default function StaffLoginPage() {
     if (!username.trim() || !password.trim()) { setError('Please enter your username and password.'); return; }
     setLoading(true); setError('');
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/auth/staff-login/`, {
+      const res = await fetch(`${API_BASE}/auth/staff-login/`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });

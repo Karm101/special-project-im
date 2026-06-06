@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { API_BASE } from '@/lib/lib_api';
 
 const IcoReports   = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" style={{ width: 20, height: 20, display: 'block' }}><path d="M18 20V10M12 20V4M6 20v-6"/></svg>;
 const IcoRequests  = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20, display: 'block' }}><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>;
@@ -54,7 +55,7 @@ export function Sidebar() {
   useEffect(() => {
     async function fetchUnread() {
       try {
-        const res = await fetch('https://web-production-5905e.up.railway.app/api/notifications/');
+        const res = await fetch(`${API_BASE}/notifications/`);
         if (!res.ok) return;
         const data = await res.json();
         const notifs = data.results ?? data;

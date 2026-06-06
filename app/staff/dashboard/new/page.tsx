@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Topbar } from '../../../components/drms/Topbar';
+import { API_BASE } from '@/lib/lib_api';
 
 // ── API types ─────────────────────────────────────────────────────────────────
 type DocType = {
@@ -101,7 +102,7 @@ export default function NewRequestPage() {
   useEffect(() => {
     async function fetchDocTypes() {
       try {
-        const res = await fetch('https://web-production-5905e.up.railway.app/api/document-types/');
+        const res = await fetch('${API_BASE}/document-types/');
         if (!res.ok) throw new Error();
         const data = await res.json();
         setDocTypes(data.results ?? data);
@@ -151,7 +152,7 @@ export default function NewRequestPage() {
     setLookupError(null);
     setLookupResult(null);
     try {
-      const res = await fetch(`https://web-production-5905e.up.railway.app/api/requesters/?search=${form.studentNumber}`);
+      const res = await fetch(`${API_BASE}/requesters/?search=${form.studentNumber}`);
       if (!res.ok) throw new Error();
       const data = await res.json();
       const results: RequesterResult[] = data.results ?? data;
@@ -293,7 +294,7 @@ export default function NewRequestPage() {
         })),
       };
 
-      const res = await fetch('https://web-production-5905e.up.railway.app/api/requests/', {
+      const res = await fetch('${API_BASE}/requests/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
