@@ -8,7 +8,10 @@ export default function AdminOverviewPage() {
   const router = useRouter();
   const [stats, setStats] = useState({ users: 0, documents: 0, activeDocuments: 0, requests: 0 });
   const [loading, setLoading] = useState(true);
-  const adminName = typeof window !== 'undefined' ? sessionStorage.getItem('staff_name') ?? 'Admin' : 'Admin';
+  const [adminName, setAdminName] = useState('Admin');
+  useEffect(() => {
+    setAdminName(sessionStorage.getItem('staff_name') ?? 'Admin');
+  }, []);
 
   useEffect(() => {
     async function fetchStats() {
