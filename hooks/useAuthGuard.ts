@@ -3,22 +3,21 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
-/**
- * useAuthGuard — protects pages from unauthenticated access.
- *
- * Usage in any staff page:   useAuthGuard('staff');
- * Usage in any student page: useAuthGuard('student');
- *
- * Staff → redirects to /staff/login if not authenticated
- * Student → redirects to / if not authenticated
- */
-export function useAuthGuard(role: 'staff' | 'student') {
+export function useAuthGuard(role: 'staff' | 'student' | 'admin') {
   const router = useRouter();
 
   useEffect(() => {
-    if (role === 'staff') {
+    if (role === 'staff' || role === 'admin') {
       const token = sessionStorage.getItem('auth_token');
-      if (!token) router.replace('/staff/login');
+      if (!token) { router.replace('/staff/login'); return; }
+
+      if (role === 'admin') {
+        const staffRole = sessionStorage.getItem('staff_role');
+        if (staffRole !== 'Super Admin') {
+          router.replace('/staff/dashboard');
+          return;
+        }
+      }
     } else {
       const token = sessionStorage.getItem('student_token');
       if (!token) router.replace('/');
