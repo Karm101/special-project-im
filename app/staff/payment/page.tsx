@@ -108,76 +108,36 @@ export default function PaymentMonitorPage() {
   }, []);
 
   // ── Modal state ──────────────────────────────────────────────────────────
-  const [modal, setModal] = useState<{
-    type: 'setAmount' | 'markPaid';
-    paymentId: number;
-    currentAmount?: number;
-  } | null>(null);
-  const [modalAmount, setModalAmount] = useState('');
-  const [modalOR, setModalOR]         = useState('');
-  const [modalError, setModalError]   = useState('');
-  const [shakeAmount, setShakeAmount] = useState(false);
+  const [modal, setModal] = useState<{ paymentId: number } | null>(null);
 
-  // ── Open Set Amount modal ────────────────────────────────────────────────
-  function openSetAmount(paymentId: number, currentAmount: number) {
-    setModal({ type: 'setAmount', paymentId, currentAmount });
-    setModalAmount(currentAmount > 0 ? String(currentAmount) : '');
-    setModalError('');
-  }
+  const [modalError, setModalError]   = useState('');
 
   // ── Open Mark Paid modal ──────────────────────────────────────────────────
   function openMarkPaid(paymentId: number) {
-    setModal({ type: 'markPaid', paymentId });
-    setModalOR('');
+    setModal({ paymentId });
     setModalError('');
   }
 
   // ── Confirm modal action ──────────────────────────────────────────────────
   async function handleModalConfirm() {
     if (!modal) return;
-    setModalError('');
-
-    if (modal.type === 'setAmount') {
-      const amt = parseFloat(modalAmount);
-      if (!modalAmount || isNaN(amt) || amt <= 0) {
-        setModalError('Please enter a valid amount.');
-        return;
-      }
-      setUpdating(modal.paymentId);
-      try {
-        const res = await fetch(`${API_BASE}/payments/${modal.paymentId}/`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ amount: amt }),
-        });
-        if (!res.ok) throw new Error();
-        const refreshed = await fetch(`${API_BASE}/payments/`);
-        const data = await refreshed.json();
-        setPayments(data.results ?? data);
-        setModal(null);
-      } catch { setModalError('Failed to update. Please try again.'); }
-      finally { setUpdating(null); }
-
-    } else if (modal.type === 'markPaid') {
-      setUpdating(modal.paymentId);
-      try {
-        const res = await fetch(`${API_BASE}/payments/${modal.paymentId}/`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            payment_status: 'Paid',
-            official_receipt_no: modalOR || null,
-            payment_date: new Date().toISOString().split('T')[0],
-          }),
-        });
-        if (!res.ok) throw new Error();
-        const refreshed = await fetch(`${API_BASE}/payments/`);
-        const data = await refreshed.json();
-        setPayments(data.results ?? data);
-        setModal(null);
-      } catch { setModalError('Failed to update. Please try again.'); }
-      finally { setUpdating(null); }
-    }
+    setUpdating(modal.paymentId);
+    try {
+      const res = await fetch(`${API_BASE}/payments/${modal.paymentId}/`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          payment_status: 'Paid',
+          payment_date: new Date().toISOString().split('T')[0],
+        }),
+      });
+      if (!res.ok) throw new Error();
+      const refreshed = await fetch(`${API_BASE}/payments/`);
+      const data = await refreshed.json();
+      setPayments(data.results ?? data);
+      setModal(null);
+    } catch { setModalError('Failed to update. Please try again.'); }
+    finally { setUpdating(null); }
   }
 
   // handleMarkPaid replaced by modal system above
@@ -332,34 +292,13 @@ export default function PaymentMonitorPage() {
                         {p.payment_status === 'Paid' ? (
                           <button className="btn-outline btn-sm" onClick={() => router.push(`/staff/request/${reqId}`)}>View</button>
                         ) : (
-                          <div style={{ display: 'flex', gap: 6 }}>
-                            {parseFloat(p.amount) === 0 && (
-                              <button
-                                className={`btn-outline btn-sm${shakeAmount ? ' shake' : ''}`}
-                                disabled={updating === p.payment_id}
-                                style={{ borderColor: shakeAmount ? '#E50019' : undefined, color: shakeAmount ? '#E50019' : undefined }}
-                                onClick={() => openSetAmount(p.payment_id, parseFloat(p.amount))}
-                              >
-                                Set Amount
-                              </button>
-                            )}
-                            <button
-                              className={`${isOverdue ? 'btn-red btn-sm' : 'btn-outline btn-sm'}${parseFloat(p.amount) === 0 && shakeAmount ? ' shake' : ''}`}
-                              disabled={updating === p.payment_id || parseFloat(p.amount) === 0}
-                              title={parseFloat(p.amount) === 0 ? 'Set amount first' : ''}
-                              style={{ borderColor: parseFloat(p.amount) === 0 ? '#E50019' : undefined }}
-                              onClick={() => {
-                                if (parseFloat(p.amount) === 0) {
-                                  setShakeAmount(true);
-                                  setTimeout(() => setShakeAmount(false), 600);
-                                  return;
-                                }
-                                openMarkPaid(p.payment_id);
-                              }}
-                            >
-                              {updating === p.payment_id ? 'Updating...' : isOverdue ? 'Send Notice' : 'Mark Paid'}
-                            </button>
-                          </div>
+                          <button
+                            className={`${isOverdue ? 'btn-red btn-sm' : 'btn-primary btn-sm'}`}
+                            disabled={updating === p.payment_id}
+                            onClick={() => openMarkPaid(p.payment_id)}
+                          >
+                            {updating === p.payment_id ? 'Updating...' : 'Mark as Paid'}
+                          </button>
                         )}
                       </td>
                     </tr>
@@ -377,68 +316,20 @@ export default function PaymentMonitorPage() {
       {modal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           onClick={() => setModal(null)}>
-          <div style={{ background: 'var(--surface)', borderRadius: 12, padding: 28, width: 380, boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}
+          <div style={{ background: 'var(--surface)', borderRadius: 12, padding: 28, width: 360, boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}
             onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 6 }}>
-              {modal.type === 'setAmount' ? 'Set Payment Amount' : 'Mark as Paid'}
-            </div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 6 }}>Mark as Paid</div>
             <div style={{ fontSize: 13, color: 'var(--mid-gray)', marginBottom: 20 }}>
-              {modal.type === 'setAmount'
-                ? 'Enter the billing amount set by the Treasury Office.'
-                : 'Enter the Official Receipt number to confirm payment.'}
+              Confirm that payment has been received for this request. Payment date will be set to today.
             </div>
-
-            {modal.type === 'setAmount' && (
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--mid-gray)', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 5 }}>
-                  Amount (₱) <span style={{ color: '#E50019' }}>*</span>
-                </label>
-                <input
-                  className="drms-input"
-                  type="number"
-                  placeholder="e.g. 150.00"
-                  value={modalAmount}
-                  onChange={e => { setModalAmount(e.target.value); setModalError(''); }}
-                  autoFocus
-                  style={{ borderColor: modalError ? '#E50019' : undefined }}
-                />
-              </div>
-            )}
-
-            {modal.type === 'markPaid' && (
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--mid-gray)', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 5 }}>
-                  Official Receipt No. <span style={{ color: '#B1B1B1', fontWeight: 400, textTransform: 'none' }}>(optional)</span>
-                </label>
-                <input
-                  className="drms-input"
-                  type="text"
-                  placeholder="e.g. OR-2026-00123"
-                  value={modalOR}
-                  onChange={e => setModalOR(e.target.value)}
-                  autoFocus
-                />
-              </div>
-            )}
-
-            {modalError && (
-              <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600, marginBottom: 12 }}>⚠️ {modalError}</div>
-            )}
-
+            {modalError && <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600, marginBottom: 12 }}>⚠️ {modalError}</div>}
             <div style={{ display: 'flex', gap: 10 }}>
-              <button
-                className="btn-primary"
-                style={{ flex: 1, justifyContent: 'center', padding: 10 }}
-                onClick={handleModalConfirm}
-                disabled={!!updating}
-              >
-                {updating ? 'Saving...' : 'Confirm'}
+              <button className="btn-primary" style={{ flex: 1, justifyContent: 'center', padding: 10 }}
+                onClick={handleModalConfirm} disabled={!!updating}>
+                {updating ? 'Saving...' : '✓ Confirm Payment'}
               </button>
-              <button
-                className="btn-outline"
-                style={{ flex: 1, justifyContent: 'center', padding: 10 }}
-                onClick={() => setModal(null)}
-              >
+              <button className="btn-outline" style={{ flex: 1, justifyContent: 'center', padding: 10 }}
+                onClick={() => setModal(null)}>
                 Cancel
               </button>
             </div>

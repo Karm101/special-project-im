@@ -44,14 +44,15 @@ function StatCard({ num, label, color, bg, icon, loading }: {
 
 function statusBadge(status: string) {
   switch (status) {
-    case 'Pending':           return { cls: 'b-sub',  label: 'Submitted' };
-    case 'Verifying':         return { cls: 'b-end',  label: 'For Endorsement' };
-    case 'For Payment':       return { cls: 'b-rev',  label: 'For Review' };
-    case 'Processing':        return { cls: 'b-apr',  label: 'For Approval' };
-    case 'Ready for Release': return { cls: 'b-rel',  label: 'For Release' };
-    case 'Released':          return { cls: 'b-done', label: 'Completed' };
-    case 'Rejected':          return { cls: 'b-rej',  label: 'Rejected' };
-    default:                  return { cls: 'b-sub',  label: status };
+    case 'Pending':        return { cls: 'b-sub',  label: 'Submitted' };
+    case 'For Validation': return { cls: 'b-end',  label: 'For Validation' };
+    case 'For Payment':    return { cls: 'b-rev',  label: 'For Payment' };
+    case 'Paid':           return { cls: 'b-apr',  label: 'Paid' };
+    case 'Processing':     return { cls: 'b-apr',  label: 'Processing' };
+    case 'For Release':    return { cls: 'b-rel',  label: 'For Release' };
+    case 'Claimed':        return { cls: 'b-done', label: 'Claimed' };
+    case 'Rejected':       return { cls: 'b-rej',  label: 'Rejected' };
+    default:               return { cls: 'b-sub',  label: status };
   }
 }
 
@@ -80,28 +81,29 @@ export default function CollegeDeptPage() {
   }, []);
 
   const stats = useMemo(() => ({
-    tor:       requests.filter(r => r.form_type === 'RO-0005').length,
-    hd:        requests.filter(r => r.form_type === 'RO-0004').length,
-    pending:   requests.filter(r => ['Pending','Verifying','For Payment'].includes(r.current_status)).length,
-    released:  requests.filter(r => r.current_status === 'Released').length,
+    tor:     requests.filter(r => r.form_type === 'RO-0005').length,
+    hd:      requests.filter(r => r.form_type === 'RO-0004').length,
+    pending: requests.filter(r => ['Pending','For Validation'].includes(r.current_status)).length,
+    claimed: requests.filter(r => r.current_status === 'Claimed').length,
   }), [requests]);
 
   const TABS = [
     { label: 'All',                 filter: 'all',        count: requests.length },
     { label: 'TOR',                 filter: 'tor',        count: stats.tor       },
     { label: 'Honorable Dismissal', filter: 'hd',         count: stats.hd        },
-    { label: 'Pending',             filter: 'pending',    count: stats.pending   },
-    { label: 'Processing',          filter: 'processing', count: requests.filter(r => ['Processing','Ready for Release'].includes(r.current_status)).length },
-    { label: 'Released',            filter: 'released',   count: stats.released  },
+    { label: 'Pending',    filter: 'pending',    count: requests.filter(r => ['Pending','For Validation'].includes(r.current_status)).length },
+    { label: 'Processing', filter: 'processing', count: requests.filter(r => ['For Payment','Paid','Processing'].includes(r.current_status)).length },
+    { label: 'Claimed',    filter: 'claimed',    count: requests.filter(r => r.current_status === 'Claimed').length },
   ];
 
   const visible = useMemo(() => {
     let rows = [...requests];
-    if (activeTab === 'tor')        rows = rows.filter(r => r.form_type === 'RO-0005');
-    else if (activeTab === 'hd')    rows = rows.filter(r => r.form_type === 'RO-0004');
-    else if (activeTab === 'pending')    rows = rows.filter(r => ['Pending','Verifying','For Payment'].includes(r.current_status));
-    else if (activeTab === 'processing') rows = rows.filter(r => ['Processing','Ready for Release'].includes(r.current_status));
-    else if (activeTab === 'released')   rows = rows.filter(r => r.current_status === 'Released');
+    if (activeTab === 'tor')             rows = rows.filter(r => r.form_type === 'RO-0005');
+    else if (activeTab === 'hd')         rows = rows.filter(r => r.form_type === 'RO-0004');
+    else if (activeTab === 'pending')    rows = rows.filter(r => ['Pending','For Validation'].includes(r.current_status));
+    else if (activeTab === 'processing') rows = rows.filter(r => ['For Payment','Paid','Processing'].includes(r.current_status));
+    else if (activeTab === 'claimed')    rows = rows.filter(r => r.current_status === 'Claimed');
+
     if (search.trim()) {
       const q = search.toLowerCase();
       rows = rows.filter(r =>
@@ -127,7 +129,7 @@ export default function CollegeDeptPage() {
           <StatCard loading={loading} num={stats.tor}      label="TOR Requests"        color="#114B9F" bg="rgba(17,75,159,0.12)"  icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>} />
           <StatCard loading={loading} num={stats.hd}       label="Honorable Dismissal"  color="#E50019" bg="rgba(229,0,25,0.12)"   icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>} />
           <StatCard loading={loading} num={stats.pending}  label="Pending Verification" color="#FFA323" bg="rgba(255,163,35,0.12)" icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>} />
-          <StatCard loading={loading} num={stats.released} label="Released This Month"  color="#198754" bg="rgba(25,135,84,0.12)"  icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>} />
+          <StatCard loading={loading} num={stats.claimed} label="Released This Month"  color="#198754" bg="rgba(25,135,84,0.12)"  icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>} />
         </div>
 
         <div className="info-box" style={{ marginBottom: 16 }}>
