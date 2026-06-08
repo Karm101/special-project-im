@@ -674,7 +674,7 @@ ${isTC ? `
             {data && !loading && (
               <>
                 {activeTab === 'form' ? <FormTab data={data} /> : <JourneyTab data={data} />}
-                <SidePanel data={data} onUpdateStatus={handleUpdateStatus} updating={updating} staffList={staffList} onAssignStaff={handleAssignStaff} onAssignBilledBy={handleAssignBilledBy} />
+                <SidePanel key={data.current_status} data={data} onUpdateStatus={handleUpdateStatus} updating={updating} staffList={staffList} onAssignStaff={handleAssignStaff} onAssignBilledBy={handleAssignBilledBy} />
               </>
             )}
           </div>
