@@ -4,6 +4,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { useAuthGuard } from '../../../hooks/useAuthGuard';
 import { useRouter } from 'next/navigation';
 import { API_BASE } from '@/lib/lib_api';
+import { useRef } from 'react';
+import { supabase } from '@/lib/supabase';
 
 // ── Inline theme toggle ───────────────────────────────────────────────────────
 function PubThemeToggle() {
@@ -79,6 +81,9 @@ export default function StudentSubmitPage() {
   const [repRelation, setRepRelation]     = useState('');
   const [selectedDocs, setSelectedDocs]   = useState<SelectedDoc[]>([]);
   const [errors, setErrors]               = useState<Record<string, string>>({});
+  const [authFiles, setAuthFiles]   = useState<File[]>([]);
+  const [uploadProgress, setUploadProgress] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const isLoggedIn = typeof window !== 'undefined' && !!sessionStorage.getItem('student_token');
 
   // ── Doc types from API ─────────────────────────────────────────────────────
@@ -216,6 +221,14 @@ export default function StudentSubmitPage() {
       if (!res.ok) throw new Error('Submission failed');
       const created = await res.json();
       setSubmittedId(created.request_id);
+
+      // Upload authorization files if any
+      if (authFiles.length > 0) {
+        setUploadProgress('Uploading authorization documents...');
+        await uploadAuthFiles(created.request_id);
+        setUploadProgress('');
+      }
+
       setStep(3);
     } catch {
       setSubmitError('Submission failed. Please try again or contact the Registrar\'s Office.');
@@ -228,6 +241,24 @@ export default function StudentSubmitPage() {
   // Students never see "RO-0004" or "RO-0005" — system picks automatically
   const isEnrolled   = enrollmentStatus === 'Enrolled';
   const derivedFormType = isEnrolled ? 'RO-0005' : 'RO-0004';
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    const valid = files.filter(f => f.size <= 10 * 1024 * 1024);
+    if (valid.length < files.length) alert('Some files skipped — max 10MB each.');
+    setAuthFiles(prev => [...prev, ...valid]);
+  }
+
+  function removeFile(index: number) {
+    setAuthFiles(prev => prev.filter((_, i) => i !== index));
+  }
+
+  async function uploadAuthFiles(requestId: number) {
+    for (const file of authFiles) {
+      const path = `request-${requestId}/${Date.now()}-${file.name}`;
+      await supabase.storage.from('authorization-letters').upload(path, file, { upsert: true });
+    }
+  }
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
@@ -437,6 +468,48 @@ export default function StudentSubmitPage() {
                 </div>
               </div>
             </div>
+
+            {hasRep && (
+              <div style={{ marginTop: 14 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>
+                  Authorization Documents <span className="req-asterisk">*</span>
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--mid-gray)', marginBottom: 10, lineHeight: 1.5 }}>
+                  Upload: (1) authorization letter, (2) copy of your school ID, (3) valid ID of representative. JPG, PNG, PDF — max 10MB each.
+                </div>
+                <div
+                  style={{ border: '2px dashed var(--border-col)', borderRadius: 10, padding: 20, textAlign: 'center', cursor: 'pointer', background: 'var(--surface-2)' }}
+                  onClick={() => fileInputRef.current?.click()}
+                  onDragOver={e => e.preventDefault()}
+                  onDrop={e => {
+                    e.preventDefault();
+                    const files = Array.from(e.dataTransfer.files).filter(f => f.size <= 10 * 1024 * 1024);
+                    setAuthFiles(prev => [...prev, ...files]);
+                  }}
+                >
+                  <div style={{ fontSize: 24, marginBottom: 6 }}>📎</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Click to upload or drag and drop</div>
+                  <div style={{ fontSize: 11, color: 'var(--mid-gray)', marginTop: 2 }}>JPG, PNG, PDF up to 10MB</div>
+                  <input ref={fileInputRef} type="file" multiple accept=".jpg,.jpeg,.png,.pdf"
+                    style={{ display: 'none' }} onChange={handleFileChange} />
+                </div>
+                {authFiles.length > 0 && (
+                  <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {authFiles.map((file, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: 'var(--surface)', border: '1px solid var(--border-col)', borderRadius: 8 }}>
+                        <span style={{ fontSize: 16 }}>{file.type.includes('pdf') ? '📄' : '🖼️'}</span>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>{file.name}</div>
+                          <div style={{ fontSize: 11, color: 'var(--mid-gray)' }}>{(file.size / 1024).toFixed(0)} KB</div>
+                        </div>
+                        <button onClick={() => removeFile(i)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#E50019', fontSize: 16 }}>✕</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="info-box warn" style={{ marginBottom: 20 }}>
               <span className="info-icon">💳</span>
