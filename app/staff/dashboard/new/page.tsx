@@ -4,13 +4,14 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Topbar } from '../../../components/drms/Topbar';
 import { API_BASE } from '@/lib/lib_api';
+import { supabase } from '@/lib/supabase';
 
 // ── API types ─────────────────────────────────────────────────────────────────
 type DocType = {
   document_type_id: number;
   document_name: string;
   processing_days: number;
-  academic_level: string; // 'College' | 'SHS' | 'All'
+  academic_level: string;
 };
 
 type RequesterResult = {
@@ -27,9 +28,7 @@ type RequesterResult = {
   contact_number: string | null;
 };
 
-// ── Form state shape ──────────────────────────────────────────────────────────
 type FormData = {
-  // Step 1 — requester
   formType: 'RO-0005' | 'RO-0004';
   studentNumber: string;
   firstName: string;
@@ -46,11 +45,9 @@ type FormData = {
   repRelation: string;
   submissionMode: 'Online' | 'Onsite';
   purpose: string;
-  // Step 2 — documents
   selectedDocs: { docTypeId: number; docName: string; copies: number; processingDays: number }[];
 };
 
-// ── Add working days helper ───────────────────────────────────────────────────
 function addWorkingDays(date: Date, days: number): Date {
   const result = new Date(date);
   let added = 0;
@@ -66,7 +63,6 @@ function formatDate(d: Date): string {
   return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 }
 
-// ── Step indicator ────────────────────────────────────────────────────────────
 function StepBar({ step }: { step: number }) {
   return (
     <div className="step-bar">
@@ -88,16 +84,42 @@ function StepBar({ step }: { step: number }) {
   );
 }
 
-// ── Main page ─────────────────────────────────────────────────────────────────
 export default function NewRequestPage() {
   const router = useRouter();
-  const [step, setStep]             = useState(1);
-  const [submitting, setSubmitting] = useState(false);
+  const [step, setStep]               = useState(1);
+  const [submitting, setSubmitting]   = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // ── Document types from API ───────────────────────────────────────────────
-  const [docTypes, setDocTypes]     = useState<DocType[]>([]);
-  const [docsLoading, setDocsLoading] = useState(true);
+  // ── Session student detection ─────────────────────────────────────────────
+  const [sessionStudent, setSessionStudent] = useState<{
+    student_number: string;
+    student_name: string;
+    student_level: string;
+    student_program: string;
+    student_id: number;
+  } | null>(null);
+
+  useEffect(() => {
+    const token  = sessionStorage.getItem('student_token');
+    const number = sessionStorage.getItem('student_number');
+    const name   = sessionStorage.getItem('student_name');
+    const level  = sessionStorage.getItem('student_level');
+    const prog   = sessionStorage.getItem('student_program');
+    const id     = sessionStorage.getItem('student_id');
+    if (token && number) {
+      setSessionStudent({
+        student_number: number,
+        student_name:   name ?? '',
+        student_level:  level ?? 'College',
+        student_program: prog ?? '',
+        student_id:     parseInt(id ?? '0'),
+      });
+    }
+  }, []);
+
+  // ── Document types ────────────────────────────────────────────────────────
+  const [docTypes, setDocTypes]         = useState<DocType[]>([]);
+  const [docsLoading, setDocsLoading]   = useState(true);
 
   useEffect(() => {
     async function fetchDocTypes() {
@@ -107,16 +129,14 @@ export default function NewRequestPage() {
         const data = await res.json();
         setDocTypes(data.results ?? data);
       } catch {
-        // Fall back to hardcoded defaults if API fails
         setDocTypes([
-          { document_type_id: 1, document_name: 'Transcript of Records (TOR)',   processing_days: 7, academic_level: 'College' },
-          { document_type_id: 2, document_name: 'Honorable Dismissal',            processing_days: 7, academic_level: 'College' },
-          { document_type_id: 3, document_name: 'Certificate of Enrollment',      processing_days: 7, academic_level: 'All'     },
-          { document_type_id: 4, document_name: 'Certificate of Grades',          processing_days: 7, academic_level: 'College' },
-          { document_type_id: 5, document_name: 'SF9 — Report Card',              processing_days: 7, academic_level: 'SHS'     },
-          { document_type_id: 6, document_name: 'SF10 — Permanent Record',        processing_days: 7, academic_level: 'SHS'     },
-          { document_type_id: 7, document_name: 'Certified True Copy',            processing_days: 7, academic_level: 'All'     },
-          { document_type_id: 8, document_name: 'CAV (via CHED)',                 processing_days: 21, academic_level: 'All'     },
+          { document_type_id: 1, document_name: 'Transcript of Records (TOR)',  processing_days: 7,  academic_level: 'College' },
+          { document_type_id: 2, document_name: 'Honorable Dismissal',           processing_days: 7,  academic_level: 'College' },
+          { document_type_id: 3, document_name: 'Certificate of Enrollment',     processing_days: 7,  academic_level: 'All'     },
+          { document_type_id: 4, document_name: 'Certificate of Grades',         processing_days: 7,  academic_level: 'College' },
+          { document_type_id: 5, document_name: 'SF9 — Report Card',             processing_days: 7,  academic_level: 'SHS'     },
+          { document_type_id: 6, document_name: 'SF10 — Permanent Record',       processing_days: 7,  academic_level: 'SHS'     },
+          { document_type_id: 7, document_name: 'Certified True Copy',           processing_days: 7,  academic_level: 'All'     },
         ]);
       } finally {
         setDocsLoading(false);
@@ -130,6 +150,11 @@ export default function NewRequestPage() {
   const [lookupResult, setLookupResult]   = useState<RequesterResult | null>(null);
   const [lookupError, setLookupError]     = useState<string | null>(null);
 
+  // ── File upload state ─────────────────────────────────────────────────────
+  const [authFiles, setAuthFiles]       = useState<File[]>([]);
+  const [uploadProgress, setUploadProgress] = useState<string>('');
+  const fileInputRef                    = useRef<HTMLInputElement>(null);
+
   // ── Form state ────────────────────────────────────────────────────────────
   const [form, setForm] = useState<FormData>({
     formType: 'RO-0005',
@@ -142,10 +167,48 @@ export default function NewRequestPage() {
     selectedDocs: [],
   });
 
+  // ── Auto-populate from session when student is logged in ─────────────────
+  useEffect(() => {
+    if (!sessionStudent) return;
+    const [lastName, firstName] = sessionStudent.student_name.includes(',')
+      ? sessionStudent.student_name.split(',').map(s => s.trim())
+      : [sessionStudent.student_name, ''];
+    setForm(prev => ({
+      ...prev,
+      studentNumber: sessionStudent.student_number,
+      firstName:     firstName || sessionStudent.student_name,
+      lastName:      lastName || '',
+      programStrand: sessionStudent.student_program,
+      academicLevel: sessionStudent.student_level === 'SHS' ? 'Senior High School' : 'College',
+    }));
+    // Also fetch full requester record to get email and contact
+    fetch(`${API_BASE}/requesters/?search=${sessionStudent.student_number}`)
+      .then(r => r.json())
+      .then(data => {
+        const results: RequesterResult[] = data.results ?? data;
+        const match = results.find(r => r.student_number === sessionStudent.student_number);
+        if (match) {
+          setLookupResult(match);
+          setForm(prev => ({
+            ...prev,
+            firstName:        match.first_name,
+            lastName:         match.last_name,
+            programStrand:    match.program_strand,
+            academicLevel:    match.academic_level === 'SHS' ? 'Senior High School' : 'College',
+            enrollmentStatus: match.enrollment_status,
+            academicYear:     match.academic_year ?? '',
+            termSemester:     match.term_semester ?? '',
+            email:            match.email,
+            contactNumber:    match.contact_number ?? '',
+          }));
+        }
+      })
+      .catch(() => {});
+  }, [sessionStudent]);
+
   const set = (field: keyof FormData, value: any) =>
     setForm(prev => ({ ...prev, [field]: value }));
 
-  // ── Lookup student by student number ─────────────────────────────────────
   async function handleLookup() {
     if (!form.studentNumber.trim()) return;
     setLookupLoading(true);
@@ -181,68 +244,77 @@ export default function NewRequestPage() {
     }
   }
 
-  // ── Toggle document selection ─────────────────────────────────────────────
+  // ── File upload helpers ───────────────────────────────────────────────────
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    const valid = files.filter(f => f.size <= 10 * 1024 * 1024); // 10MB limit
+    if (valid.length < files.length) {
+      alert('Some files were skipped — maximum file size is 10MB per file.');
+    }
+    setAuthFiles(prev => [...prev, ...valid]);
+  }
+
+  function removeFile(index: number) {
+    setAuthFiles(prev => prev.filter((_, i) => i !== index));
+  }
+
+  async function uploadAuthFiles(requestId: number): Promise<string[]> {
+    const urls: string[] = [];
+    for (const file of authFiles) {
+      const ext      = file.name.split('.').pop();
+      const path     = `request-${requestId}/${Date.now()}-${file.name}`;
+      const { error } = await supabase.storage
+        .from('authorization-letters')
+        .upload(path, file, { upsert: true });
+      if (!error) {
+        const { data } = supabase.storage
+          .from('authorization-letters')
+          .getPublicUrl(path);
+        urls.push(data.publicUrl);
+      }
+    }
+    return urls;
+  }
+
+  // ── Document selection ────────────────────────────────────────────────────
   function toggleDoc(dt: DocType) {
     setForm(prev => {
       const exists = prev.selectedDocs.find(d => d.docTypeId === dt.document_type_id);
-      if (exists) {
-        return { ...prev, selectedDocs: prev.selectedDocs.filter(d => d.docTypeId !== dt.document_type_id) };
-      }
-      return {
-        ...prev,
-        selectedDocs: [...prev.selectedDocs, {
-          docTypeId: dt.document_type_id,
-          docName: dt.document_name,
-          copies: 1,
-          processingDays: dt.processing_days,
-        }],
-      };
+      if (exists) return { ...prev, selectedDocs: prev.selectedDocs.filter(d => d.docTypeId !== dt.document_type_id) };
+      return { ...prev, selectedDocs: [...prev.selectedDocs, { docTypeId: dt.document_type_id, docName: dt.document_name, copies: 1, processingDays: dt.processing_days }] };
     });
   }
 
   function setCopies(docTypeId: number, copies: number) {
-    setForm(prev => ({
-      ...prev,
-      selectedDocs: prev.selectedDocs.map(d =>
-        d.docTypeId === docTypeId ? { ...d, copies } : d
-      ),
-    }));
+    setForm(prev => ({ ...prev, selectedDocs: prev.selectedDocs.map(d => d.docTypeId === docTypeId ? { ...d, copies } : d) }));
   }
 
-  // ── Computed values ───────────────────────────────────────────────────────
-  const totalAmount = 0; // Fee set by Treasury after verification — not pre-defined per document
-  const maxDays     = form.selectedDocs.reduce((max, d) => Math.max(max, d.processingDays), 7);
+  const maxDays      = form.selectedDocs.reduce((max, d) => Math.max(max, d.processingDays), 7);
   const expectedClaim = formatDate(addWorkingDays(new Date(), maxDays));
 
-  // Filter doc types by academic level
   const filteredDocTypes = useMemo(() => {
     const level = form.academicLevel === 'Senior High School' ? 'SHS' : 'College';
-    return docTypes.filter(dt =>
-      dt.academic_level === 'All' ||
-      dt.academic_level === level
-    );
+    return docTypes.filter(dt => dt.academic_level === 'All' || dt.academic_level === level);
   }, [docTypes, form.academicLevel]);
 
-  // ── Validation errors state ──────────────────────────────────────────────
+  // ── Validation ────────────────────────────────────────────────────────────
   const [errors, setErrors] = useState<Record<string, string>>({});
-
-  // ── Refs for scroll-to-error ──────────────────────────────────────────────
-  const firstNameRef    = useRef<HTMLDivElement>(null);
-  const lastNameRef     = useRef<HTMLDivElement>(null);
-  const emailRef        = useRef<HTMLDivElement>(null);
-  const programRef      = useRef<HTMLDivElement>(null);
-  const docsRef         = useRef<HTMLDivElement>(null);
-  const purposeRef      = useRef<HTMLDivElement>(null);
+  const firstNameRef = useRef<HTMLDivElement>(null);
+  const lastNameRef  = useRef<HTMLDivElement>(null);
+  const emailRef     = useRef<HTMLDivElement>(null);
+  const programRef   = useRef<HTMLDivElement>(null);
+  const docsRef      = useRef<HTMLDivElement>(null);
+  const purposeRef   = useRef<HTMLDivElement>(null);
 
   function validateStep1(): boolean {
     const e: Record<string, string> = {};
-    if (!form.firstName.trim())    e.firstName    = 'First name is required.';
-    if (!form.lastName.trim())     e.lastName     = 'Last name is required.';
-    if (!form.email.trim())        e.email        = 'Email is required.';
+    if (!form.firstName.trim())     e.firstName    = 'First name is required.';
+    if (!form.lastName.trim())      e.lastName     = 'Last name is required.';
+    if (!form.email.trim())         e.email        = 'Email is required.';
     if (!form.programStrand.trim()) e.programStrand = 'Program / Strand is required.';
+    if (form.hasRep && authFiles.length === 0) e.authFiles = 'Please upload the authorization letter and valid IDs.';
     setErrors(e);
     if (Object.keys(e).length > 0) {
-      // Scroll to the first error field
       const firstRef = e.firstName ? firstNameRef : e.lastName ? lastNameRef : e.programStrand ? programRef : emailRef;
       setTimeout(() => firstRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
       return false;
@@ -253,7 +325,7 @@ export default function NewRequestPage() {
   function validateStep2(): boolean {
     const e: Record<string, string> = {};
     if (form.selectedDocs.length === 0) e.docs    = 'Please select at least one document.';
-    if (!form.purpose.trim())           e.purpose  = 'Purpose is required.';
+    if (!form.purpose.trim())           e.purpose = 'Purpose is required.';
     setErrors(e);
     if (Object.keys(e).length > 0) {
       const firstRef = e.docs ? docsRef : purposeRef;
@@ -263,30 +335,30 @@ export default function NewRequestPage() {
     return true;
   }
 
-  // ── Submit to API ─────────────────────────────────────────────────────────
+  // ── Submit ────────────────────────────────────────────────────────────────
   async function handleSubmit() {
     setSubmitting(true);
     setSubmitError(null);
     try {
       const payload = {
-        form_type:          form.formType,
-        academic_level:     form.academicLevel === 'Senior High School' ? 'SHS' : 'College',
-        submission_mode:    form.submissionMode,
-        purpose:            form.purpose,
-        is_authorized_rep:  form.hasRep,
+        form_type:           form.formType,
+        academic_level:      form.academicLevel === 'Senior High School' ? 'SHS' : 'College',
+        submission_mode:     form.submissionMode,
+        purpose:             form.purpose,
+        is_authorized_rep:   form.hasRep,
         representative_name: form.hasRep ? form.repName : null,
         rep_relation:        form.hasRep ? form.repRelation : null,
         requester: {
-          student_number:   form.studentNumber || null,
-          first_name:       form.firstName,
-          last_name:        form.lastName,
-          program_strand:   form.programStrand,
-          academic_level:   form.academicLevel === 'Senior High School' ? 'SHS' : 'College',
+          student_number:    form.studentNumber || null,
+          first_name:        form.firstName,
+          last_name:         form.lastName,
+          program_strand:    form.programStrand,
+          academic_level:    form.academicLevel === 'Senior High School' ? 'SHS' : 'College',
           enrollment_status: form.enrollmentStatus,
-          academic_year:    form.academicYear || null,
-          term_semester:    form.termSemester || null,
-          email:            form.email,
-          contact_number:   form.contactNumber || null,
+          academic_year:     form.academicYear || null,
+          term_semester:     form.termSemester || null,
+          email:             form.email,
+          contact_number:    form.contactNumber || null,
         },
         documents: form.selectedDocs.map(d => ({
           document_type_id: d.docTypeId,
@@ -306,7 +378,15 @@ export default function NewRequestPage() {
       }
 
       const created = await res.json();
-      const newId = `REQ-${String(created.request_id).padStart(3, '0')}`;
+      const newId   = `REQ-${String(created.request_id).padStart(3, '0')}`;
+
+      // Upload authorization files if any
+      if (authFiles.length > 0) {
+        setUploadProgress('Uploading authorization files...');
+        await uploadAuthFiles(created.request_id);
+        setUploadProgress('');
+      }
+
       router.push(`/staff/request/${newId}`);
     } catch (err: any) {
       setSubmitError(`Submission failed: ${err.message}`);
@@ -327,7 +407,17 @@ export default function NewRequestPage() {
       <div className="page-body">
         <StepBar step={step} />
 
-        {/* ── STEP 1: Requester Info ── */}
+        {/* ── Auto-populate banner ── */}
+        {sessionStudent && step === 1 && (
+          <div className="info-box" style={{ marginBottom: 16 }}>
+            <span className="info-icon">✅</span>
+            <div className="info-text">
+              Logged in as <strong>{sessionStudent.student_name}</strong> ({sessionStudent.student_number}) — your information has been auto-filled.
+            </div>
+          </div>
+        )}
+
+        {/* ── STEP 1 ── */}
         {step === 1 && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 20 }}>
             <div>
@@ -350,32 +440,24 @@ export default function NewRequestPage() {
               <div className="drms-card" style={{ padding: 24, marginBottom: 16 }}>
                 <div className="section-title">Requester Information</div>
 
-                {/* Student number lookup */}
-                <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-                  <div className="fg" style={{ flex: 1, marginBottom: 0 }}>
-                    <label>Student Number</label>
-                    <input
-                      className="drms-input"
-                      type="text"
-                      placeholder="e.g. 2024110012 — press Lookup to autofill"
-                      value={form.studentNumber}
-                      onChange={e => set('studentNumber', e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && handleLookup()}
-                    />
+                {/* Student lookup — hidden if session student */}
+                {!sessionStudent && (
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+                    <div className="fg" style={{ flex: 1, marginBottom: 0 }}>
+                      <label>Student Number</label>
+                      <input className="drms-input" type="text" placeholder="e.g. 2024110012 — press Lookup to autofill"
+                        value={form.studentNumber} onChange={e => set('studentNumber', e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && handleLookup()} />
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                      <button className="btn-outline" style={{ height: 38, padding: '0 14px' }} onClick={handleLookup} disabled={lookupLoading}>
+                        {lookupLoading ? 'Searching...' : '🔍 Lookup'}
+                      </button>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-                    <button
-                      className="btn-outline"
-                      style={{ height: 38, padding: '0 14px' }}
-                      onClick={handleLookup}
-                      disabled={lookupLoading}
-                    >
-                      {lookupLoading ? 'Searching...' : '🔍 Lookup'}
-                    </button>
-                  </div>
-                </div>
+                )}
 
-                {lookupResult && (
+                {lookupResult && !sessionStudent && (
                   <div className="info-box" style={{ marginBottom: 12 }}>
                     <span className="info-icon">✅</span>
                     <div className="info-text">Student found — fields auto-filled from database.</div>
@@ -391,40 +473,42 @@ export default function NewRequestPage() {
                 <div className="form-grid">
                   <div className="fg">
                     <label>Academic Level <span className="req-asterisk">*</span></label>
-                    <select className="drms-select" value={form.academicLevel} onChange={e => set('academicLevel', e.target.value)}>
-                      <option>College</option>
-                      <option>Senior High School</option>
+                    <select className="drms-select" value={form.academicLevel} onChange={e => set('academicLevel', e.target.value)}
+                      disabled={!!sessionStudent}>
+                      <option>College</option><option>Senior High School</option>
                     </select>
                   </div>
                   <div className="fg">
                     <label>Submission Mode <span className="req-asterisk">*</span></label>
                     <select className="drms-select" value={form.submissionMode} onChange={e => set('submissionMode', e.target.value)}>
-                      <option>Onsite</option>
-                      <option>Online</option>
+                      <option>Onsite</option><option>Online</option>
                     </select>
                   </div>
                   <div className="fg" ref={firstNameRef}>
                     <label>First Name <span className="req-asterisk">*</span></label>
-                    <input className={`drms-input${errors.firstName ? ' input-error' : ''}`} type="text" value={form.firstName} onChange={e => { set('firstName', e.target.value); setErrors(p => ({...p, firstName: ''})); }} />
+                    <input className={`drms-input${errors.firstName ? ' input-error' : ''}`} type="text" value={form.firstName}
+                      onChange={e => { set('firstName', e.target.value); setErrors(p => ({...p, firstName: ''})); }}
+                      readOnly={!!sessionStudent} />
                     {errors.firstName && <div className="field-error">{errors.firstName}</div>}
                   </div>
                   <div className="fg" ref={lastNameRef}>
                     <label>Last Name <span className="req-asterisk">*</span></label>
-                    <input className={`drms-input${errors.lastName ? ' input-error' : ''}`} type="text" value={form.lastName} onChange={e => { set('lastName', e.target.value); setErrors(p => ({...p, lastName: ''})); }} />
+                    <input className={`drms-input${errors.lastName ? ' input-error' : ''}`} type="text" value={form.lastName}
+                      onChange={e => { set('lastName', e.target.value); setErrors(p => ({...p, lastName: ''})); }}
+                      readOnly={!!sessionStudent} />
                     {errors.lastName && <div className="field-error">{errors.lastName}</div>}
                   </div>
                   <div className="fg" ref={programRef}>
                     <label>Program / Strand <span className="req-asterisk">*</span></label>
-                    <input className={`drms-input${errors.programStrand ? ' input-error' : ''}`} type="text" placeholder="e.g. BSCS, STEM" value={form.programStrand} onChange={e => { set('programStrand', e.target.value); setErrors(p => ({...p, programStrand: ''})); }} />
+                    <input className={`drms-input${errors.programStrand ? ' input-error' : ''}`} type="text" placeholder="e.g. BSCS, STEM"
+                      value={form.programStrand} onChange={e => { set('programStrand', e.target.value); setErrors(p => ({...p, programStrand: ''})); }}
+                      readOnly={!!sessionStudent} />
                     {errors.programStrand && <div className="field-error">{errors.programStrand}</div>}
                   </div>
                   <div className="fg">
                     <label>Enrollment Status <span className="req-asterisk">*</span></label>
                     <select className="drms-select" value={form.enrollmentStatus} onChange={e => set('enrollmentStatus', e.target.value)}>
-                      <option>Enrolled</option>
-                      <option>Not Enrolled</option>
-                      <option>Alumni</option>
-                      <option>Transferee</option>
+                      <option>Enrolled</option><option>Not Enrolled</option><option>Alumni</option><option>Transferee</option>
                     </select>
                   </div>
                   <div className="fg">
@@ -441,7 +525,9 @@ export default function NewRequestPage() {
                   </div>
                   <div className="fg" ref={emailRef}>
                     <label>Email Address <span className="req-asterisk">*</span></label>
-                    <input className={`drms-input${errors.email ? ' input-error' : ''}`} type="email" placeholder="student@mcm.edu.ph" value={form.email} onChange={e => { set('email', e.target.value); setErrors(p => ({...p, email: ''})); }} />
+                    <input className={`drms-input${errors.email ? ' input-error' : ''}`} type="email" placeholder="student@mcm.edu.ph"
+                      value={form.email} onChange={e => { set('email', e.target.value); setErrors(p => ({...p, email: ''})); }}
+                      readOnly={!!sessionStudent} />
                     {errors.email && <div className="field-error">{errors.email}</div>}
                   </div>
                 </div>
@@ -449,13 +535,65 @@ export default function NewRequestPage() {
                 {/* Authorized rep */}
                 <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(0,0,0,0.06)' }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', textTransform: 'none', letterSpacing: 0 }}>
-                    <input type="checkbox" style={{ width: 16, height: 16, accentColor: 'var(--navy)', flexShrink: 0 }} checked={form.hasRep} onChange={e => set('hasRep', e.target.checked)} />
+                    <input type="checkbox" style={{ width: 16, height: 16, accentColor: 'var(--navy)', flexShrink: 0 }}
+                      checked={form.hasRep} onChange={e => set('hasRep', e.target.checked)} />
                     <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Filed by Authorized Representative</span>
                   </label>
+
                   <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, opacity: form.hasRep ? 1 : 0.4, pointerEvents: form.hasRep ? 'auto' : 'none' }}>
                     <div className="fg"><label>Representative Name</label><input className="drms-input" type="text" placeholder="Full name" value={form.repName} onChange={e => set('repName', e.target.value)} /></div>
                     <div className="fg"><label>Relationship</label><input className="drms-input" type="text" placeholder="e.g. Parent, Sibling" value={form.repRelation} onChange={e => set('repRelation', e.target.value)} /></div>
                   </div>
+
+                  {/* File upload — only shown when hasRep is checked */}
+                  {form.hasRep && (
+                    <div style={{ marginTop: 16 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>
+                        Authorization Documents <span className="req-asterisk">*</span>
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--mid-gray)', marginBottom: 10, lineHeight: 1.5 }}>
+                        Please upload: (1) written authorization letter, (2) copy of student's school ID, and (3) valid ID of representative. Accepted: JPG, PNG, PDF — max 10MB each.
+                      </div>
+
+                      {/* Upload area */}
+                      <div
+                        style={{ border: '2px dashed var(--border-col)', borderRadius: 10, padding: 20, textAlign: 'center', cursor: 'pointer', background: 'var(--surface-2)', transition: 'border-color .15s' }}
+                        onClick={() => fileInputRef.current?.click()}
+                        onDragOver={e => e.preventDefault()}
+                        onDrop={e => {
+                          e.preventDefault();
+                          const files = Array.from(e.dataTransfer.files);
+                          const valid = files.filter(f => f.size <= 10 * 1024 * 1024);
+                          setAuthFiles(prev => [...prev, ...valid]);
+                        }}
+                      >
+                        <div style={{ fontSize: 24, marginBottom: 6 }}>📎</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Click to upload or drag and drop</div>
+                        <div style={{ fontSize: 11, color: 'var(--mid-gray)', marginTop: 2 }}>JPG, PNG, PDF up to 10MB</div>
+                        <input ref={fileInputRef} type="file" multiple accept=".jpg,.jpeg,.png,.pdf"
+                          style={{ display: 'none' }} onChange={handleFileChange} />
+                      </div>
+
+                      {/* File list */}
+                      {authFiles.length > 0 && (
+                        <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          {authFiles.map((file, i) => (
+                            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: 'var(--surface)', border: '1px solid var(--border-col)', borderRadius: 8 }}>
+                              <span style={{ fontSize: 16 }}>{file.type.includes('pdf') ? '📄' : '🖼️'}</span>
+                              <div style={{ flex: 1 }}>
+                                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>{file.name}</div>
+                                <div style={{ fontSize: 11, color: 'var(--mid-gray)' }}>{(file.size / 1024).toFixed(0)} KB</div>
+                              </div>
+                              <button onClick={() => removeFile(i)}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#E50019', fontSize: 16, lineHeight: 1 }}>✕</button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {errors.authFiles && <div className="field-error" style={{ marginTop: 6 }}>{errors.authFiles}</div>}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -465,28 +603,38 @@ export default function NewRequestPage() {
               <div className="drms-card" style={{ padding: 20 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 14 }}>Request Summary</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Form Type</span><span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{form.formType}</span></div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Level</span><span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{form.academicLevel}</span></div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Mode</span><span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{form.submissionMode}</span></div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Requester</span><span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{form.firstName || '—'} {form.lastName}</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Form Type</span><span style={{ fontWeight: 600 }}>{form.formType}</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Level</span><span style={{ fontWeight: 600 }}>{form.academicLevel}</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Mode</span><span style={{ fontWeight: 600 }}>{form.submissionMode}</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Requester</span><span style={{ fontWeight: 600 }}>{form.firstName || '—'} {form.lastName}</span></div>
+                  {form.hasRep && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Rep Files</span><span style={{ fontWeight: 600, color: authFiles.length > 0 ? '#198754' : '#E50019' }}>{authFiles.length > 0 ? `${authFiles.length} file(s)` : 'None uploaded'}</span></div>
+                  )}
                 </div>
               </div>
-              <div className="info-box">
-                <span className="info-icon">ℹ️</span>
-                <div className="info-text">Enter the student number and click Lookup to auto-fill from the database, or fill in manually.</div>
-              </div>
+              {sessionStudent ? (
+                <div className="info-box">
+                  <span className="info-icon">✅</span>
+                  <div className="info-text">Your info has been auto-filled from your account.</div>
+                </div>
+              ) : (
+                <div className="info-box">
+                  <span className="info-icon">ℹ️</span>
+                  <div className="info-text">Enter the student number and click Lookup to auto-fill, or fill in manually.</div>
+                </div>
+              )}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <button className="btn-primary" style={{ justifyContent: 'center', padding: 12 }} onClick={() => {
-                  if (!validateStep1()) return;
-                  setStep(2);
-                }}>Continue to Documents →</button>
+                <button className="btn-primary" style={{ justifyContent: 'center', padding: 12 }}
+                  onClick={() => { if (!validateStep1()) return; setStep(2); }}>
+                  Continue to Documents →
+                </button>
                 <button className="btn-outline" style={{ justifyContent: 'center' }} onClick={() => router.push('/staff/dashboard')}>Cancel</button>
               </div>
             </div>
           </div>
         )}
 
-        {/* ── STEP 2: Select Documents ── */}
+        {/* ── STEP 2 ── */}
         {step === 2 && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 18 }}>
             <div className="drms-card" style={{ padding: 20 }}>
@@ -504,37 +652,28 @@ export default function NewRequestPage() {
                         <input type="checkbox" checked={isChecked} onChange={() => {}} style={{ width: 15, height: 15, accentColor: 'var(--navy)', flexShrink: 0 }} onClick={e => e.stopPropagation()} />
                         <div style={{ flex: 1 }}>
                           <div className="check-item-label">{dt.document_name}</div>
-                          <div className="check-item-sub">
-                            {dt.processing_days} working days · Fee set at Treasury
-                          </div>
+                          <div className="check-item-sub">{dt.processing_days} working days · Fee set at Treasury</div>
                         </div>
-                        {(
-                          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }} onClick={e => e.stopPropagation()}>
-                            <input
-                              type="number"
-                              value={sel?.copies ?? 1}
-                              min={1} max={10}
-                              style={{ width: 48, padding: '4px 6px', fontSize: 12, border: '1px solid var(--mid-gray)', borderRadius: 6 }}
-                              onChange={e => setCopies(dt.document_type_id, Number(e.target.value))}
-                              disabled={!isChecked}
-                            />
-                            <span style={{ color: 'var(--text-primary)' }}>copies</span>
-                          </div>
-                        )}
+                        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }} onClick={e => e.stopPropagation()}>
+                          <input type="number" value={sel?.copies ?? 1} min={1} max={10}
+                            style={{ width: 48, padding: '4px 6px', fontSize: 12, border: '1px solid var(--mid-gray)', borderRadius: 6 }}
+                            onChange={e => setCopies(dt.document_type_id, Number(e.target.value))} disabled={!isChecked} />
+                          <span style={{ color: 'var(--text-primary)' }}>copies</span>
+                        </div>
                       </div>
                     );
                   })}
                 </div>
               )}
-
               <div className="fg" ref={purposeRef} style={{ marginTop: 16 }}>
                 <label>Purpose / Reason for Request <span className="req-asterisk">*</span></label>
-                <textarea className={`drms-textarea${errors.purpose ? ' input-error' : ''}`} placeholder="State the specific purpose of this request..." value={form.purpose} onChange={e => { set('purpose', e.target.value); setErrors(p => ({...p, purpose: ''})); }} />
+                <textarea className={`drms-textarea${errors.purpose ? ' input-error' : ''}`}
+                  placeholder="State the specific purpose of this request..."
+                  value={form.purpose} onChange={e => { set('purpose', e.target.value); setErrors(p => ({...p, purpose: ''})); }} />
                 {errors.purpose && <div className="field-error">{errors.purpose}</div>}
               </div>
             </div>
 
-            {/* Summary sidebar */}
             <div style={{ position: 'sticky', top: 'calc(var(--topbar-h) + 24px)', display: 'flex', flexDirection: 'column', gap: 12, height: 'fit-content' }}>
               <div className="drms-card" style={{ padding: 18 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 10 }}>Selected Documents</div>
@@ -558,27 +697,26 @@ export default function NewRequestPage() {
               </div>
               <div className="info-box warn">
                 <span className="info-icon">⚠️</span>
-                <div className="info-text" style={{ fontSize: 11 }}>Payment is settled at the Treasury Office after RO verification. Official receipt required.</div>
+                <div className="info-text" style={{ fontSize: 11 }}>Payment is settled at the Treasury Office after RO verification.</div>
               </div>
-              <button className="btn-primary" style={{ justifyContent: 'center', padding: 11 }} onClick={() => {
-                if (!validateStep2()) return;
-                setStep(3);
-              }}>Continue to Review →</button>
+              <button className="btn-primary" style={{ justifyContent: 'center', padding: 11 }}
+                onClick={() => { if (!validateStep2()) return; setStep(3); }}>
+                Continue to Review →
+              </button>
               <button className="btn-outline" style={{ justifyContent: 'center' }} onClick={() => setStep(1)}>← Back</button>
             </div>
           </div>
         )}
 
-        {/* ── STEP 3: Review & Submit ── */}
+        {/* ── STEP 3 ── */}
         {step === 3 && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 18 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div className="info-box">
                 <span className="info-icon">✅</span>
-                <div className="info-text">Please review all information below before submitting. Click "Edit" on any section to make changes.</div>
+                <div className="info-text">Please review all information below before submitting.</div>
               </div>
 
-              {/* Requester review */}
               <div className="drms-card" style={{ padding: 18 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                   <div className="section-title" style={{ marginBottom: 0 }}>Requester Information</div>
@@ -593,10 +731,12 @@ export default function NewRequestPage() {
                   <div className="field-group"><div className="field-label">Submission Mode</div><div className="field-value">{form.submissionMode}</div></div>
                   <div className="field-group"><div className="field-label">Email</div><div className="field-value">{form.email}</div></div>
                   <div className="field-group"><div className="field-label">Authorized Rep</div><div className="field-value">{form.hasRep ? `${form.repName} (${form.repRelation})` : 'None'}</div></div>
+                  {form.hasRep && (
+                    <div className="field-group"><div className="field-label">Auth Documents</div><div className="field-value" style={{ color: authFiles.length > 0 ? '#198754' : '#E50019' }}>{authFiles.length > 0 ? `${authFiles.length} file(s) ready to upload` : '⚠️ No files uploaded'}</div></div>
+                  )}
                 </div>
               </div>
 
-              {/* Documents review */}
               <div className="drms-card" style={{ padding: 18 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                   <div className="section-title" style={{ marginBottom: 0 }}>Documents Requested</div>
@@ -631,30 +771,31 @@ export default function NewRequestPage() {
               )}
             </div>
 
-            {/* Final summary sidebar */}
             <div style={{ position: 'sticky', top: 'calc(var(--topbar-h) + 24px)', display: 'flex', flexDirection: 'column', gap: 12, height: 'fit-content' }}>
               <div className="drms-card" style={{ padding: 18 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 10 }}>Request Summary</div>
                 <div style={{ fontSize: 12, display: 'flex', flexDirection: 'column', gap: 7 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Form Type</span><span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{form.formType}</span></div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Requester</span><span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{form.lastName}, {form.firstName}</span></div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Documents</span><span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{form.selectedDocs.length} item(s)</span></div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Processing</span><span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{maxDays} working days</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Form Type</span><span style={{ fontWeight: 600 }}>{form.formType}</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Requester</span><span style={{ fontWeight: 600 }}>{form.lastName}, {form.firstName}</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Documents</span><span style={{ fontWeight: 600 }}>{form.selectedDocs.length} item(s)</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Processing</span><span style={{ fontWeight: 600 }}>{maxDays} working days</span></div>
                   <div style={{ height: 1, background: 'rgba(0,0,0,.06)' }} />
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Amount Due</span><span style={{ fontWeight: 800, color: 'var(--mid-gray)' }}>Set at Treasury</span></div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Expected Claim</span><span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{expectedClaim}</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mid-gray)' }}>Expected Claim</span><span style={{ fontWeight: 600 }}>{expectedClaim}</span></div>
                 </div>
               </div>
               <div className="info-box warn">
                 <span className="info-icon">💳</span>
-                <div className="info-text" style={{ fontSize: 11 }}>Payment at Treasury Office after verification. Billing email will be sent to the student.</div>
+                <div className="info-text" style={{ fontSize: 11 }}>Payment at Treasury Office after verification. An SMS notification will be sent to the student.</div>
               </div>
-              <button
-                className="btn-primary"
-                style={{ justifyContent: 'center', padding: 11 }}
-                disabled={submitting}
-                onClick={handleSubmit}
-              >
+              {uploadProgress && (
+                <div className="info-box">
+                  <span className="info-icon">⏳</span>
+                  <div className="info-text">{uploadProgress}</div>
+                </div>
+              )}
+              <button className="btn-primary" style={{ justifyContent: 'center', padding: 11 }}
+                disabled={submitting} onClick={handleSubmit}>
                 {submitting ? 'Submitting...' : '✓ Submit Request'}
               </button>
               <button className="btn-outline" style={{ justifyContent: 'center' }} onClick={() => setStep(2)}>← Back</button>
