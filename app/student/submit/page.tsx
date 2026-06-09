@@ -79,10 +79,44 @@ export default function StudentSubmitPage() {
   const [repRelation, setRepRelation]     = useState('');
   const [selectedDocs, setSelectedDocs]   = useState<SelectedDoc[]>([]);
   const [errors, setErrors]               = useState<Record<string, string>>({});
+  const isLoggedIn = typeof window !== 'undefined' && !!sessionStorage.getItem('student_token');
 
   // ── Doc types from API ─────────────────────────────────────────────────────
   const [docTypes, setDocTypes]     = useState<DocType[]>([]);
   const [docsLoading, setDocsLoading] = useState(true);
+
+  // ── Auto-populate from session ─────────────────────────────────────────────
+  useEffect(() => {
+    const token  = sessionStorage.getItem('student_token');
+    const number = sessionStorage.getItem('student_number');
+    const level  = sessionStorage.getItem('student_level');
+    const prog   = sessionStorage.getItem('student_program');
+    if (!token || !number) return;
+
+    setStudentNumber(number);
+    if (level) setAcademicLevel(level === 'SHS' ? 'Senior High School' : 'College');
+    if (prog)  setProgramStrand(prog);
+
+    // Fetch full record for name, email, contact
+    fetch(`${API_BASE}/requesters/?search=${number}`)
+      .then(r => r.json())
+      .then(data => {
+        const results = data.results ?? data;
+        const match = results.find((r: any) => r.student_number === number);
+        if (match) {
+          setFirstName(match.first_name);
+          setLastName(match.last_name);
+          setProgramStrand(match.program_strand);
+          setAcademicLevel(match.academic_level === 'SHS' ? 'Senior High School' : 'College');
+          setEnrollmentStatus(match.enrollment_status);
+          setAcademicYear(match.academic_year ?? '');
+          setTermSemester(match.term_semester ?? '');
+          setEmail(match.email);
+          setContactNumber(match.contact_number ?? '');
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     async function fetchDocs() {
