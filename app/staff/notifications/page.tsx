@@ -82,7 +82,11 @@ export default function NotificationsPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/notifications/`);
+      const staffId = sessionStorage.getItem('staff_id');
+      const params  = staffId
+        ? `?recipient_type=Staff&recipient_id=${staffId}`
+        : `?recipient_type=Staff`;
+      const res = await fetch(`${API_BASE}/notifications/${params}`);
       if (!res.ok) throw new Error('API error');
       const data = await res.json();
       setNotifs(data.results ?? data);
