@@ -67,14 +67,16 @@ export function Topbar({
   useEffect(() => {
     async function fetchUnread() {
       try {
-        const res = await fetch(`${API_BASE}/notifications/`);
+        const staffId = sessionStorage.getItem('staff_id');
+        const params  = staffId
+          ? `?recipient_type=Staff&recipient_id=${staffId}&is_read=false`
+          : `?recipient_type=Staff&is_read=false`;
+        const res = await fetch(`${API_BASE}/notifications/${params}`);
         if (!res.ok) return;
         const data = await res.json();
         const notifs = data.results ?? data;
         setUnreadCount(notifs.filter((n: any) => !n.is_read).length);
-      } catch {
-        // Silent fail — not critical
-      }
+      } catch {}
     }
     fetchUnread();
     // Refresh every 60 seconds — same as sidebar
