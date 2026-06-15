@@ -168,7 +168,10 @@ function SidePanel({
 
   const status        = data.current_status;
 
-  const allLogs = [...(data.status_logs || [])].reverse();
+  // Sort by timestamp descending — newest first, guaranteed regardless of API order
+  const allLogs = [...(data.status_logs || [])].sort(
+    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+  );
   const visibleLogs = showAll ? allLogs.slice(0, visibleCount) : allLogs.slice(0, 5);
   const hasMore = allLogs.length > visibleCount;
   const hasOlder = !showAll && allLogs.length > 5;
@@ -369,7 +372,7 @@ function SidePanel({
               <button
                 onClick={() => setVisibleCount(c => c + 5)}
                 style={{ width: '100%', background: 'none', border: 'none', color: 'var(--blue)', fontSize: 11, fontWeight: 600, cursor: 'pointer', padding: '6px 0', textAlign: 'center' }}>
-                ↑ Load older entries
+                ↓ Load more
               </button>
             )}
             {/* Show older / collapse */}
@@ -377,14 +380,14 @@ function SidePanel({
               <button
                 onClick={() => { setShowAll(true); setVisibleCount(10); }}
                 style={{ width: '100%', background: 'none', border: 'none', color: 'var(--blue)', fontSize: 11, fontWeight: 600, cursor: 'pointer', padding: '6px 0', textAlign: 'center' }}>
-                ↑ Load older entries ({allLogs.length - 5} more)
+                ↓ Load older entries ({allLogs.length - 5} more)
               </button>
             )}
             {showAll && (
               <button
                 onClick={() => { setShowAll(false); setVisibleCount(5); }}
                 style={{ width: '100%', background: 'none', border: 'none', color: 'var(--mid-gray)', fontSize: 11, cursor: 'pointer', padding: '6px 0', textAlign: 'center' }}>
-                ↓ Show less
+                ↑ Show less
               </button>
             )}
           </>
