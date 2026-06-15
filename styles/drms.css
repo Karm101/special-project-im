@@ -406,6 +406,15 @@
 .badge-na       { background: rgba(177,177,177,0.1);border-color: #B1B1B1; color: #B1B1B1; }
 .badge-overdue  { background: rgba(229,0,25,0.08);  border-color: #E50019; color: #E50019; }
 
+/* ── NEW WORKFLOW BADGES (light mode) ───────────────────────────────── */
+.b-sub  { background: rgba(140,139,139,0.12); border-color: #8C8B8B;  color: #5a5a5a; }
+.b-end  { background: rgba(17,75,159,0.10);   border-color: #114B9F;  color: #114B9F; }
+.b-rev  { background: rgba(255,163,35,0.12);  border-color: #FFA323;  color: #b87200; }
+.b-apr  { background: rgba(109,77,245,0.10);  border-color: #6D4DF5;  color: #5038cc; }
+.b-rel  { background: rgba(17,75,159,0.10);   border-color: #114B9F;  color: #114B9F; }
+.b-done { background: rgba(25,135,84,0.10);   border-color: #198754;  color: #198754; }
+.b-rej  { background: rgba(229,0,25,0.10);    border-color: #E50019;  color: #E50019; }
+
 /* ── STAT CARDS ─────────────────────────────────────────────────── */
 .stat-grid { display: grid; gap: 16px; margin-bottom: 24px; }
 .stat-grid-4 { grid-template-columns: repeat(4,1fr); }

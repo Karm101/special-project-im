@@ -170,7 +170,7 @@ function SidePanel({
   const isTerminal = ['Claimed', 'Shredded', 'Rejected', 'Invalid Request'].includes(status);
 
   // Which buttons to show
-  const canAdvance    = !isTerminal && !['For Clearance'].includes(status);
+  const canAdvance    = !isTerminal;
   const canReturn     = ['For Validation', 'For Clearance', 'For Billing', 'For Payment', 'Paid', 'For Processing', 'For Printing'].includes(status);
   const canReject     = !isTerminal;
   const canInvalid    = ['Pending', 'For Validation'].includes(status);
@@ -179,6 +179,7 @@ function SidePanel({
   const nextStatus: Record<string, string> = {
     'Pending':        'For Validation',
     'For Validation': 'For Billing',
+    'For Clearance':  'For Billing',   // ← add this line
     'For Billing':    'For Payment',
     'For Payment':    'Paid',
     'Paid':           'For Processing',
@@ -190,6 +191,7 @@ function SidePanel({
   const nextLabel: Record<string, string> = {
     'Pending':        'Mark as For Validation',
     'For Validation': 'Mark as For Billing',
+    'For Clearance':  'Resume — Mark as For Billing',  // ← add this line
     'For Billing':    'Mark as For Payment',
     'For Payment':    'Mark as Paid',
     'Paid':           'Mark as For Processing',
