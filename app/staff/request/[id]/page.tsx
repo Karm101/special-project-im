@@ -163,8 +163,15 @@ function SidePanel({
   const staffName     = data.assigned_staff ? `${data.assigned_staff.first_name} ${data.assigned_staff.last_name}` : 'Unassigned';
   const staffInitials = data.assigned_staff ? `${data.assigned_staff.first_name[0]}${data.assigned_staff.last_name[0]}` : '?';
   const billedByName  = data.billed_by_staff ? `${data.billed_by_staff.first_name} ${data.billed_by_staff.last_name}` : 'Not assigned';
-  const recentLogs    = [...(data.status_logs || [])].reverse().slice(0, 5);
+  const [showAll, setShowAll] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(5);
+
   const status        = data.current_status;
+
+  const allLogs = [...(data.status_logs || [])].reverse();
+  const visibleLogs = showAll ? allLogs.slice(0, visibleCount) : allLogs.slice(0, 5);
+  const hasMore = allLogs.length > visibleCount;
+  const hasOlder = !showAll && allLogs.length > 5;
 
   // Terminal statuses — no more actions
   const isTerminal = ['Claimed', 'Shredded', 'Rejected', 'Invalid Request'].includes(status);
@@ -341,21 +348,46 @@ function SidePanel({
       {/* Status History */}
       <div className="side-sect" style={{ flex: 1, overflowY: 'auto' }}>
         <div className="side-sect-title">Status History</div>
-        {recentLogs.length === 0 ? (
+        {allLogs.length === 0 ? (
           <div style={{ fontSize: 12, color: '#B1B1B1' }}>No status changes yet.</div>
         ) : (
-          recentLogs.map(log => (
-            <div key={log.log_id} className="comment-item">
-              <div className="comment-meta">
-                <span className="comment-author">{log.staff_name ?? 'System'}</span>
-                <span className="comment-date">{formatDateTime(log.timestamp)}</span>
+          <>
+            {visibleLogs.map(log => (
+              <div key={log.log_id} className="comment-item">
+                <div className="comment-meta">
+                  <span className="comment-author">{log.staff_name ?? 'System'}</span>
+                  <span className="comment-date">{formatDateTime(log.timestamp)}</span>
+                </div>
+                <div className="comment-text">
+                  Status changed to <strong>{log.status}</strong>
+                  {log.remarks ? ` — ${log.remarks}` : ''}
+                </div>
               </div>
-              <div className="comment-text">
-                Status changed to <strong>{log.status}</strong>
-                {log.remarks ? ` — ${log.remarks}` : ''}
-              </div>
-            </div>
-          ))
+            ))}
+            {/* Load more older entries */}
+            {showAll && hasMore && (
+              <button
+                onClick={() => setVisibleCount(c => c + 5)}
+                style={{ width: '100%', background: 'none', border: 'none', color: 'var(--blue)', fontSize: 11, fontWeight: 600, cursor: 'pointer', padding: '6px 0', textAlign: 'center' }}>
+                ↑ Load older entries
+              </button>
+            )}
+            {/* Show older / collapse */}
+            {hasOlder && !showAll && (
+              <button
+                onClick={() => { setShowAll(true); setVisibleCount(10); }}
+                style={{ width: '100%', background: 'none', border: 'none', color: 'var(--blue)', fontSize: 11, fontWeight: 600, cursor: 'pointer', padding: '6px 0', textAlign: 'center' }}>
+                ↑ Load older entries ({allLogs.length - 5} more)
+              </button>
+            )}
+            {showAll && (
+              <button
+                onClick={() => { setShowAll(false); setVisibleCount(5); }}
+                style={{ width: '100%', background: 'none', border: 'none', color: 'var(--mid-gray)', fontSize: 11, cursor: 'pointer', padding: '6px 0', textAlign: 'center' }}>
+                ↓ Show less
+              </button>
+            )}
+          </>
         )}
       </div>
 
