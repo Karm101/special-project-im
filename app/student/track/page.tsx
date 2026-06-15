@@ -82,35 +82,79 @@ function formatDateTime(d: string) {
 
 function statusToBadge(status: string) {
   switch (status) {
-    case 'Pending':           return { cls: 'b-sub',  label: 'Submitted' };
-    case 'Verifying':         return { cls: 'b-end',  label: 'For Endorsement' };
-    case 'For Payment':       return { cls: 'b-rev',  label: 'For Review' };
-    case 'Processing':        return { cls: 'b-apr',  label: 'For Approval' };
-    case 'Ready for Release': return { cls: 'b-rel',  label: 'For Release' };
-    case 'Released':          return { cls: 'b-done', label: 'Released' };
-    default:                  return { cls: 'b-sub',  label: status };
+    case 'Pending':         return { cls: 'b-sub',  label: 'Submitted' };
+    case 'For Validation':  return { cls: 'b-end',  label: 'For Validation' };
+    case 'Invalid Request': return { cls: 'b-rej',  label: 'Invalid Request' };
+    case 'For Clearance':   return { cls: 'b-rev',  label: 'For Clearance' };
+    case 'For Billing':     return { cls: 'b-rev',  label: 'For Billing' };
+    case 'For Payment':     return { cls: 'b-rev',  label: 'For Payment' };
+    case 'Paid':            return { cls: 'b-apr',  label: 'Paid' };
+    case 'For Processing':  return { cls: 'b-apr',  label: 'For Processing' };
+    case 'For Printing':    return { cls: 'b-apr',  label: 'For Printing' };
+    case 'For Release':     return { cls: 'b-rel',  label: 'For Release' };
+    case 'Claimed':         return { cls: 'b-done', label: 'Claimed' };
+    case 'Shredded':        return { cls: 'b-rej',  label: 'Shredded' };
+    case 'Rejected':        return { cls: 'b-rej',  label: 'Rejected' };
+    default:                return { cls: 'b-sub',  label: status };
   }
 }
 
 function statusToStageIndex(status: string): number {
   switch (status) {
-    case 'Pending':           return 1;
-    case 'Verifying':         return 2;
-    case 'For Payment':       return 3;
-    case 'Processing':        return 4;
-    case 'Ready for Release': return 5;
-    case 'Released':          return 6;
-    default:                  return 1;
+    case 'Pending':         return 1;
+    case 'For Validation':  return 2;
+    case 'Invalid Request': return 2;
+    case 'For Clearance':   return 2;
+    case 'For Billing':     return 3;
+    case 'For Payment':     return 3;
+    case 'Paid':            return 4;
+    case 'For Processing':  return 4;
+    case 'For Printing':    return 4;
+    case 'For Release':     return 5;
+    case 'Claimed':         return 6;
+    case 'Shredded':        return 6;
+    case 'Rejected':        return 2;
+    default:                return 1;
   }
 }
 
 const STAGES = [
-  { num: 1, name: 'Submission',        pendingDesc: 'Your request is being received.',                           activeDesc: 'Your request was successfully submitted.',             doneDesc: 'Request submitted successfully.' },
-  { num: 2, name: 'Verification',      pendingDesc: 'Waiting for document verification.',                       activeDesc: 'Staff is verifying your documents and enrollment.',    doneDesc: 'Your documents have been verified.' },
-  { num: 3, name: 'Billing & Payment', pendingDesc: 'Waiting for payment billing.',                             activeDesc: 'You have been billed. Please settle at Treasury.',    doneDesc: 'Payment confirmed.' },
-  { num: 4, name: 'Processing',        pendingDesc: 'Documents not yet being processed.',                       activeDesc: 'Your documents are currently being processed.',        doneDesc: 'Documents have been processed.' },
-  { num: 5, name: 'Ready for Release', pendingDesc: 'Documents not yet ready for release.',                     activeDesc: 'Your documents are ready! Please claim at the RO.',   doneDesc: 'Documents were ready for release.' },
-  { num: 6, name: 'Released',          pendingDesc: 'Documents not yet released.',                              activeDesc: 'Documents released. Thank you!',                      doneDesc: 'Documents have been released and claimed.' },
+  {
+    num: 1, name: 'Submission',
+    pendingDesc: 'Your request is being received.',
+    activeDesc:  'Your request was successfully submitted.',
+    doneDesc:    'Request submitted successfully.',
+  },
+  {
+    num: 2, name: 'Verification',
+    pendingDesc: 'Waiting for document verification.',
+    activeDesc:  'Staff is verifying your documents. If clearance is required, your request may be placed on hold.',
+    doneDesc:    'Your documents have been verified.',
+  },
+  {
+    num: 3, name: 'Billing & Payment',
+    pendingDesc: 'Waiting for billing.',
+    activeDesc:  'Your request has been billed. Please proceed to the Treasury Office to pay. You will be notified via SMS.',
+    doneDesc:    'Payment confirmed. The 7-working-day processing period has started.',
+  },
+  {
+    num: 4, name: 'Processing',
+    pendingDesc: 'Documents not yet being processed.',
+    activeDesc:  'Your documents are currently being processed and printed.',
+    doneDesc:    'Documents have been processed.',
+  },
+  {
+    num: 5, name: 'Ready for Release',
+    pendingDesc: 'Documents not yet ready for release.',
+    activeDesc:  'Your documents are ready! Please claim at the Registrar\'s Office. Bring a valid ID.',
+    doneDesc:    'Documents were ready for release.',
+  },
+  {
+    num: 6, name: 'Claimed',
+    pendingDesc: 'Documents not yet released.',
+    activeDesc:  'Documents released. Thank you!',
+    doneDesc:    'Documents have been claimed.',
+  },
 ];
 
 export default function StudentTrackPage() {
@@ -445,8 +489,12 @@ export default function StudentTrackPage() {
                   const stageType = stage.num < currentStage ? 'done' : stage.num === currentStage ? 'active' : 'pending';
                   const log = data.status_logs?.find(l => {
                     const statusMap: Record<number, string[]> = {
-                      1: ['Pending'], 2: ['Verifying'], 3: ['For Payment'],
-                      4: ['Processing'], 5: ['Ready for Release'], 6: ['Released'],
+                      1: ['Pending'],
+                      2: ['For Validation', 'For Clearance', 'Invalid Request', 'Rejected'],
+                      3: ['For Billing', 'For Payment', 'Paid'],
+                      4: ['For Processing', 'For Printing'],
+                      5: ['For Release'],
+                      6: ['Claimed', 'Shredded'],
                     };
                     return statusMap[stage.num]?.includes(l.status);
                   });
@@ -495,11 +543,17 @@ export default function StudentTrackPage() {
                   📅 Expected Claim Date: {formatDate(data.expected_claim_date)}
                 </div>
                 <div style={{ fontSize: 11, color: 'var(--mid-gray)', marginTop: 4 }}>
-                  {data.current_status === 'Released'
+                  {['Claimed', 'Shredded'].includes(data.current_status)
                     ? 'Your documents have been released. Thank you!'
-                    : data.current_status === 'Ready for Release'
+                    : data.current_status === 'For Release'
                     ? 'Your documents are ready! Please bring a valid ID when claiming at the Registrar\'s Office.'
-                    : 'Claim slip will be issued once your documents are ready. Please bring a valid ID when claiming.'}
+                    : data.current_status === 'For Clearance'
+                    ? 'Your request is on hold pending clearance. The Registrar\'s Office will notify you once cleared.'
+                    : data.current_status === 'Invalid Request'
+                    ? 'Your request was marked as invalid. Please contact the Registrar\'s Office for more information.'
+                    : data.current_status === 'Rejected'
+                    ? 'Your request was rejected. Please contact the Registrar\'s Office for more information.'
+                    : 'Processing time is 7 working days after payment is confirmed. Please bring a valid ID when claiming.'}
                 </div>
               </div>
             </div>
