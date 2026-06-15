@@ -87,29 +87,59 @@ function formatDateTime(d: string) {
 }
 
 function statusToWorkflow(status: string): string {
+  const labels: Record<string, string> = {
+    'Pending':        '● Submitted',
+    'For Validation': '● For Validation',
+    'Invalid Request':'● Invalid Request',
+    'For Clearance':  '● For Clearance',
+    'For Billing':    '● For Billing',
+    'For Payment':    '● For Payment',
+    'Paid':           '● Paid',
+    'For Processing': '● For Processing',
+    'For Printing':   '● For Printing',
+    'For Release':    '● For Release',
+    'Claimed':        '● Claimed',
+    'Shredded':       '● Shredded',
+    'Rejected':       '● Rejected',
+  };
+  return labels[status] ?? `● ${status}`;
+}
+
+function statusToBadge(status: string): { cls: string; label: string } {
   switch (status) {
-    case 'Pending':        return '● Submitted';
-    case 'For Validation': return '● For Validation';
-    case 'For Payment':    return '● For Payment';
-    case 'Paid':           return '● Paid';
-    case 'Processing':     return '● Processing';
-    case 'For Release':    return '● For Release';
-    case 'Claimed':        return '● Claimed';
-    case 'Rejected':       return '● Rejected';
-    default:               return `● ${status}`;
+    case 'Pending':         return { cls: 'b-sub',  label: 'Submitted' };
+    case 'For Validation':  return { cls: 'b-end',  label: 'For Validation' };
+    case 'Invalid Request': return { cls: 'b-rej',  label: 'Invalid Request' };
+    case 'For Clearance':   return { cls: 'b-rev',  label: 'For Clearance' };
+    case 'For Billing':     return { cls: 'b-rev',  label: 'For Billing' };
+    case 'For Payment':     return { cls: 'b-rev',  label: 'For Payment' };
+    case 'Paid':            return { cls: 'b-apr',  label: 'Paid' };
+    case 'For Processing':  return { cls: 'b-apr',  label: 'For Processing' };
+    case 'For Printing':    return { cls: 'b-apr',  label: 'For Printing' };
+    case 'For Release':     return { cls: 'b-rel',  label: 'For Release' };
+    case 'Claimed':         return { cls: 'b-done', label: 'Claimed' };
+    case 'Shredded':        return { cls: 'b-rej',  label: 'Shredded' };
+    case 'Rejected':        return { cls: 'b-rej',  label: 'Rejected' };
+    default:                return { cls: 'b-sub',  label: status };
   }
 }
 
 function statusToStageIndex(status: string): number {
   switch (status) {
-    case 'Pending':        return 1;
-    case 'For Validation': return 2;
-    case 'For Payment':    return 3;
-    case 'Paid':           return 4;
-    case 'Processing':     return 5;
-    case 'For Release':    return 6;
-    case 'Claimed':        return 7;
-    default:               return 1;
+    case 'Pending':         return 1;
+    case 'For Validation':  return 2;
+    case 'Invalid Request': return 2;
+    case 'For Clearance':   return 2;
+    case 'For Billing':     return 3;
+    case 'For Payment':     return 4;
+    case 'Paid':            return 5;
+    case 'For Processing':  return 6;
+    case 'For Printing':    return 7;
+    case 'For Release':     return 8;
+    case 'Claimed':         return 9;
+    case 'Shredded':        return 9;
+    case 'Rejected':        return 2;
+    default:                return 1;
   }
 }
 
@@ -124,42 +154,75 @@ function SidePanel({
   onAssignStaff: (staffId: number) => Promise<void>;
   onAssignBilledBy: (staffId: number) => Promise<void>;
 }) {
-  const [comment, setComment]       = useState('');
-  const [rejectMode, setRejectMode] = useState(false);
+  const [comment, setComment]             = useState('');
+  const [rejectMode, setRejectMode]       = useState(false);
+  const [invalidMode, setInvalidMode]     = useState(false);
+  const [clearanceMode, setClearanceMode] = useState(false);
+  const [billingModal, setBillingModal]   = useState(false);
 
   const staffName     = data.assigned_staff ? `${data.assigned_staff.first_name} ${data.assigned_staff.last_name}` : 'Unassigned';
   const staffInitials = data.assigned_staff ? `${data.assigned_staff.first_name[0]}${data.assigned_staff.last_name[0]}` : '?';
   const billedByName  = data.billed_by_staff ? `${data.billed_by_staff.first_name} ${data.billed_by_staff.last_name}` : 'Not assigned';
+  const recentLogs    = [...(data.status_logs || [])].reverse().slice(0, 5);
+  const status        = data.current_status;
 
-  const recentLogs = [...(data.status_logs || [])].reverse().slice(0, 5);
+  // Terminal statuses — no more actions
+  const isTerminal = ['Claimed', 'Shredded', 'Rejected', 'Invalid Request'].includes(status);
 
-  const status     = data.current_status;
-  const canReturn  = ['For Validation', 'For Payment', 'Paid', 'Processing'].includes(status);
-  const canReject  = !['Claimed', 'Rejected'].includes(status);
-  const canAdvance = !['Claimed', 'Rejected'].includes(status);
+  // Which buttons to show
+  const canAdvance    = !isTerminal && !['For Clearance'].includes(status);
+  const canReturn     = ['For Validation', 'For Clearance', 'For Billing', 'For Payment', 'Paid', 'For Processing', 'For Printing'].includes(status);
+  const canReject     = !isTerminal;
+  const canInvalid    = ['Pending', 'For Validation'].includes(status);
+  const canClearance  = ['For Validation', 'For Billing'].includes(status);
 
   const nextStatus: Record<string, string> = {
     'Pending':        'For Validation',
-    'For Validation': 'For Payment',
+    'For Validation': 'For Billing',
+    'For Billing':    'For Payment',
     'For Payment':    'Paid',
-    'Paid':           'Processing',
-    'Processing':     'For Release',
+    'Paid':           'For Processing',
+    'For Processing': 'For Printing',
+    'For Printing':   'For Release',
     'For Release':    'Claimed',
   };
 
   const nextLabel: Record<string, string> = {
     'Pending':        'Mark as For Validation',
-    'For Validation': 'Mark as For Payment',
+    'For Validation': 'Mark as For Billing',
+    'For Billing':    'Mark as For Payment',
     'For Payment':    'Mark as Paid',
-    'Paid':           'Mark as Processing',
-    'Processing':     'Mark as For Release',
+    'Paid':           'Mark as For Processing',
+    'For Processing': 'Mark as For Printing',
+    'For Printing':   'Mark as For Release',
     'For Release':    'Mark as Claimed',
   };
 
+  function resetModes() {
+    setRejectMode(false);
+    setInvalidMode(false);
+    setClearanceMode(false);
+    setComment('');
+  }
+
   function handleRejectClick() {
+    resetModes();
     setRejectMode(true);
     const reqId = `REQ-${String(data.request_id).padStart(3, '0')}`;
     setComment(`Request ${reqId} has been rejected. Reason: `);
+  }
+
+  function handleInvalidClick() {
+    resetModes();
+    setInvalidMode(true);
+    const reqId = `REQ-${String(data.request_id).padStart(3, '0')}`;
+    setComment(`Request ${reqId} has been marked as invalid. Reason: `);
+  }
+
+  function handleClearanceClick() {
+    resetModes();
+    setClearanceMode(true);
+    setComment('');
   }
 
   async function handleConfirmReject() {
@@ -168,13 +231,38 @@ function SidePanel({
       return;
     }
     await onUpdateStatus('Rejected', comment);
-    setRejectMode(false);
-    setComment('');
+    resetModes();
+  }
+
+  async function handleConfirmInvalid() {
+    if (!comment.trim() || comment.endsWith('Reason: ')) {
+      alert('Please enter a reason for marking as invalid.');
+      return;
+    }
+    await onUpdateStatus('Invalid Request', comment);
+    resetModes();
+  }
+
+  async function handleConfirmClearance() {
+    await onUpdateStatus('For Clearance', comment || 'Request placed on hold pending clearance.');
+    resetModes();
   }
 
   async function handleAdvance() {
-    if (!nextStatus[status]) return;
-    await onUpdateStatus(nextStatus[status], comment || '');
+    const next = nextStatus[status];
+    if (!next) return;
+    // Show billing disclaimer when advancing to For Billing
+    if (next === 'For Billing') {
+      setBillingModal(true);
+      return;
+    }
+    await onUpdateStatus(next, comment || '');
+    setComment('');
+  }
+
+  async function handleConfirmBilling() {
+    setBillingModal(false);
+    await onUpdateStatus('For Billing', comment || '');
     setComment('');
   }
 
@@ -183,8 +271,31 @@ function SidePanel({
     setComment('');
   }
 
+  const activeMode = rejectMode || invalidMode || clearanceMode;
+
   return (
     <div className="modal-side-pane">
+
+      {/* Billing Disclaimer Modal */}
+      {billingModal && (
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 12 }}>
+          <div style={{ background: 'white', borderRadius: 12, padding: 24, maxWidth: 320, margin: 16 }}>
+            <div style={{ fontSize: 14, fontWeight: 800, color: '#001C43', marginBottom: 8 }}>💳 Billing Reminder</div>
+            <div style={{ fontSize: 12, color: '#444', lineHeight: 1.6, marginBottom: 16 }}>
+              You are about to mark this request as <strong>For Billing</strong>.<br /><br />
+              The student will be notified via the school's billing system (SMS/email) with their statement of account.<br /><br />
+              The <strong>7-working-day processing period</strong> will only begin after the student's payment is confirmed.
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="btn-action btn-release" style={{ flex: 1, fontSize: 12 }} disabled={updating} onClick={handleConfirmBilling}>
+                {updating ? 'Processing...' : '✓ Confirm For Billing'}
+              </button>
+              <button className="btn-outline btn-sm" style={{ flex: 1 }} onClick={() => setBillingModal(false)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Assigned Staff */}
       <div className="side-sect">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
@@ -246,8 +357,8 @@ function SidePanel({
         )}
       </div>
 
-      {/* Comment / Reject input */}
-      {rejectMode ? (
+      {/* Reject mode */}
+      {rejectMode && (
         <div style={{ padding: '12px 14px', borderTop: '1px solid rgba(0,0,0,0.06)', background: '#fff8f8' }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: '#E50019', marginBottom: 8 }}>⚠️ Confirm Rejection</div>
           <div style={{ fontSize: 11, color: '#666', marginBottom: 8, lineHeight: 1.5 }}>Edit the message below — include the specific reason.</div>
@@ -257,10 +368,51 @@ function SidePanel({
             <button className="btn-action btn-reject" style={{ flex: 1, fontSize: 12 }} disabled={updating} onClick={handleConfirmReject}>
               {updating ? 'Rejecting...' : '✓ Confirm Rejection'}
             </button>
-            <button className="btn-outline btn-sm" style={{ flex: 1 }} onClick={() => { setRejectMode(false); setComment(''); }}>Cancel</button>
+            <button className="btn-outline btn-sm" style={{ flex: 1 }} onClick={resetModes}>Cancel</button>
           </div>
         </div>
-      ) : (
+      )}
+
+      {/* Invalid Request mode */}
+      {invalidMode && (
+        <div style={{ padding: '12px 14px', borderTop: '1px solid rgba(0,0,0,0.06)', background: '#fff8f8' }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#E50019', marginBottom: 8 }}>⚠️ Mark as Invalid Request</div>
+          <div style={{ fontSize: 11, color: '#666', marginBottom: 8, lineHeight: 1.5 }}>
+            Use this when the requested document is inappropriate for the student's current level, department, or academic status.
+          </div>
+          <textarea className="drms-textarea" style={{ fontSize: 12, minHeight: 80, resize: 'vertical', borderColor: '#E50019' }}
+            value={comment} onChange={e => setComment(e.target.value)} autoFocus />
+          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+            <button className="btn-action btn-reject" style={{ flex: 1, fontSize: 12 }} disabled={updating} onClick={handleConfirmInvalid}>
+              {updating ? 'Processing...' : '✓ Confirm Invalid Request'}
+            </button>
+            <button className="btn-outline btn-sm" style={{ flex: 1 }} onClick={resetModes}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {/* For Clearance mode */}
+      {clearanceMode && (
+        <div style={{ padding: '12px 14px', borderTop: '1px solid rgba(0,0,0,0.06)', background: '#fffbe6' }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#856404', marginBottom: 8 }}>🔒 Place on Clearance Hold</div>
+          <div style={{ fontSize: 11, color: '#666', marginBottom: 8, lineHeight: 1.5 }}>
+            Use this when the student has outstanding clearances with specific offices. Add a remark specifying which offices need to clear first.
+          </div>
+          <textarea className="drms-textarea" style={{ fontSize: 12, minHeight: 80, resize: 'vertical', borderColor: '#856404' }}
+            placeholder="e.g. Student has outstanding balance at Treasury Office..."
+            value={comment} onChange={e => setComment(e.target.value)} autoFocus />
+          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+            <button className="btn-action" style={{ flex: 1, fontSize: 12, background: '#856404', color: 'white', border: 'none', borderRadius: 8, padding: '8px 12px', cursor: 'pointer' }}
+              disabled={updating} onClick={handleConfirmClearance}>
+              {updating ? 'Processing...' : '✓ Confirm Clearance Hold'}
+            </button>
+            <button className="btn-outline btn-sm" style={{ flex: 1 }} onClick={resetModes}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {/* Comment input — shown when no mode active */}
+      {!activeMode && (
         <div className="comment-input-row">
           <input className="comment-input" type="text" placeholder="Add a remark (optional)..."
             value={comment} onChange={e => setComment(e.target.value)}
@@ -270,11 +422,22 @@ function SidePanel({
       )}
 
       {/* Action buttons */}
-      {!rejectMode && (
+      {!activeMode && (
         <div className="modal-action-btns">
           {canReturn && (
             <button className="btn-action btn-return" disabled={updating} onClick={handleReturn}>
               Return for Revision
+            </button>
+          )}
+          {canClearance && (
+            <button className="btn-action" style={{ background: '#856404', color: 'white', border: 'none', borderRadius: 8, padding: '8px 12px', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}
+              disabled={updating} onClick={handleClearanceClick}>
+              🔒 Put on Clearance Hold
+            </button>
+          )}
+          {canInvalid && (
+            <button className="btn-action btn-reject" style={{ background: '#6c757d' }} disabled={updating} onClick={handleInvalidClick}>
+              Mark as Invalid Request
             </button>
           )}
           {canReject && (
@@ -289,6 +452,18 @@ function SidePanel({
           )}
         </div>
       )}
+
+      {/* Terminal state message */}
+      {isTerminal && (
+        <div style={{ padding: '12px 14px', borderTop: '1px solid rgba(0,0,0,0.06)', textAlign: 'center' }}>
+          <div style={{ fontSize: 12, color: '#B1B1B1', fontStyle: 'italic' }}>
+            {status === 'Claimed' && '✓ This request has been completed and claimed.'}
+            {status === 'Shredded' && '🗑️ This request has been shredded after 90 days.'}
+            {status === 'Rejected' && '✕ This request has been rejected.'}
+            {status === 'Invalid Request' && '✕ This request was marked as invalid.'}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -298,6 +473,7 @@ function FormTab({ data }: { data: RequestDetail }) {
   const r = data.requester_info;
   const fullName = r ? `${r.last_name}, ${r.first_name}` : '—';
   const academicPeriod = [r?.academic_year, r?.term_semester].filter(Boolean).join(' · ') || '—';
+  const badge = statusToBadge(data.current_status);
 
   return (
     <div className="modal-form-pane">
@@ -321,6 +497,7 @@ function FormTab({ data }: { data: RequestDetail }) {
         <div className="form-section-title">Request Details</div>
         <div className="field-grid">
           <div className="field-group"><div className="field-label">Request ID</div><div className="field-value">#{`REQ-${String(data.request_id).padStart(3, '0')}`}</div></div>
+          <div className="field-group"><div className="field-label">Current Status</div><div className="field-value"><span className={`badge ${badge.cls}`}>{badge.label}</span></div></div>
           <div className="field-group"><div className="field-label">Form Type</div><div className="field-value">{data.form_type}</div></div>
           <div className="field-group"><div className="field-label">Submission Mode</div><div className="field-value">{data.submission_mode}</div></div>
           <div className="field-group"><div className="field-label">Date Submitted</div><div className="field-value">{formatDate(data.date_submitted)}</div></div>
@@ -330,11 +507,13 @@ function FormTab({ data }: { data: RequestDetail }) {
             <div className="field-value">
               {data.actual_claim_date
                 ? <span style={{ color: '#198754', fontWeight: 600 }}>✓ {formatDate(data.actual_claim_date)}</span>
-                : <span style={{ color: '#B1B1B1' }}>Not yet claimed</span>
-              }
+                : <span style={{ color: '#B1B1B1' }}>Not yet claimed</span>}
             </div>
           </div>
-          <div className="field-group"><div className="field-label">Authorized Representative</div><div className="field-value">{data.is_authorized_rep ? `Yes — ${data.representative_name} (${data.rep_relation})` : 'No'}</div></div>
+          <div className="field-group">
+            <div className="field-label">Authorized Representative</div>
+            <div className="field-value">{data.is_authorized_rep ? `Yes — ${data.representative_name} (${data.rep_relation})` : 'No'}</div>
+          </div>
           <div className="field-group span2"><div className="field-label">Purpose</div><div className="field-value">{data.purpose}</div></div>
         </div>
       </div>
@@ -390,8 +569,7 @@ function FormTab({ data }: { data: RequestDetail }) {
               <div className="field-value">
                 {data.billed_by_staff
                   ? `${data.billed_by_staff.last_name}, ${data.billed_by_staff.first_name}`
-                  : <span style={{ color: '#B1B1B1' }}>Not assigned</span>
-                }
+                  : <span style={{ color: '#B1B1B1' }}>Not assigned</span>}
               </div>
             </div>
           </div>
@@ -406,36 +584,103 @@ function JourneyTab({ data }: { data: RequestDetail }) {
   const currentStage = statusToStageIndex(data.current_status);
   const staffName    = data.assigned_staff ? `${data.assigned_staff.first_name} ${data.assigned_staff.last_name}` : '—';
   const billedBy     = data.billed_by_staff ? `${data.billed_by_staff.first_name} ${data.billed_by_staff.last_name}` : '—';
+  const isRejected   = ['Rejected', 'Invalid Request', 'Shredded'].includes(data.current_status);
 
   const STAGES = [
-    { num: 1, name: 'Submission',     leftKey: 'Form Received', leftVal: `${data.submission_mode} (RO Portal)`,          rightKey: 'Assigned To:',  rightVal: staffName },
-    { num: 2, name: 'Validation',     leftKey: 'Validated',     leftVal: currentStage > 2 ? 'Done' : '—',                rightKey: 'Validated By:', rightVal: staffName },
-    { num: 3, name: 'For Payment',    leftKey: 'Billed By',     leftVal: billedBy,                                       rightKey: '',              rightVal: '' },
-    { num: 4, name: 'Paid',           leftKey: 'Payment',       leftVal: currentStage >= 4 ? 'Confirmed' : 'Pending',    rightKey: 'Date:',         rightVal: formatDate(data.payment_info?.payment_date ?? null) },
-    { num: 5, name: 'Processing',     leftKey: 'Status',        leftVal: currentStage === 5 ? 'In Progress' : currentStage > 5 ? 'Done' : '—', rightKey: 'Assigned To:', rightVal: staffName },
-    { num: 6, name: 'For Release',    leftKey: 'Ready',         leftVal: currentStage >= 6 ? 'Yes' : 'Not yet',          rightKey: '',              rightVal: '' },
-    { num: 7, name: 'Claimed',        leftKey: 'Date Claimed',  leftVal: formatDate(data.actual_claim_date),             rightKey: '',              rightVal: '' },
+    {
+      num: 1, name: 'Submission',
+      leftKey: 'Form Received', leftVal: `${data.submission_mode} (RO Portal)`,
+      rightKey: 'Assigned To:', rightVal: staffName,
+      statuses: ['Pending'],
+    },
+    {
+      num: 2, name: 'Validation',
+      leftKey: 'Validated', leftVal: currentStage > 2 ? 'Done' : '—',
+      rightKey: 'Validated By:', rightVal: staffName,
+      statuses: ['For Validation', 'Invalid Request', 'For Clearance', 'Rejected'],
+    },
+    {
+      num: 3, name: 'For Billing',
+      leftKey: 'Billed By', leftVal: billedBy,
+      rightKey: '', rightVal: '',
+      statuses: ['For Billing'],
+    },
+    {
+      num: 4, name: 'For Payment',
+      leftKey: 'Payment', leftVal: currentStage >= 4 ? 'Awaiting Payment' : '—',
+      rightKey: '', rightVal: '',
+      statuses: ['For Payment'],
+    },
+    {
+      num: 5, name: 'Paid',
+      leftKey: 'Payment', leftVal: currentStage >= 5 ? 'Confirmed' : 'Pending',
+      rightKey: 'Date:', rightVal: formatDate(data.payment_info?.payment_date ?? null),
+      statuses: ['Paid'],
+    },
+    {
+      num: 6, name: 'For Processing',
+      leftKey: 'Status', leftVal: currentStage === 6 ? 'In Progress' : currentStage > 6 ? 'Done' : '—',
+      rightKey: 'Assigned To:', rightVal: staffName,
+      statuses: ['For Processing'],
+    },
+    {
+      num: 7, name: 'For Printing',
+      leftKey: 'Status', leftVal: currentStage === 7 ? 'Being Printed' : currentStage > 7 ? 'Done' : '—',
+      rightKey: '', rightVal: '',
+      statuses: ['For Printing'],
+    },
+    {
+      num: 8, name: 'For Release',
+      leftKey: 'Ready', leftVal: currentStage >= 8 ? 'Yes' : 'Not yet',
+      rightKey: '', rightVal: '',
+      statuses: ['For Release'],
+    },
+    {
+      num: 9, name: 'Claimed',
+      leftKey: 'Date Claimed', leftVal: formatDate(data.actual_claim_date),
+      rightKey: '', rightVal: '',
+      statuses: ['Claimed', 'Shredded'],
+    },
   ];
 
-  const logForStage = (stageNum: number) => {
-    const statusMap: Record<number, string[]> = {
-      1: ['Pending'],
-      2: ['For Validation'],
-      3: ['For Payment'],
-      4: ['Paid'],
-      5: ['Processing'],
-      6: ['For Release'],
-      7: ['Claimed'],
-    };
-    return data.status_logs?.find(l => statusMap[stageNum]?.includes(l.status));
+  const logForStage = (stage: typeof STAGES[0]) => {
+    return data.status_logs?.find(l => stage.statuses.includes(l.status));
   };
 
   return (
     <div className="modal-form-pane">
+      {/* Rejected/Invalid/Shredded banner */}
+      {isRejected && (
+        <div className="info-box warn" style={{ marginBottom: 16 }}>
+          <span className="info-icon">⚠️</span>
+          <div className="info-text">
+            This request was marked as <strong>{data.current_status}</strong>.
+            {data.status_logs?.find(l => ['Rejected','Invalid Request','Shredded'].includes(l.status))?.remarks
+              ? ` Reason: ${data.status_logs.find(l => ['Rejected','Invalid Request','Shredded'].includes(l.status))?.remarks}`
+              : ''}
+          </div>
+        </div>
+      )}
+
+      {/* For Clearance banner */}
+      {data.current_status === 'For Clearance' && (
+        <div className="info-box warn" style={{ marginBottom: 16, borderColor: '#856404' }}>
+          <span className="info-icon">🔒</span>
+          <div className="info-text">
+            This request is on <strong>Clearance Hold</strong>.
+            {data.status_logs?.find(l => l.status === 'For Clearance')?.remarks
+              ? ` ${data.status_logs.find(l => l.status === 'For Clearance')?.remarks}`
+              : ' Waiting for office clearances to be completed.'}
+          </div>
+        </div>
+      )}
+
       <div className="journey-list">
         {STAGES.map((stage, i) => {
-          const stageState = stage.num < currentStage ? 'done' : stage.num === currentStage ? 'active' : 'pending';
-          const log = logForStage(stage.num);
+          const stageState = stage.num < currentStage ? 'done'
+            : stage.num === currentStage ? 'active'
+            : 'pending';
+          const log = logForStage(stage);
           const dateStr = log ? formatDateTime(log.timestamp) : '';
 
           return (
@@ -449,10 +694,12 @@ function JourneyTab({ data }: { data: RequestDetail }) {
                   </div>
                   <div className="stage-meta">
                     <div>
-                      <div className={stageState === 'pending' ? '' : 'stage-received-key'} style={stageState === 'pending' ? { fontSize: 14, color: '#B1B1B1' } : {}}>
+                      <div className={stageState === 'pending' ? '' : 'stage-received-key'}
+                        style={stageState === 'pending' ? { fontSize: 14, color: '#B1B1B1' } : {}}>
                         {stage.leftKey}
                       </div>
-                      <div className={`stage-received-val${stageState === 'pending' ? ' pending' : ''}`} style={stageState === 'active' ? { color: '#114B9F' } : {}}>
+                      <div className={`stage-received-val${stageState === 'pending' ? ' pending' : ''}`}
+                        style={stageState === 'active' ? { color: '#114B9F' } : {}}>
                         {stage.leftVal}
                       </div>
                     </div>
