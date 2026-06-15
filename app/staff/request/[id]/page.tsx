@@ -611,6 +611,13 @@ function FormTab({ data }: { data: RequestDetail }) {
             </div>
           </div>
         )}
+        {data.payment_info && data.payment_info.payment_status !== 'Paid' && (
+          <div style={{ marginTop: 10 }}>
+            <a href="/staff/payment" style={{ fontSize: 12, color: 'var(--blue)', fontWeight: 600, textDecoration: 'none' }}>
+              → Go to Payment Monitor to mark as Paid
+            </a>
+          </div>
+        )}
       </div>
     </div>
   );
