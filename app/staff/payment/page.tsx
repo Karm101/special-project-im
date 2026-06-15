@@ -143,26 +143,51 @@ export default function PaymentMonitorPage() {
   // handleMarkPaid replaced by modal system above
 
   // ── Stat counts ──────────────────────────────────────────────────────────
-  const stats = useMemo(() => ({
-    pending:   payments.filter(p => p.payment_status === 'Pending').length,
-    overdue:   payments.filter(p => p.payment_status === 'Overdue').length,
-    paid:      payments.filter(p => p.payment_status === 'Paid').length,
-    collected: payments
-      .filter(p => p.payment_status === 'Paid')
-      .reduce((sum, p) => sum + parseFloat(p.amount || '0'), 0),
-  }), [payments]);
+  const stats = useMemo(() => {
+    const EXCLUDED_STATUSES = ['Rejected', 'Invalid Request', 'Shredded'];
+    const activePayments = payments.filter(p => {
+      const reqData = requests[p.request];
+      if (!reqData) return true;
+      return !EXCLUDED_STATUSES.includes(reqData.current_status);
+    });
+    return {
+      pending:   activePayments.filter(p => p.payment_status === 'Pending').length,
+      overdue:   activePayments.filter(p => p.payment_status === 'Overdue').length,
+      paid:      activePayments.filter(p => p.payment_status === 'Paid').length,
+      collected: activePayments
+        .filter(p => p.payment_status === 'Paid')
+        .reduce((sum, p) => sum + parseFloat(p.amount || '0'), 0),
+    };
+  }, [payments, requests]);
+
+  const totalActivePayments = useMemo(() => {
+    const EXCLUDED_STATUSES = ['Rejected', 'Invalid Request', 'Shredded'];
+    return payments.filter(p => {
+      const reqData = requests[p.request];
+      if (!reqData) return true;
+      return !EXCLUDED_STATUSES.includes(reqData.current_status);
+    }).length;
+  }, [payments, requests]);
 
   // ── Tab definitions ──────────────────────────────────────────────────────
   const TABS = [
-    { label: 'All',     filter: 'all',     count: payments.length, color: '#7eb3ff' },
-    { label: 'Pending', filter: 'Pending', count: stats.pending,   color: '#FFA323' },
-    { label: 'Overdue', filter: 'Overdue', count: stats.overdue,   color: '#ff7a7a' },
-    { label: 'Paid',    filter: 'Paid',    count: stats.paid,      color: '#4ade80' },
+    { label: 'All',     filter: 'all',     count: totalActivePayments, color: '#7eb3ff' },
+    { label: 'Pending', filter: 'Pending', count: stats.pending,       color: '#FFA323' },
+    { label: 'Overdue', filter: 'Overdue', count: stats.overdue,       color: '#ff7a7a' },
+    { label: 'Paid',    filter: 'Paid',    count: stats.paid,          color: '#4ade80' },
   ];
 
   // ── Filter rows ──────────────────────────────────────────────────────────
   const visibleRows = useMemo(() => {
-    let rows = activeTab === 'all' ? payments : payments.filter(p => p.payment_status === activeTab);
+    // Exclude payments linked to rejected/invalid/shredded requests
+    const EXCLUDED_STATUSES = ['Rejected', 'Invalid Request', 'Shredded'];
+    let rows = payments.filter(p => {
+      const reqData = requests[p.request];
+      if (!reqData) return true; // keep if not loaded yet
+      return !EXCLUDED_STATUSES.includes(reqData.current_status);
+    });
+
+    if (activeTab !== 'all') rows = rows.filter(p => p.payment_status === activeTab);
     if (activeFilters?.statuses?.size > 0) rows = rows.filter(p => activeFilters.statuses.has(p.payment_status));
     if (activeFilters?.dateFrom) rows = rows.filter(p => p.payment_date && p.payment_date >= activeFilters.dateFrom);
     if (activeFilters?.dateTo)   rows = rows.filter(p => p.payment_date && p.payment_date <= activeFilters.dateTo);
@@ -174,8 +199,8 @@ export default function PaymentMonitorPage() {
           ? `${requests[p.request].requester_info.last_name}, ${requests[p.request].requester_info.first_name}`
           : '';
         return reqId.toLowerCase().includes(q) ||
-               requester.toLowerCase().includes(q) ||
-               (p.official_receipt_no ?? '').toLowerCase().includes(q);
+              requester.toLowerCase().includes(q) ||
+              (p.official_receipt_no ?? '').toLowerCase().includes(q);
       });
     }
     return rows;
