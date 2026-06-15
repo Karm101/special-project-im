@@ -612,10 +612,11 @@ function FormTab({ data }: { data: RequestDetail }) {
           </div>
         )}
         {data.payment_info && data.payment_info.payment_status !== 'Paid' && (
-          <div style={{ marginTop: 10 }}>
-            <a href="/staff/payment" style={{ fontSize: 12, color: 'var(--blue)', fontWeight: 600, textDecoration: 'none' }}>
-              → Go to Payment Monitor to mark as Paid
-            </a>
+          <div className="info-box warn" style={{ marginTop: 10 }}>
+            <span className="info-icon">💳</span>
+            <div className="info-text" style={{ fontSize: 12 }}>
+              Payment is pending. Once the student pays at the Treasury Office, advance the status to <strong>Paid</strong> using the button in the side panel.
+            </div>
           </div>
         )}
       </div>
