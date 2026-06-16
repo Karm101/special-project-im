@@ -347,11 +347,11 @@ export default function ClearancePage() {
                     value={formFilter}
                     onChange={e => { setFormFilter(e.target.value as 'all' | 'RO-0004' | 'RO-0005'); setDocFilter('all'); setPage(1); }}
                     className="drms-select"
-                    style={{ flex: 1, fontSize: 12, height: 32, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}
+                    style={{ flex: 1, fontSize: 12, height: 32, minWidth: 0 }}
                   >
-                    <option value="all">All Document Requests</option>
-                    <option value="RO-0004">RO-0004 Requests</option>
-                    <option value="RO-0005">RO-0005 Requests</option>
+                    <option value="all">All Requests</option>
+                    <option value="RO-0004">RO-0004 Only</option>
+                    <option value="RO-0005">RO-0005 Only</option>
                   </select>
 
                   {/* Filter button */}
