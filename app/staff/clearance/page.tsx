@@ -136,11 +136,12 @@ export default function ClearancePage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/requests/?search=RO-0004`);
+      const res = await fetch(`${API_BASE}/requests/`);
       if (!res.ok) throw new Error('API error');
       const data = await res.json();
       const all: ApiRequest[] = data.results ?? data;
-      const filtered = all.filter(r => r.form_type === 'RO-0004');
+      // Only show requests that are in For Clearance or have clearance records
+      const filtered = all.filter(r => r.form_type === 'RO-0004' || r.form_type === 'RO-0005');
       setRo4Requests(filtered);
 
       if (filtered.length > 0) {
@@ -268,7 +269,7 @@ export default function ClearancePage() {
 
         {/* Stat cards */}
         <div className="stat-grid stat-grid-4">
-          <StatCard loading={loading} num={stats.active}  label="Active TC Requests"  color="#114B9F" bg="rgba(17,75,159,0.12)"     icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>} />
+          <StatCard loading={loading} num={stats.active}  label="Total Requests"  color="#114B9F" bg="rgba(17,75,159,0.12)"     icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>} />
           <StatCard loading={loading} num={stats.pending} label="Pending Clearances"  color="#FFA323" bg="rgba(255,163,35,0.12)"    icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>} />
           <StatCard loading={loading} num={stats.cleared} label="Cleared Offices"     color="#198754" bg="rgba(25,135,84,0.12)"     icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><path d="M12 2l8 4v6c0 4.4-3.3 8.5-8 10-4.7-1.5-8-5.6-8-10V6l8-4z"/><polyline points="9 12 11 14 15 10"/></svg>} />
           <StatCard loading={loading} num={stats.full}    label="Fully Cleared"       color="#198754" bg="rgba(25,135,84,0.08)"     icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><polyline points="20 6 9 17 4 12"/></svg>} />
@@ -283,7 +284,7 @@ export default function ClearancePage() {
         {!loading && ro4Requests.length === 0 && (
           <div className="info-box" style={{ marginTop: 8 }}>
             <span className="info-icon">ℹ️</span>
-            <div className="info-text">No RO-0004 (Transfer Credential) requests found.</div>
+            <div className="info-text">No document requests found.</div>
           </div>
         )}
 
@@ -293,7 +294,7 @@ export default function ClearancePage() {
             {/* ── Left: Request list ── */}
             <div className="drms-card">
               <div className="drms-card-header">
-                <span className="drms-card-title">TC Requests (RO-0004)</span>
+                <span className="drms-card-title">Document Requests</span>
                 <button className="btn-outline btn-sm" onClick={fetchData} title="Refresh">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 13, height: 13 }}>
                     <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
@@ -320,7 +321,7 @@ export default function ClearancePage() {
                     <div key={r.request_id} onClick={() => setSelectedId(r.request_id)} style={{ padding: '12px 16px', borderBottom: i < pagedRequests.length - 1 ? '1px solid var(--border-col)' : 'none', background: isSelected ? 'rgba(125,179,255,0.1)' : 'var(--surface)', borderLeft: isSelected ? '3px solid var(--navy)' : '3px solid transparent', cursor: 'pointer', transition: 'all 0.12s' }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>#{reqId} — {name}</div>
                       <div style={{ fontSize: 11, color: 'var(--mid-gray)', marginTop: 3 }}>
-                        {formatDate(r.date_submitted)} · {r.requester_info?.program_strand ?? '—'}
+                        {formatDate(r.date_submitted)} · {r.form_type} · {r.requester_info?.program_strand ?? '—'}
                       </div>
                       <div style={{ marginTop: 6 }}>
                         <span className={`badge ${allDone ? 'b-done' : clrCount > 0 ? 'b-apr' : 'b-rev'}`} style={{ fontSize: 11 }}>
