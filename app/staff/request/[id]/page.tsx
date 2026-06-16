@@ -20,6 +20,7 @@ type Clearance = {
   processed_by: string | null;
   remarks: string | null;
   token_version: number;
+  signature_image_url: string | null;
 };
 
 type Requester = {
@@ -642,9 +643,10 @@ function FormTab({ data }: { data: RequestDetail }) {
 
 // ── Clearance Tab ─────────────────────────────────────────────────────────────
 function ClearanceTab({ data, onRefresh }: { data: RequestDetail; onRefresh: () => void }) {
-  const [toggling, setToggling]       = useState<number | null>(null);
+  const [toggling, setToggling]         = useState<number | null>(null);
   const [regenerating, setRegenerating] = useState<number | null>(null);
-  const [copied, setCopied]           = useState<number | null>(null);
+  const [copied, setCopied]             = useState<number | null>(null);
+  const [detailModal, setDetailModal]   = useState<Clearance | null>(null);
 
   const clearances = data.clearances ?? [];
   const allCleared = clearances.length > 0 && clearances.every(c => c.clearance_status === 'Cleared');
@@ -765,9 +767,17 @@ function ClearanceTab({ data, onRefresh }: { data: RequestDetail; onRefresh: () 
                         )}
                       </div>
                       {isCleared && (
-                        <div style={{ fontSize: 11, color: '#198754', marginTop: 2 }}>
-                          Cleared by {c.cleared_by_name} · {formatDate(c.cleared_at)}
-                        </div>
+                          <div style={{ fontSize: 11, color: '#198754', marginTop: 2 }}>
+                            Cleared by {c.cleared_by_name} · {formatDate(c.cleared_at)}
+                          </div>
+                        )}
+                      {isCleared && (
+                        <button
+                          onClick={() => setDetailModal(c)}
+                          style={{ marginTop: 6, background: 'none', border: 'none', padding: 0, fontSize: 11, fontWeight: 600, color: '#114B9F', cursor: 'pointer', textDecoration: 'underline' }}
+                        >
+                          View Clearance Details
+                        </button>
                       )}
                       {isDisabled && (
                         <div style={{ fontSize: 11, color: '#B1B1B1', marginTop: 2 }}>
@@ -835,6 +845,88 @@ function ClearanceTab({ data, onRefresh }: { data: RequestDetail; onRefresh: () 
           <div style={{ marginTop: 8, color: '#856404' }}>⚠️ If you sent a link to the wrong person, click <strong>Disable Link</strong> to immediately invalidate it, then click <strong>New Link</strong> to generate a fresh one.</div>
         </div>
       </div>
+
+      {/* ── Clearance Detail Modal ── */}
+      {detailModal && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 1000,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 20,
+        }} onClick={() => setDetailModal(null)}>
+          <div style={{
+            background: 'white', borderRadius: 12, width: '100%', maxWidth: 640,
+            boxShadow: '0 8px 40px rgba(0,0,0,0.2)', fontFamily: 'Arial, sans-serif',
+            overflow: 'hidden',
+          }} onClick={e => e.stopPropagation()}>
+
+            {/* Modal header */}
+            <div style={{ background: '#001C43', padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ color: 'white', fontSize: 13, fontWeight: 700, letterSpacing: 0.5 }}>
+                CLEARANCE DETAILS
+              </div>
+              <button onClick={() => setDetailModal(null)} style={{ background: 'none', border: 'none', color: 'white', fontSize: 18, cursor: 'pointer', lineHeight: 1 }}>✕</button>
+            </div>
+
+            {/* Form-style clearance table */}
+            <div style={{ padding: 24 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                <thead>
+                  <tr style={{ background: '#f0f0f0' }}>
+                    <th style={{ border: '1px solid #ccc', padding: '8px 10px', textAlign: 'left', fontWeight: 700, width: '28%' }}>Department / Office</th>
+                    <th style={{ border: '1px solid #ccc', padding: '8px 10px', textAlign: 'left', fontWeight: 700, width: '36%' }}>PROCESSED BY: (name &amp; signature)</th>
+                    <th style={{ border: '1px solid #ccc', padding: '8px 10px', textAlign: 'left', fontWeight: 700, width: '18%' }}>Date</th>
+                    <th style={{ border: '1px solid #ccc', padding: '8px 10px', textAlign: 'left', fontWeight: 700, width: '18%' }}>Remarks</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    {/* Office name */}
+                    <td style={{ border: '1px solid #ccc', padding: '10px 10px', verticalAlign: 'top' }}>
+                      <div style={{ fontWeight: 600, color: '#001C43' }}>{detailModal.office_name}</div>
+                    </td>
+
+                    {/* Processed by — name + signature image */}
+                    <td style={{ border: '1px solid #ccc', padding: '10px 10px', verticalAlign: 'top' }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: '#001C43', marginBottom: 8 }}>
+                        {detailModal.cleared_by_name ?? '—'}
+                      </div>
+                      {detailModal.signature_image_url ? (
+                        <img
+                          src={detailModal.signature_image_url}
+                          alt="E-signature"
+                          style={{ maxHeight: 56, maxWidth: 180, objectFit: 'contain', border: '1px solid #eee', borderRadius: 4, padding: 4, background: '#fafafa' }}
+                        />
+                      ) : (
+                        <div style={{ fontSize: 11, color: '#B1B1B1', fontStyle: 'italic' }}>No signature on file</div>
+                      )}
+                    </td>
+
+                    {/* Date */}
+                    <td style={{ border: '1px solid #ccc', padding: '10px 10px', verticalAlign: 'top' }}>
+                      <div style={{ color: '#001C43' }}>
+                        {detailModal.cleared_at
+                          ? new Date(detailModal.cleared_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Manila' })
+                          : '—'}
+                      </div>
+                    </td>
+
+                    {/* Remarks */}
+                    <td style={{ border: '1px solid #ccc', padding: '10px 10px', verticalAlign: 'top' }}>
+                      <div style={{ color: '#001C43' }}>{detailModal.remarks ?? '—'}</div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              {/* Footer note */}
+              <div style={{ marginTop: 16, fontSize: 11, color: '#B1B1B1', textAlign: 'right' }}>
+                Mapúa Malayan Colleges Mindanao — Registrar's Office
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
