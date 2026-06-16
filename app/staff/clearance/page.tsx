@@ -16,6 +16,12 @@ type ApiClearance = {
   date_processed: string | null;
   clearance_status: 'Pending' | 'Cleared' | 'Not Applicable';
   remarks: string | null;
+  clearance_token: string;
+  is_active: boolean;
+  cleared_at: string | null;
+  cleared_by_name: string | null;
+  token_version: number;
+  signature_image_url: string | null;
 };
 
 type ApiRequest = {
@@ -34,7 +40,7 @@ type ApiRequest = {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function formatDate(d: string | null) {
   if (!d) return '—';
-  return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Manila' });
 }
 
 function StatCard({ num, label, color, bg, icon, loading }: {
@@ -55,112 +61,185 @@ function StatCard({ num, label, color, bg, icon, loading }: {
   );
 }
 
-function statusBadge(s: string) {
-  if (s === 'Cleared')         return <span className="badge badge-cleared"  style={{ fontSize: 12 }}>Cleared</span>;
-  if (s === 'Not Applicable')  return <span className="badge badge-na"        style={{ fontSize: 12 }}>Not Applicable</span>;
-  return                              <span className="badge badge-pending"   style={{ fontSize: 12 }}>Pending</span>;
+// ── Detail modal (mirrors RO-0004 clearance table) ────────────────────────────
+function ClearanceDetailModal({ c, onClose }: { c: ApiClearance; onClose: () => void }) {
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+      onClick={onClose}>
+      <div style={{ background: 'white', borderRadius: 12, width: '100%', maxWidth: 640, boxShadow: '0 8px 40px rgba(0,0,0,0.2)', fontFamily: 'Arial, sans-serif', overflow: 'hidden' }}
+        onClick={e => e.stopPropagation()}>
+        <div style={{ background: '#001C43', padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ color: 'white', fontSize: 13, fontWeight: 700, letterSpacing: 0.5 }}>CLEARANCE DETAILS</div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'white', fontSize: 18, cursor: 'pointer', lineHeight: 1 }}>✕</button>
+        </div>
+        <div style={{ padding: 24 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+            <thead>
+              <tr style={{ background: '#f0f0f0' }}>
+                <th style={{ border: '1px solid #ccc', padding: '8px 10px', textAlign: 'left', fontWeight: 700, width: '28%' }}>Department / Office</th>
+                <th style={{ border: '1px solid #ccc', padding: '8px 10px', textAlign: 'left', fontWeight: 700, width: '36%' }}>PROCESSED BY: (name &amp; signature)</th>
+                <th style={{ border: '1px solid #ccc', padding: '8px 10px', textAlign: 'left', fontWeight: 700, width: '18%' }}>Date</th>
+                <th style={{ border: '1px solid #ccc', padding: '8px 10px', textAlign: 'left', fontWeight: 700, width: '18%' }}>Remarks</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style={{ border: '1px solid #ccc', padding: '10px', verticalAlign: 'top' }}>
+                  <div style={{ fontWeight: 600, color: '#001C43' }}>{c.office_name}</div>
+                </td>
+                <td style={{ border: '1px solid #ccc', padding: '10px', verticalAlign: 'top' }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: '#001C43', marginBottom: 8 }}>{c.cleared_by_name ?? '—'}</div>
+                  {c.signature_image_url ? (
+                    <img src={c.signature_image_url} alt="E-signature" style={{ maxHeight: 56, maxWidth: 180, objectFit: 'contain', border: '1px solid #eee', borderRadius: 4, padding: 4, background: '#fafafa' }} />
+                  ) : (
+                    <div style={{ fontSize: 11, color: '#B1B1B1', fontStyle: 'italic' }}>No signature on file</div>
+                  )}
+                </td>
+                <td style={{ border: '1px solid #ccc', padding: '10px', verticalAlign: 'top' }}>
+                  <div style={{ color: '#001C43' }}>{formatDate(c.cleared_at)}</div>
+                </td>
+                <td style={{ border: '1px solid #ccc', padding: '10px', verticalAlign: 'top' }}>
+                  <div style={{ color: '#001C43' }}>{c.remarks ?? '—'}</div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div style={{ marginTop: 16, fontSize: 11, color: '#B1B1B1', textAlign: 'right' }}>
+            Mapúa Malayan Colleges Mindanao — Registrar's Office
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function ClearancePage() {
   const router = useRouter();
-  const [search, setSearch]           = useState('');
-  const [selectedId, setSelectedId]   = useState<number | null>(null);
-  const [updating, setUpdating]       = useState<number | null>(null);
-  const [page, setPage]               = useState(1);
+  const [search, setSearch]             = useState('');
+  const [selectedId, setSelectedId]     = useState<number | null>(null);
+  const [page, setPage]                 = useState(1);
+  const [detailModal, setDetailModal]   = useState<ApiClearance | null>(null);
 
-  // ── API state ─────────────────────────────────────────────────────────────
-  const [ro4Requests, setRo4Requests] = useState<ApiRequest[]>([]);
-  const [clearances, setClearances]   = useState<Record<number, ApiClearance[]>>({});
-  const [loading, setLoading]         = useState(true);
-  const [error, setError]             = useState<string | null>(null);
+  // Token actions
+  const [toggling, setToggling]         = useState<number | null>(null);
+  const [regenerating, setRegenerating] = useState<number | null>(null);
+  const [copied, setCopied]             = useState<number | null>(null);
 
-  // ── Fetch all RO-0004 requests + their clearances ─────────────────────────
-  useEffect(() => {
-    async function fetchData() {
-      setLoading(true);
-      setError(null);
-      try {
-        // Get all requests filtered by RO-0004 form type
-        const res = await fetch(`${API_BASE}/requests/?search=RO-0004`);
-        if (!res.ok) throw new Error('API error');
-        const data = await res.json();
-        const all: ApiRequest[] = data.results ?? data;
-        // Filter to only RO-0004
-        const filtered = all.filter(r => r.form_type === 'RO-0004');
-        setRo4Requests(filtered);
+  // API state
+  const [ro4Requests, setRo4Requests]   = useState<ApiRequest[]>([]);
+  const [clearances, setClearances]     = useState<Record<number, ApiClearance[]>>({});
+  const [loading, setLoading]           = useState(true);
+  const [error, setError]               = useState<string | null>(null);
 
-        if (filtered.length > 0) {
-          setSelectedId(filtered[0].request_id);
-          // Fetch clearances for each RO-0004 request
-          const clrMap: Record<number, ApiClearance[]> = {};
-          await Promise.all(
-            filtered.map(async r => {
-              const clrRes = await fetch(`${API_BASE}/clearances/?request=${r.request_id}`);
-              if (clrRes.ok) {
-                const clrData = await clrRes.json();
-                clrMap[r.request_id] = clrData.results ?? clrData;
-              } else {
-                clrMap[r.request_id] = [];
-              }
-            })
-          );
-          setClearances(clrMap);
-        }
-      } catch {
-        setError('Could not connect to the API. Make sure Django is running.');
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchData();
-  }, []);
-
-  // ── Mark a clearance office as Cleared ───────────────────────────────────
-  async function handleMarkCleared(clearanceId: number, requestId: number) {
-    setUpdating(clearanceId);
+  // ── Fetch data ────────────────────────────────────────────────────────────
+  async function fetchData() {
+    setLoading(true);
+    setError(null);
     try {
-      const processedBy = prompt('Processed by (name):') ?? 'RO Staff';
-      const res = await fetch(`${API_BASE}/clearances/${clearanceId}/`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          clearance_status: 'Cleared',
-          processed_by: processedBy,
-          date_processed: new Date().toISOString().split('T')[0],
-        }),
-      });
-      if (!res.ok) throw new Error('Update failed');
-      // Refresh clearances for this request
-      const refreshed = await fetch(`${API_BASE}/clearances/?request=${requestId}`);
-      const data = await refreshed.json();
-      setClearances(prev => ({ ...prev, [requestId]: data.results ?? data }));
+      const res = await fetch(`${API_BASE}/requests/?search=RO-0004`);
+      if (!res.ok) throw new Error('API error');
+      const data = await res.json();
+      const all: ApiRequest[] = data.results ?? data;
+      const filtered = all.filter(r => r.form_type === 'RO-0004');
+      setRo4Requests(filtered);
+
+      if (filtered.length > 0) {
+        setSelectedId(prev => prev ?? filtered[0].request_id);
+        const clrMap: Record<number, ApiClearance[]> = {};
+        await Promise.all(
+          filtered.map(async r => {
+            const clrRes = await fetch(`${API_BASE}/clearances/?request=${r.request_id}`);
+            if (clrRes.ok) {
+              const clrData = await clrRes.json();
+              clrMap[r.request_id] = clrData.results ?? clrData;
+            } else {
+              clrMap[r.request_id] = [];
+            }
+          })
+        );
+        setClearances(clrMap);
+      }
     } catch {
-      alert('Failed to update clearance. Please try again.');
+      setError('Could not connect to the API. Make sure Django is running.');
     } finally {
-      setUpdating(null);
+      setLoading(false);
     }
   }
 
+  useEffect(() => { fetchData(); }, []);
+
+  // ── Refresh clearances for selected request only ──────────────────────────
+  async function refreshSelected(requestId: number) {
+    try {
+      const clrRes = await fetch(`${API_BASE}/clearances/?request=${requestId}`);
+      if (clrRes.ok) {
+        const clrData = await clrRes.json();
+        setClearances(prev => ({ ...prev, [requestId]: clrData.results ?? clrData }));
+      }
+    } catch {}
+  }
+
+  // ── Token actions ─────────────────────────────────────────────────────────
+  function getClearanceLink(token: string): string {
+    return `${window.location.origin}/clearance/${token}`;
+  }
+
+  async function copyLink(clearanceId: number, token: string) {
+    try {
+      await navigator.clipboard.writeText(getClearanceLink(token));
+      setCopied(clearanceId);
+      setTimeout(() => setCopied(null), 2000);
+    } catch { alert('Could not copy link.'); }
+  }
+
+  async function toggleActive(clearanceId: number, currentActive: boolean, requestId: number) {
+    setToggling(clearanceId);
+    try {
+      await fetch(`${API_BASE}/clearance/${clearanceId}/toggle/`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_active: !currentActive }),
+      });
+      await refreshSelected(requestId);
+    } catch { alert('Failed to toggle link.'); }
+    finally { setToggling(null); }
+  }
+
+  async function regenerateToken(clearanceId: number, requestId: number) {
+    if (!confirm('This will invalidate the current link and generate a new one. Continue?')) return;
+    setRegenerating(clearanceId);
+    try {
+      await fetch(`${API_BASE}/clearance/${clearanceId}/regenerate/`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      await refreshSelected(requestId);
+    } catch { alert('Failed to regenerate token.'); }
+    finally { setRegenerating(null); }
+  }
+
   // ── Derived values ────────────────────────────────────────────────────────
-  const selectedRequest = ro4Requests.find(r => r.request_id === selectedId) ?? null;
+  const selectedRequest    = ro4Requests.find(r => r.request_id === selectedId) ?? null;
   const selectedClearances = selectedId ? (clearances[selectedId] ?? []) : [];
+  const clearedCount       = selectedClearances.filter(c => c.clearance_status === 'Cleared').length;
+  const totalCount         = selectedClearances.filter(c => c.clearance_status !== 'Not Applicable').length;
+  const progressPct        = totalCount > 0 ? Math.round(clearedCount / totalCount * 100) : 0;
 
-  const clearedCount = selectedClearances.filter(c => c.clearance_status === 'Cleared').length;
-  const totalCount   = selectedClearances.filter(c => c.clearance_status !== 'Not Applicable').length;
-  const progressPct  = totalCount > 0 ? Math.round(clearedCount / totalCount * 100) : 0;
-
-  // ── Stats ─────────────────────────────────────────────────────────────────
   const stats = useMemo(() => {
     const allClearances = Object.values(clearances).flat();
     return {
-      active:   ro4Requests.length,
-      pending:  allClearances.filter(c => c.clearance_status === 'Pending').length,
-      cleared:  allClearances.filter(c => c.clearance_status === 'Cleared').length,
-      overdue:  ro4Requests.filter(r => r.current_status === 'Pending' || r.current_status === 'Verifying').length,
+      active:  ro4Requests.length,
+      pending: allClearances.filter(c => c.clearance_status === 'Pending').length,
+      cleared: allClearances.filter(c => c.clearance_status === 'Cleared').length,
+      full:    ro4Requests.filter(r => {
+        const clrs = clearances[r.request_id] ?? [];
+        const total = clrs.filter(c => c.clearance_status !== 'Not Applicable').length;
+        const done  = clrs.filter(c => c.clearance_status === 'Cleared').length;
+        return total > 0 && done === total;
+      }).length,
     };
   }, [ro4Requests, clearances]);
 
-  // ── Filtered request list ─────────────────────────────────────────────────
   const visibleRequests = useMemo(() => {
     if (!search.trim()) return ro4Requests;
     const q = search.toLowerCase();
@@ -189,10 +268,10 @@ export default function ClearancePage() {
 
         {/* Stat cards */}
         <div className="stat-grid stat-grid-4">
-          <StatCard loading={loading} num={stats.active}   label="Active TC Requests"   color="#114B9F" bg="rgba(17,75,159,0.12)"  icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>} />
-          <StatCard loading={loading} num={stats.pending}  label="Pending Clearances"   color="#FFA323" bg="rgba(255,163,35,0.12)" icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>} />
-          <StatCard loading={loading} num={stats.cleared}  label="Cleared This Month"   color="#198754" bg="rgba(25,135,84,0.12)"  icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><path d="M12 2l8 4v6c0 4.4-3.3 8.5-8 10-4.7-1.5-8-5.6-8-10V6l8-4z"/><polyline points="9 12 11 14 15 10"/></svg>} />
-          <StatCard loading={loading} num={stats.overdue}  label="Overdue Clearances"   color="#E50019" bg="rgba(240, 97, 116, 0.12)"   icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>} />
+          <StatCard loading={loading} num={stats.active}  label="Active TC Requests"  color="#114B9F" bg="rgba(17,75,159,0.12)"     icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>} />
+          <StatCard loading={loading} num={stats.pending} label="Pending Clearances"  color="#FFA323" bg="rgba(255,163,35,0.12)"    icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>} />
+          <StatCard loading={loading} num={stats.cleared} label="Cleared Offices"     color="#198754" bg="rgba(25,135,84,0.12)"     icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><path d="M12 2l8 4v6c0 4.4-3.3 8.5-8 10-4.7-1.5-8-5.6-8-10V6l8-4z"/><polyline points="9 12 11 14 15 10"/></svg>} />
+          <StatCard loading={loading} num={stats.full}    label="Fully Cleared"       color="#198754" bg="rgba(25,135,84,0.08)"     icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><polyline points="20 6 9 17 4 12"/></svg>} />
         </div>
 
         {loading && (
@@ -204,9 +283,7 @@ export default function ClearancePage() {
         {!loading && ro4Requests.length === 0 && (
           <div className="info-box" style={{ marginTop: 8 }}>
             <span className="info-icon">ℹ️</span>
-            <div className="info-text">
-              No RO-0004 (Transfer Credential) requests found. Clearance tracking only applies to TC requests.
-            </div>
+            <div className="info-text">No RO-0004 (Transfer Credential) requests found.</div>
           </div>
         )}
 
@@ -217,56 +294,36 @@ export default function ClearancePage() {
             <div className="drms-card">
               <div className="drms-card-header">
                 <span className="drms-card-title">TC Requests (RO-0004)</span>
+                <button className="btn-outline btn-sm" onClick={fetchData} title="Refresh">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 13, height: 13 }}>
+                    <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+                    <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+                  </svg>
+                </button>
               </div>
-              {/* Search */}
               <div style={{ padding: '10px 12px 4px' }}>
                 <div className="search-box" style={{ minWidth: 0, width: '100%', boxSizing: 'border-box' }}>
-                  <input
-                    type="text"
-                    placeholder="Search requester..."
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                  />
+                  <input type="text" placeholder="Search requester..." value={search} onChange={e => setSearch(e.target.value)} />
                   <Search size={13} color="var(--mid-gray)" />
                 </div>
               </div>
               <div style={{ padding: '4px 0' }}>
                 {pagedRequests.map((r, i) => {
-                  const reqId     = `REQ-${String(r.request_id).padStart(3, '0')}`;
-                  const name      = r.requester_info
-                    ? `${r.requester_info.last_name}, ${r.requester_info.first_name}`
-                    : '—';
-                  const clrs      = clearances[r.request_id] ?? [];
-                  const clrCount  = clrs.filter(c => c.clearance_status === 'Cleared').length;
-                  const totalClr  = clrs.filter(c => c.clearance_status !== 'Not Applicable').length;
+                  const reqId      = `REQ-${String(r.request_id).padStart(3, '0')}`;
+                  const name       = r.requester_info ? `${r.requester_info.last_name}, ${r.requester_info.first_name}` : '—';
+                  const clrs       = clearances[r.request_id] ?? [];
+                  const clrCount   = clrs.filter(c => c.clearance_status === 'Cleared').length;
+                  const totalClr   = clrs.filter(c => c.clearance_status !== 'Not Applicable').length;
                   const isSelected = selectedId === r.request_id;
-
-                  const pagedRequests = visibleRequests.slice((page - 1) * 10, page * 10);
-
-  return (
-                    <div
-                      key={r.request_id}
-                      onClick={() => setSelectedId(r.request_id)}
-                      style={{
-                        padding: '12px 16px',
-                        borderBottom: i < pagedRequests.length - 1 ? '1px solid var(--border-col)' : 'none',
-                        background: isSelected ? 'rgba(125,179,255,0.1)' : 'var(--surface)',
-                        borderLeft: isSelected ? '3px solid var(--navy)' : '3px solid transparent',
-                        cursor: 'pointer',
-                        transition: 'all 0.12s',
-                      }}
-                    >
-                      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
-                        #{reqId} — {name}
-                      </div>
+                  const allDone    = totalClr > 0 && clrCount === totalClr;
+                  return (
+                    <div key={r.request_id} onClick={() => setSelectedId(r.request_id)} style={{ padding: '12px 16px', borderBottom: i < pagedRequests.length - 1 ? '1px solid var(--border-col)' : 'none', background: isSelected ? 'rgba(125,179,255,0.1)' : 'var(--surface)', borderLeft: isSelected ? '3px solid var(--navy)' : '3px solid transparent', cursor: 'pointer', transition: 'all 0.12s' }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>#{reqId} — {name}</div>
                       <div style={{ fontSize: 11, color: 'var(--mid-gray)', marginTop: 3 }}>
-                        Submitted {formatDate(r.date_submitted)} · {r.requester_info?.program_strand ?? '—'}
+                        {formatDate(r.date_submitted)} · {r.requester_info?.program_strand ?? '—'}
                       </div>
                       <div style={{ marginTop: 6 }}>
-                        <span
-                          className={`badge ${clrCount === 0 ? 'badge-pending' : clrCount === totalClr ? 'b-done' : 'badge-verifying'}`}
-                          style={{ fontSize: 12 }}
-                        >
+                        <span className={`badge ${allDone ? 'b-done' : clrCount > 0 ? 'b-apr' : 'b-rev'}`} style={{ fontSize: 11 }}>
                           {clrCount} of {totalClr} Cleared
                         </span>
                       </div>
@@ -274,9 +331,7 @@ export default function ClearancePage() {
                   );
                 })}
                 {visibleRequests.length === 0 && (
-                  <div style={{ padding: 20, textAlign: 'center', color: 'var(--mid-gray)', fontSize: 13 }}>
-                    No requests match your search.
-                  </div>
+                  <div style={{ padding: 20, textAlign: 'center', color: 'var(--mid-gray)', fontSize: 13 }}>No requests match your search.</div>
                 )}
               </div>
               <div style={{ padding: '4px 12px' }}>
@@ -287,81 +342,115 @@ export default function ClearancePage() {
             {/* ── Right: Clearance detail ── */}
             {selectedRequest && (
               <div className="drms-card">
-                <div className="drms-card-header">
-                  <span className="drms-card-title">
-                    Clearance Status — #REQ-{String(selectedRequest.request_id).padStart(3, '0')} {' '}
-                    {selectedRequest.requester_info
-                      ? `${selectedRequest.requester_info.last_name}, ${selectedRequest.requester_info.first_name}`
-                      : ''}
-                  </span>
-                  <span
-                    className={`badge ${clearedCount === 0 ? 'badge-pending' : clearedCount === totalCount ? 'b-done' : 'badge-verifying'}`}
-                    style={{ fontSize: 12 }}
-                  >
-                    {clearedCount} / {totalCount} Offices Cleared
-                  </span>
+                <div className="drms-card-header" style={{ alignItems: 'flex-start' }}>
+                  <div>
+                    <span className="drms-card-title">
+                      #REQ-{String(selectedRequest.request_id).padStart(3, '0')} —{' '}
+                      {selectedRequest.requester_info
+                        ? `${selectedRequest.requester_info.last_name}, ${selectedRequest.requester_info.first_name}`
+                        : '—'}
+                    </span>
+                    <div style={{ fontSize: 12, color: 'var(--mid-gray)', marginTop: 2 }}>
+                      {selectedRequest.form_type} · {selectedRequest.current_status}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <span className={`badge ${clearedCount === totalCount && totalCount > 0 ? 'b-done' : clearedCount > 0 ? 'b-apr' : 'b-rev'}`} style={{ fontSize: 11 }}>
+                      {clearedCount} / {totalCount} Offices Cleared
+                    </span>
+                    <button className="btn-outline btn-sm" onClick={() => refreshSelected(selectedRequest.request_id)} title="Refresh">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 13, height: 13 }}>
+                        <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+                        <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+                      </svg>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Progress bar */}
                 <div style={{ padding: '14px 20px 0' }}>
                   <div style={{ background: 'var(--light-gray)', height: 8, borderRadius: 4 }}>
-                    <div style={{ background: 'var(--blue)', height: '100%', width: `${progressPct}%`, borderRadius: 4, transition: 'width .3s' }} />
+                    <div style={{ background: progressPct === 100 ? '#198754' : 'var(--blue)', height: '100%', width: `${progressPct}%`, borderRadius: 4, transition: 'width .3s' }} />
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--mid-gray)', marginTop: 4 }}>
-                    {clearedCount} of {totalCount} offices have cleared this request
+                    {clearedCount} of {totalCount} offices cleared · {progressPct}%
                   </div>
                 </div>
 
                 {/* Office rows */}
-                <div style={{ padding: '12px 20px' }}>
+                <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {selectedClearances.length === 0 ? (
                     <div style={{ padding: '20px 0', textAlign: 'center', color: 'var(--mid-gray)', fontSize: 13 }}>
                       No clearance records found for this request.
-                      <br />
-                      <span style={{ fontSize: 12 }}>Clearance records are created when a TC request is submitted.</span>
                     </div>
                   ) : (
-                    selectedClearances.map((c, i) => (
-                      <div key={c.clearance_id} className="cl-row">
-                        <div className="cl-num">{i + 1}</div>
-                        <div style={{ flex: 1 }}>
-                          <div className="cl-office">{c.office_name}</div>
-                          {c.processed_by && c.processed_by !== 'N/A' && c.processed_by !== '—' && (
-                            <div className="cl-by">
-                              By: {c.processed_by}
-                              {c.date_processed ? ` · ${formatDate(c.date_processed)}` : ''}
+                    selectedClearances.map(c => {
+                      const isCleared  = c.clearance_status === 'Cleared';
+                      const isDisabled = !c.is_active && !isCleared;
+                      return (
+                        <div key={c.clearance_id} style={{ border: `1px solid ${isCleared ? 'rgba(25,135,84,0.3)' : 'rgba(0,0,0,0.08)'}`, borderRadius: 10, padding: '12px 16px', background: isCleared ? 'rgba(25,135,84,0.04)' : isDisabled ? 'rgba(0,0,0,0.02)' : 'var(--surface)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: isCleared ? 6 : 10 }}>
+                            {/* Icon */}
+                            <div style={{ width: 28, height: 28, borderRadius: '50%', flexShrink: 0, background: isCleared ? '#198754' : isDisabled ? '#B1B1B1' : '#FFA323', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: 'white' }}>
+                              {isCleared ? '✓' : isDisabled ? '⊘' : '⏳'}
                             </div>
+                            {/* Name + version */}
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
+                                {c.office_name}
+                                {!isCleared && (
+                                  <span style={{ fontSize: 11, fontWeight: 500, color: '#B1B1B1', marginLeft: 6 }}>
+                                    — Link #{`v${c.token_version ?? 1}`}
+                                  </span>
+                                )}
+                              </div>
+                              {isCleared && (
+                                <div style={{ fontSize: 11, color: '#198754', marginTop: 2 }}>
+                                  Cleared by {c.cleared_by_name} · {formatDate(c.cleared_at)}
+                                </div>
+                              )}
+                              {isDisabled && (
+                                <div style={{ fontSize: 11, color: '#B1B1B1', marginTop: 2 }}>Link disabled</div>
+                              )}
+                            </div>
+                            {/* Badge */}
+                            <span className={`badge ${isCleared ? 'b-done' : isDisabled ? 'b-sub' : 'b-rev'}`} style={{ fontSize: 11 }}>
+                              {isCleared ? 'Cleared' : isDisabled ? 'Disabled' : 'Pending'}
+                            </span>
+                          </div>
+
+                          {/* Cleared: view details button */}
+                          {isCleared && (
+                            <button onClick={() => setDetailModal(c)} style={{ background: 'none', border: 'none', padding: 0, fontSize: 11, fontWeight: 600, color: '#114B9F', cursor: 'pointer', textDecoration: 'underline' }}>
+                              View Clearance Details
+                            </button>
                           )}
-                          {c.remarks && (
-                            <div style={{ fontSize: 11, color: 'var(--mid-gray)', fontStyle: 'italic', marginTop: 2 }}>
-                              {c.remarks}
+
+                          {/* Pending: token actions */}
+                          {!isCleared && (
+                            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                              {c.is_active && (
+                                <button className="btn-outline btn-sm" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }} onClick={() => copyLink(c.clearance_id, c.clearance_token)}>
+                                  {copied === c.clearance_id ? '✓ Copied!' : '📋 Copy Link'}
+                                </button>
+                              )}
+                              <button className="btn-outline btn-sm" style={{ fontSize: 11 }} disabled={toggling === c.clearance_id} onClick={() => toggleActive(c.clearance_id, c.is_active, selectedRequest.request_id)}>
+                                {toggling === c.clearance_id ? '...' : c.is_active ? '🔴 Disable Link' : '🟢 Enable Link'}
+                              </button>
+                              <button className="btn-outline btn-sm" style={{ fontSize: 11 }} disabled={regenerating === c.clearance_id} onClick={() => regenerateToken(c.clearance_id, selectedRequest.request_id)}>
+                                {regenerating === c.clearance_id ? '...' : '🔄 New Link'}
+                              </button>
                             </div>
                           )}
                         </div>
-                        <div style={{ minWidth: 130, textAlign: 'right' }}>
-                          {statusBadge(c.clearance_status)}
-                        </div>
-                        {c.clearance_status === 'Pending' && (
-                          <button
-                            className="btn-outline btn-sm"
-                            style={{ marginLeft: 8, whiteSpace: 'nowrap' }}
-                            disabled={updating === c.clearance_id}
-                            onClick={() => handleMarkCleared(c.clearance_id, selectedRequest.request_id)}
-                          >
-                            {updating === c.clearance_id ? 'Updating...' : 'Mark Cleared'}
-                          </button>
-                        )}
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
 
-                {/* View full request button */}
+                {/* View full request */}
                 <div style={{ padding: '0 20px 16px' }}>
-                  <button
-                    className="btn-outline btn-sm"
-                    onClick={() => router.push(`/staff/request/REQ-${String(selectedRequest.request_id).padStart(3, '0')}`)}
-                  >
+                  <button className="btn-outline btn-sm" onClick={() => router.push(`/staff/request/REQ-${String(selectedRequest.request_id).padStart(3, '0')}`)}>
                     View Full Request →
                   </button>
                 </div>
@@ -370,6 +459,11 @@ export default function ClearancePage() {
           </div>
         )}
       </div>
+
+      {/* Detail modal */}
+      {detailModal && (
+        <ClearanceDetailModal c={detailModal} onClose={() => setDetailModal(null)} />
+      )}
     </>
   );
 }
