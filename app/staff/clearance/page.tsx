@@ -260,8 +260,8 @@ export default function ClearancePage() {
 
   // Document type options based on form filter
   const docTypeOptions = useMemo(() => {
-    const ro4Docs = ['TOR', 'Honorable Dismissal/TC', 'SF10', 'SF9', 'Diploma', 'Certified True Copy', 'Certification', 'Special Order'];
-    const ro5Docs = ['TOR', 'Honorable Dismissal/TC', 'SF10', 'SF9', 'Diploma', 'Certified True Copy', 'Certification', 'Special Order'];
+    const ro4Docs = ['Transcript of Record', 'Honorable Dismissal', 'Permanent Record', 'Report Card', 'Diploma', 'Certified True Copy', 'Special Order', 'Certification'];
+    const ro5Docs = ['Transcript of Record', 'Honorable Dismissal', 'Permanent Record', 'Report Card', 'Diploma', 'Certified True Copy', 'Special Order', 'Certification'];
     if (formFilter === 'RO-0004') return ro4Docs;
     if (formFilter === 'RO-0005') return ro5Docs;
     return [...new Set([...ro4Docs, ...ro5Docs])];
@@ -300,7 +300,7 @@ export default function ClearancePage() {
     return rows;
   }, [ro4Requests, search, formFilter, docFilter]);
 
-  const pagedRequests = visibleRequests.slice((page - 1) * 10, page * 10);
+  const pagedRequests = visibleRequests.slice((page - 1) * 9, page * 9);
 
   return (
     <>
@@ -456,7 +456,7 @@ export default function ClearancePage() {
                 )}
               </div>
               <div style={{ padding: '4px 12px' }}>
-                <Pagination currentPage={page} totalItems={visibleRequests.length} itemsPerPage={10} onPageChange={p => setPage(p)} />
+                <Pagination currentPage={page} totalItems={visibleRequests.length} itemsPerPage={9} onPageChange={p => setPage(p)} />
               </div>
             </div>
 
