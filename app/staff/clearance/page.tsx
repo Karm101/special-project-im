@@ -260,8 +260,8 @@ export default function ClearancePage() {
 
   // Document type options based on form filter
   const docTypeOptions = useMemo(() => {
-    const ro4Docs = ['Transcript of Record', 'Honorable Dismissal', 'Permanent Record', 'Report Card', 'Diploma', 'Certified True Copy', 'Special Order', 'Certification'];
-    const ro5Docs = ['Transcript of Record', 'Honorable Dismissal', 'Permanent Record', 'Report Card', 'Diploma', 'Certified True Copy', 'Special Order', 'Certification'];
+    const ro4Docs = ['Transcript of Record', 'Honorable Dismissal', 'SF10', 'SF9', 'Diploma', 'Certified True Copy', 'Special Order', 'Certification'];
+    const ro5Docs = ['Transcript of Record', 'Honorable Dismissal', 'SF10', 'SF9', 'Diploma', 'Certified True Copy', 'Special Order', 'Certification'];
     if (formFilter === 'RO-0004') return ro4Docs;
     if (formFilter === 'RO-0005') return ro5Docs;
     return [...new Set([...ro4Docs, ...ro5Docs])];
@@ -347,11 +347,11 @@ export default function ClearancePage() {
                     value={formFilter}
                     onChange={e => { setFormFilter(e.target.value as 'all' | 'RO-0004' | 'RO-0005'); setDocFilter('all'); setPage(1); }}
                     className="drms-select"
-                    style={{ flex: 1, fontSize: 12, height: 32, minWidth: 0 }}
+                    style={{ width: 0, flex: 1, fontSize: 12, height: 32 }}
                   >
-                    <option value="all">All Requests</option>
-                    <option value="RO-0004">RO-0004 Only</option>
-                    <option value="RO-0005">RO-0005 Only</option>
+                    <option value="all">All</option>
+                    <option value="RO-0004">RO-0004</option>
+                    <option value="RO-0005">RO-0005</option>
                   </select>
 
                   {/* Filter button */}
