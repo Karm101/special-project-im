@@ -1281,7 +1281,7 @@ ${isTC ? `
               <div className={`modal-tab${activeTab === 'journey' ? ' active' : ''}`} onClick={() => setActiveTab('journey')}>Journey</div>
               <div className={`modal-tab${activeTab === 'clearance' ? ' active' : ''}`} onClick={() => setActiveTab('clearance')}>
                 Clearance
-                {data && data.clearances && data.clearances.some(c => c.clearance_status !== 'Cleared') && (
+                {data && data.current_status === 'For Clearance' && data.clearances && data.clearances.some(c => c.clearance_status !== 'Cleared') && (
                   <span style={{ marginLeft: 6, width: 7, height: 7, borderRadius: '50%', background: '#FFA323', display: 'inline-block' }} />
                 )}
               </div>
