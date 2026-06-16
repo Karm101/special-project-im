@@ -7,6 +7,20 @@ import { Topbar } from '../../../components/drms/Topbar';
 import { API_BASE } from '@/lib/lib_api';
 
 // ── API types ─────────────────────────────────────────────────────────────────
+
+type Clearance = {
+  clearance_id: number;
+  office_name: string;
+  clearance_status: string;
+  clearance_token: string;
+  is_active: boolean;
+  cleared_at: string | null;
+  cleared_by_name: string | null;
+  date_processed: string | null;
+  processed_by: string | null;
+  remarks: string | null;
+};
+
 type Requester = {
   requester_id: number;
   student_number: string;
@@ -72,6 +86,7 @@ type RequestDetail = {
   requested_documents: RequestedDoc[];
   status_logs: StatusLog[];
   payment_info: Payment | null;
+  clearances: Clearance[];
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -624,6 +639,187 @@ function FormTab({ data }: { data: RequestDetail }) {
   );
 }
 
+// ── Clearance Tab ─────────────────────────────────────────────────────────────
+function ClearanceTab({ data, onRefresh }: { data: RequestDetail; onRefresh: () => void }) {
+  const [toggling, setToggling]       = useState<number | null>(null);
+  const [regenerating, setRegenerating] = useState<number | null>(null);
+  const [copied, setCopied]           = useState<number | null>(null);
+
+  const clearances = data.clearances ?? [];
+  const allCleared = clearances.length > 0 && clearances.every(c => c.clearance_status === 'Cleared');
+  const pendingCount = clearances.filter(c => c.clearance_status !== 'Cleared').length;
+
+  function getClearanceLink(token: string): string {
+    return `${window.location.origin}/clearance/${token}`;
+  }
+
+  async function copyLink(clearanceId: number, token: string) {
+    try {
+      await navigator.clipboard.writeText(getClearanceLink(token));
+      setCopied(clearanceId);
+      setTimeout(() => setCopied(null), 2000);
+    } catch {
+      alert('Could not copy link. Please copy it manually.');
+    }
+  }
+
+  async function toggleActive(clearanceId: number, currentActive: boolean) {
+    setToggling(clearanceId);
+    try {
+      await fetch(`${API_BASE}/clearance/${clearanceId}/toggle/`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_active: !currentActive }),
+      });
+      onRefresh();
+    } catch { alert('Failed to toggle link.'); }
+    finally { setToggling(null); }
+  }
+
+  async function regenerateToken(clearanceId: number) {
+    if (!confirm('This will invalidate the current link and generate a new one. Continue?')) return;
+    setRegenerating(clearanceId);
+    try {
+      await fetch(`${API_BASE}/clearance/${clearanceId}/regenerate/`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      onRefresh();
+    } catch { alert('Failed to regenerate token.'); }
+    finally { setRegenerating(null); }
+  }
+
+  return (
+    <div className="modal-form-pane">
+      {/* Summary banner */}
+      {clearances.length === 0 ? (
+        <div className="info-box" style={{ marginBottom: 16 }}>
+          <span className="info-icon">ℹ️</span>
+          <div className="info-text">
+            No clearance records for this request. Clearances are auto-created when a request is submitted.
+          </div>
+        </div>
+      ) : allCleared ? (
+        <div className="info-box" style={{ marginBottom: 16, background: 'rgba(25,135,84,0.08)', borderColor: '#198754' }}>
+          <span className="info-icon">✅</span>
+          <div className="info-text">
+            All offices have cleared this request. You may proceed to the next stage.
+          </div>
+        </div>
+      ) : (
+        <div className="info-box warn" style={{ marginBottom: 16 }}>
+          <span className="info-icon">🔒</span>
+          <div className="info-text">
+            <strong>{pendingCount} office{pendingCount !== 1 ? 's' : ''} pending clearance.</strong> Copy and send the link to each office. They can click the link to confirm clearance without logging in.
+          </div>
+        </div>
+      )}
+
+      {/* Clearance table */}
+      {clearances.length > 0 && (
+        <div className="form-section">
+          <div className="form-section-title">Clearance Status</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {clearances.map(c => {
+              const isCleared  = c.clearance_status === 'Cleared';
+              const isDisabled = !c.is_active && !isCleared;
+              return (
+                <div key={c.clearance_id} style={{
+                  border: `1px solid ${isCleared ? 'rgba(25,135,84,0.3)' : isDisabled ? 'rgba(0,0,0,0.08)' : 'rgba(0,0,0,0.08)'}`,
+                  borderRadius: 10, padding: '12px 16px',
+                  background: isCleared ? 'rgba(25,135,84,0.04)' : isDisabled ? 'rgba(0,0,0,0.02)' : 'var(--surface)',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: isCleared ? 6 : 10 }}>
+                    {/* Status icon */}
+                    <div style={{
+                      width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+                      background: isCleared ? '#198754' : isDisabled ? '#B1B1B1' : '#FFA323',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 12, color: 'white',
+                    }}>
+                      {isCleared ? '✓' : isDisabled ? '⊘' : '⏳'}
+                    </div>
+
+                    {/* Office name */}
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
+                        {c.office_name}
+                      </div>
+                      {isCleared && (
+                        <div style={{ fontSize: 11, color: '#198754', marginTop: 2 }}>
+                          Cleared by {c.cleared_by_name} · {formatDate(c.cleared_at)}
+                        </div>
+                      )}
+                      {isDisabled && (
+                        <div style={{ fontSize: 11, color: '#B1B1B1', marginTop: 2 }}>
+                          Link disabled
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Status badge */}
+                    <span className={`badge ${isCleared ? 'b-done' : isDisabled ? 'b-sub' : 'b-rev'}`} style={{ fontSize: 11 }}>
+                      {isCleared ? 'Cleared' : isDisabled ? 'Disabled' : 'Pending'}
+                    </span>
+                  </div>
+
+                  {/* Actions — only show for non-cleared */}
+                  {!isCleared && (
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      {/* Copy link */}
+                      {c.is_active && (
+                        <button
+                          className="btn-outline btn-sm"
+                          style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }}
+                          onClick={() => copyLink(c.clearance_id, c.clearance_token)}
+                        >
+                          {copied === c.clearance_id ? '✓ Copied!' : '📋 Copy Link'}
+                        </button>
+                      )}
+
+                      {/* Toggle enable/disable */}
+                      <button
+                        className="btn-outline btn-sm"
+                        style={{ fontSize: 11 }}
+                        disabled={toggling === c.clearance_id}
+                        onClick={() => toggleActive(c.clearance_id, c.is_active)}
+                      >
+                        {toggling === c.clearance_id ? '...' : c.is_active ? '🔴 Disable Link' : '🟢 Enable Link'}
+                      </button>
+
+                      {/* Regenerate */}
+                      <button
+                        className="btn-outline btn-sm"
+                        style={{ fontSize: 11 }}
+                        disabled={regenerating === c.clearance_id}
+                        onClick={() => regenerateToken(c.clearance_id)}
+                      >
+                        {regenerating === c.clearance_id ? '...' : '🔄 New Link'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* How it works */}
+      <div className="form-section">
+        <div className="form-section-title">How Clearance Works</div>
+        <div style={{ fontSize: 12, color: 'var(--mid-gray)', lineHeight: 1.8 }}>
+          <div>1. Click <strong>Copy Link</strong> next to each office that needs to clear the student.</div>
+          <div>2. Send the link via your existing email or Teams channel to the respective office.</div>
+          <div>3. The office staff clicks the link, enters their name, and confirms clearance — no login required.</div>
+          <div>4. Once all offices have cleared, resume the request using <strong>Resume — Mark as For Billing</strong> in the side panel.</div>
+          <div style={{ marginTop: 8, color: '#856404' }}>⚠️ If you sent a link to the wrong person, click <strong>Disable Link</strong> to immediately invalidate it, then click <strong>New Link</strong> to generate a fresh one.</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Journey Tab ───────────────────────────────────────────────────────────────
 function JourneyTab({ data }: { data: RequestDetail }) {
   const currentStage = statusToStageIndex(data.current_status);
@@ -779,7 +975,7 @@ function JourneyTab({ data }: { data: RequestDetail }) {
 export default function RequestPage() {
   const router   = useRouter();
   const params   = useParams();
-  const [activeTab, setActiveTab] = useState<'form' | 'journey'>('form');
+  const [activeTab, setActiveTab] = useState<'form' | 'journey' | 'clearance'>('form');
   const [data, setData]           = useState<RequestDetail | null>(null);
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState<string | null>(null);
@@ -819,6 +1015,14 @@ export default function RequestPage() {
     }
     fetchDetail();
   }, [numericId]);
+
+  async function handleRefresh() {
+    if (!numericId) return;
+    try {
+      const res = await fetch(`${API_BASE}/requests/${numericId}/`);
+      if (res.ok) setData(await res.json());
+    } catch {}
+  }
 
   async function handleAssignStaff(staffId: number) {
     try {
@@ -957,6 +1161,12 @@ ${isTC ? `
             <div className="modal-tab-list">
               <div className={`modal-tab${activeTab === 'form' ? ' active' : ''}`} onClick={() => setActiveTab('form')}>Form</div>
               <div className={`modal-tab${activeTab === 'journey' ? ' active' : ''}`} onClick={() => setActiveTab('journey')}>Journey</div>
+              <div className={`modal-tab${activeTab === 'clearance' ? ' active' : ''}`} onClick={() => setActiveTab('clearance')}>
+                Clearance
+                {data && data.clearances && data.clearances.some(c => c.clearance_status !== 'Cleared') && (
+                  <span style={{ marginLeft: 6, width: 7, height: 7, borderRadius: '50%', background: '#FFA323', display: 'inline-block' }} />
+                )}
+              </div>
             </div>
             <span className="workflow-status">{data ? statusToWorkflow(data.current_status) : '● Loading...'}</span>
           </div>
@@ -965,7 +1175,7 @@ ${isTC ? `
             {error   && <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#E50019', fontSize: 14 }}>{error}</div>}
             {data && !loading && (
               <>
-                {activeTab === 'form' ? <FormTab data={data} /> : <JourneyTab data={data} />}
+                {activeTab === 'form' ? <FormTab data={data} /> : activeTab === 'journey' ? <JourneyTab data={data} /> : <ClearanceTab data={data} onRefresh={handleRefresh} />}
                 <SidePanel key={data.current_status} data={data} onUpdateStatus={handleUpdateStatus} updating={updating} staffList={staffList} onAssignStaff={handleAssignStaff} onAssignBilledBy={handleAssignBilledBy} />
               </>
             )}
