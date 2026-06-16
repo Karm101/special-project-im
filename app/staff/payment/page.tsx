@@ -212,7 +212,7 @@ export default function PaymentMonitorPage() {
         const priorityMap: Record<string, number> = { 'Overdue': 1, 'Pending': 2, 'Paid': 3 };
         const priorityDiff = (priorityMap[a.payment_status] ?? 2) - (priorityMap[b.payment_status] ?? 2);
         if (priorityDiff !== 0) return priorityDiff;
-        return new Date(a.payment_date ?? '').getTime() - new Date(b.payment_date ?? '').getTime();
+        return new Date(b.payment_date ?? '').getTime() - new Date(a.payment_date ?? '').getTime();
       });
     }
 

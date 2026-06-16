@@ -251,7 +251,7 @@ export default function DashboardPage() {
       rows.sort((a, b) => {
         const priorityDiff = getStatusPriority(a.current_status) - getStatusPriority(b.current_status);
         if (priorityDiff !== 0) return priorityDiff;
-        return new Date(a.date_submitted).getTime() - new Date(b.date_submitted).getTime();
+        return new Date(b.date_submitted).getTime() - new Date(a.date_submitted).getTime();
       });
     }
 

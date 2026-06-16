@@ -286,7 +286,7 @@ export default function ClearancePage() {
         const aPending = aClrs.filter(c => c.clearance_status !== 'Cleared').length;
         const bPending = bClrs.filter(c => c.clearance_status !== 'Cleared').length;
         if (bPending !== aPending) return bPending - aPending;
-        return new Date(a.date_submitted).getTime() - new Date(b.date_submitted).getTime();
+        return new Date(b.date_submitted).getTime() - new Date(a.date_submitted).getTime();
       });
     }
 
