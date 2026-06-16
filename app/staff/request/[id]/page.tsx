@@ -1102,10 +1102,17 @@ export default function RequestPage() {
     ];
     const clearanceRows = clearanceOffices.map(office => {
       const clr = (data as any).clearances?.find((c: any) => c.office_name === office);
+      const sigCell = clr?.signature_image_url
+        ? `<div style="font-size:11px;margin-bottom:4px;">${clr.processed_by ?? ''}</div>
+           <img src="${clr.signature_image_url}" style="height:36px;max-width:120px;object-fit:contain;" />`
+        : (clr?.processed_by ?? '');
+      const dateStr = clr?.cleared_at
+        ? new Date(clr.cleared_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Manila' })
+        : '';
       return `<tr>
         <td style="padding:6px 8px;border-bottom:1px solid #ddd;font-size:12px;">${office}</td>
-        <td style="padding:6px 8px;border-bottom:1px solid #ddd;font-size:12px;">${clr?.processed_by ?? ''}</td>
-        <td style="padding:6px 8px;border-bottom:1px solid #ddd;font-size:12px;">${clr?.date_processed ?? ''}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid #ddd;font-size:12px;">${sigCell}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid #ddd;font-size:12px;">${dateStr}</td>
         <td style="padding:6px 8px;border-bottom:1px solid #ddd;font-size:12px;">${clr?.remarks ?? ''}</td>
       </tr>`;
     }).join('');
