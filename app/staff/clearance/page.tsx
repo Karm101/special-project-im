@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search } from 'lucide-react';
 import { Pagination } from '../../components/drms/Pagination';
@@ -123,6 +123,8 @@ export default function ClearancePage() {
   const [formFilter, setFormFilter]     = useState<'all' | 'RO-0004' | 'RO-0005'>('all');
   const [docFilter, setDocFilter]       = useState<string>('all');
   const [filterOpen, setFilterOpen]     = useState(false);
+  const filterBtnRef = useRef<HTMLDivElement>(null);
+  const [filterPos, setFilterPos] = useState({ top: 0, left: 0 });
 
   // Token actions
   const [toggling, setToggling]         = useState<number | null>(null);
@@ -345,7 +347,7 @@ export default function ClearancePage() {
                     value={formFilter}
                     onChange={e => { setFormFilter(e.target.value as 'all' | 'RO-0004' | 'RO-0005'); setDocFilter('all'); setPage(1); }}
                     className="drms-select"
-                    style={{ flex: 1, fontSize: 12, height: 32 }}
+                    style={{ flex: 1, fontSize: 12, height: 32, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}
                   >
                     <option value="all">All Document Requests</option>
                     <option value="RO-0004">RO-0004 Requests</option>
@@ -353,10 +355,16 @@ export default function ClearancePage() {
                   </select>
 
                   {/* Filter button */}
-                  <div style={{ position: 'relative' }}>
+                  <div style={{ position: 'relative' }} ref={filterBtnRef}>
                     <button
                       className="btn-outline btn-sm"
-                      onClick={() => setFilterOpen(o => !o)}
+                      onClick={() => {
+                        if (filterBtnRef.current) {
+                          const rect = filterBtnRef.current.getBoundingClientRect();
+                          setFilterPos({ top: rect.bottom + 6, left: rect.left });
+                        }
+                        setFilterOpen(o => !o);
+                      }}
                       title="Filter by document type"
                       data-filter-btn="true"
                       style={{ position: 'relative', padding: '0 10px', height: 32 }}
@@ -370,7 +378,7 @@ export default function ClearancePage() {
                     </button>
 
                     {filterOpen && (
-                      <div style={{ position: 'fixed', left: 48, top: 'auto', marginTop: 4, background: 'white', border: '1px solid rgba(0,0,0,.1)', borderRadius: 10, padding: 14, width: 220, zIndex: 1000, boxShadow: '0 8px 24px rgba(0,0,0,.12)' }}
+                      <div style={{ position: 'fixed', top: filterPos.top, left: filterPos.left, background: 'white', border: '1px solid rgba(0,0,0,.1)', borderRadius: 10, padding: 14, width: 220, zIndex: 1000, boxShadow: '0 8px 24px rgba(0,0,0,.12)' }}
                         data-filter-panel="true"
                         onClick={e => e.stopPropagation()}>
                         <div style={{ fontSize: 11, fontWeight: 700, color: '#B1B1B1', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Document Type</div>
