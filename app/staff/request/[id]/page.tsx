@@ -719,7 +719,23 @@ function ClearanceTab({ data, onRefresh }: { data: RequestDetail; onRefresh: () 
       {/* Clearance table */}
       {clearances.length > 0 && (
         <div className="form-section">
-          <div className="form-section-title">Clearance Status</div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <div className="form-section-title" style={{ marginBottom: 0 }}>Clearance Status</div>
+            <button
+              onClick={onRefresh}
+              style={{
+                background: 'none', border: '1px solid var(--border)',
+                borderRadius: 6, padding: '4px 10px', cursor: 'pointer',
+                fontSize: 11, fontWeight: 600, color: 'var(--mid-gray)',
+                display: 'flex', alignItems: 'center', gap: 5,
+                transition: 'color 0.15s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.color = 'var(--blue)')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'var(--mid-gray)')}
+            >
+              🔄 Refresh
+            </button>
+          </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {clearances.map(c => {
               const isCleared  = c.clearance_status === 'Cleared';
