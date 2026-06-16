@@ -747,13 +747,14 @@ function ClearanceTab({ data, onRefresh }: { data: RequestDetail; onRefresh: () 
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: isCleared ? 6 : 10 }}>
                     {/* Status icon */}
-                    <div style={{
-                      width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
-                      background: isCleared ? '#198754' : isDisabled ? '#B1B1B1' : '#FFA323',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 12, color: 'white',
-                    }}>
-                      {isCleared ? '✓' : isDisabled ? '⊘' : '⏳'}
+                    <div style={{ width: 28, height: 28, borderRadius: '50%', flexShrink: 0, background: isCleared ? '#198754' : isDisabled ? '#B1B1B1' : '#FFA323', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                      {isCleared ? (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}><polyline points="20 6 9 17 4 12"/></svg>
+                      ) : isDisabled ? (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                      ) : (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      )}
                     </div>
 
                     {/* Office name */}
@@ -797,33 +798,29 @@ function ClearanceTab({ data, onRefresh }: { data: RequestDetail; onRefresh: () 
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                       {/* Copy link */}
                       {c.is_active && (
-                        <button
-                          className="btn-outline btn-sm"
-                          style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }}
-                          onClick={() => copyLink(c.clearance_id, c.clearance_token)}
-                        >
-                          {copied === c.clearance_id ? '✓ Copied!' : '📋 Copy Link'}
+                        <button className="btn-outline btn-sm" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }} onClick={() => copyLink(c.clearance_id, c.clearance_token)}>
+                          {copied === c.clearance_id ? (
+                            <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 12, height: 12 }}><polyline points="20 6 9 17 4 12"/></svg> Copied!</>
+                          ) : (
+                            <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 12, height: 12 }}><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy Link</>
+                          )}
                         </button>
                       )}
 
                       {/* Toggle enable/disable */}
-                      <button
-                        className="btn-outline btn-sm"
-                        style={{ fontSize: 11 }}
-                        disabled={toggling === c.clearance_id}
-                        onClick={() => toggleActive(c.clearance_id, c.is_active)}
-                      >
-                        {toggling === c.clearance_id ? '...' : c.is_active ? '🔴 Disable Link' : '🟢 Enable Link'}
+                      <button className="btn-outline btn-sm" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }} disabled={toggling === c.clearance_id} onClick={() => toggleActive(c.clearance_id, c.is_active)}>
+                        {toggling === c.clearance_id ? '...' : c.is_active ? (
+                          <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 12, height: 12 }}><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> Disable Link</>
+                        ) : (
+                          <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 12, height: 12 }}><path d="M12 2l8 4v6c0 4.4-3.3 8.5-8 10-4.7-1.5-8-5.6-8-10V6l8-4z"/><polyline points="9 12 11 14 15 10"/></svg> Enable Link</>
+                        )}
                       </button>
 
                       {/* Regenerate */}
-                      <button
-                        className="btn-outline btn-sm"
-                        style={{ fontSize: 11 }}
-                        disabled={regenerating === c.clearance_id}
-                        onClick={() => regenerateToken(c.clearance_id)}
-                      >
-                        {regenerating === c.clearance_id ? '...' : '🔄 New Link'}
+                      <button className="btn-outline btn-sm" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }} disabled={regenerating === c.clearance_id} onClick={() => regenerateToken(c.clearance_id)}>
+                        {regenerating === c.clearance_id ? '...' : (
+                          <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 12, height: 12 }}><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> New Link</>
+                        )}
                       </button>
                     </div>
                   )}
