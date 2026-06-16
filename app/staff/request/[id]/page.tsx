@@ -19,6 +19,7 @@ type Clearance = {
   date_processed: string | null;
   processed_by: string | null;
   remarks: string | null;
+  token_version: number;
 };
 
 type Requester = {
@@ -744,6 +745,11 @@ function ClearanceTab({ data, onRefresh }: { data: RequestDetail; onRefresh: () 
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
                         {c.office_name}
+                        {!isCleared && (
+                          <span style={{ fontSize: 11, fontWeight: 500, color: '#B1B1B1', marginLeft: 6 }}>
+                            — Link #{`v${c.token_version ?? 1}`}
+                          </span>
+                        )}
                       </div>
                       {isCleared && (
                         <div style={{ fontSize: 11, color: '#198754', marginTop: 2 }}>
