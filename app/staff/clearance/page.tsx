@@ -148,7 +148,11 @@ export default function ClearancePage() {
       const data = await res.json();
       const all: ApiRequest[] = data.results ?? data;
       // Only show requests that are in For Clearance or have clearance records
-      const filtered = all.filter(r => r.form_type === 'RO-0004' || r.form_type === 'RO-0005');
+      const CLEARANCE_RELEVANT = ['For Clearance', 'For Billing', 'For Payment', 'Paid', 'For Processing', 'For Printing', 'For Release', 'Claimed'];
+      const filtered = all.filter(r =>
+        (r.form_type === 'RO-0004' || r.form_type === 'RO-0005') &&
+        CLEARANCE_RELEVANT.includes(r.current_status)
+      );
       setRo4Requests(filtered);
 
       if (filtered.length > 0) {
