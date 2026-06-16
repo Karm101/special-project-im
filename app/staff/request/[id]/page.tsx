@@ -722,18 +722,15 @@ function ClearanceTab({ data, onRefresh }: { data: RequestDetail; onRefresh: () 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
             <div className="form-section-title" style={{ marginBottom: 0 }}>Clearance Status</div>
             <button
+              className="btn-outline btn-sm"
               onClick={onRefresh}
-              style={{
-                background: 'none', border: '1px solid var(--border)',
-                borderRadius: 6, padding: '4px 10px', cursor: 'pointer',
-                fontSize: 11, fontWeight: 600, color: 'var(--mid-gray)',
-                display: 'flex', alignItems: 'center', gap: 5,
-                transition: 'color 0.15s',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.color = 'var(--blue)')}
-              onMouseLeave={e => (e.currentTarget.style.color = 'var(--mid-gray)')}
+              title="Refresh clearance status"
             >
-              🔄 Refresh
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
+                <polyline points="23 4 23 10 17 10"/>
+                <polyline points="1 20 1 14 7 14"/>
+                <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+              </svg>
             </button>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
