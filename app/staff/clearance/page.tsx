@@ -35,6 +35,7 @@ type ApiRequest = {
     program_strand: string;
     academic_level: string;
   } | null;
+  requested_documents?: { document_name: string }[];
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -119,6 +120,9 @@ export default function ClearancePage() {
   const [selectedId, setSelectedId]     = useState<number | null>(null);
   const [page, setPage]                 = useState(1);
   const [detailModal, setDetailModal]   = useState<ApiClearance | null>(null);
+  const [formFilter, setFormFilter]     = useState<'all' | 'RO-0004' | 'RO-0005'>('all');
+  const [docFilter, setDocFilter]       = useState<string>('all');
+  const [filterOpen, setFilterOpen]     = useState(false);
 
   // Token actions
   const [toggling, setToggling]         = useState<number | null>(null);
@@ -136,7 +140,7 @@ export default function ClearancePage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/requests/`);
+      const res = await fetch(`${API_BASE}/requests/?page_size=200`);
       if (!res.ok) throw new Error('API error');
       const data = await res.json();
       const all: ApiRequest[] = data.results ?? data;
@@ -168,6 +172,17 @@ export default function ClearancePage() {
   }
 
   useEffect(() => { fetchData(); }, []);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      const target = e.target as HTMLElement;
+      if (!target.closest('[data-filter-panel]') && !target.closest('[data-filter-btn]')) {
+        setFilterOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // ── Refresh clearances for selected request only ──────────────────────────
   async function refreshSelected(requestId: number) {
@@ -241,17 +256,47 @@ export default function ClearancePage() {
     };
   }, [ro4Requests, clearances]);
 
+  // Document type options based on form filter
+  const docTypeOptions = useMemo(() => {
+    const ro4Docs = ['TOR', 'Honorable Dismissal/TC', 'SF10', 'SF9', 'Diploma', 'Certified True Copy', 'Certification', 'Special Order'];
+    const ro5Docs = ['TOR', 'Honorable Dismissal/TC', 'SF10', 'SF9', 'Diploma', 'Certified True Copy', 'Certification', 'Special Order'];
+    if (formFilter === 'RO-0004') return ro4Docs;
+    if (formFilter === 'RO-0005') return ro5Docs;
+    return [...new Set([...ro4Docs, ...ro5Docs])];
+  }, [formFilter]);
+
   const visibleRequests = useMemo(() => {
-    if (!search.trim()) return ro4Requests;
-    const q = search.toLowerCase();
-    return ro4Requests.filter(r => {
-      const name = r.requester_info
-        ? `${r.requester_info.last_name}, ${r.requester_info.first_name}`.toLowerCase()
-        : '';
-      const id = `REQ-${String(r.request_id).padStart(3, '0')}`.toLowerCase();
-      return name.includes(q) || id.includes(q);
-    });
-  }, [ro4Requests, search]);
+    let rows = [...ro4Requests];
+
+    // Sort newest first
+    rows.sort((a, b) => new Date(b.date_submitted).getTime() - new Date(a.date_submitted).getTime());
+
+    // Form type filter
+    if (formFilter !== 'all') rows = rows.filter(r => r.form_type === formFilter);
+
+    // Document type filter
+    if (docFilter !== 'all') {
+      rows = rows.filter(r =>
+        r.requested_documents?.some(d =>
+          d.document_name.toLowerCase().includes(docFilter.toLowerCase())
+        )
+      );
+    }
+
+    // Search
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      rows = rows.filter(r => {
+        const name = r.requester_info
+          ? `${r.requester_info.last_name}, ${r.requester_info.first_name}`.toLowerCase()
+          : '';
+        const id = `REQ-${String(r.request_id).padStart(3, '0')}`.toLowerCase();
+        return name.includes(q) || id.includes(q);
+      });
+    }
+
+    return rows;
+  }, [ro4Requests, search, formFilter, docFilter]);
 
   const pagedRequests = visibleRequests.slice((page - 1) * 10, page * 10);
 
@@ -293,14 +338,81 @@ export default function ClearancePage() {
 
             {/* ── Left: Request list ── */}
             <div className="drms-card">
-              <div className="drms-card-header">
-                <span className="drms-card-title">Document Requests</span>
-                <button className="btn-outline btn-sm" onClick={fetchData} title="Refresh">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 13, height: 13 }}>
-                    <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
-                    <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
-                  </svg>
-                </button>
+              <div style={{ padding: '14px 12px 8px', borderBottom: '1px solid var(--border-col)' }}>
+                {/* Row 1: dropdown + icons */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <select
+                    value={formFilter}
+                    onChange={e => { setFormFilter(e.target.value as 'all' | 'RO-0004' | 'RO-0005'); setDocFilter('all'); setPage(1); }}
+                    className="drms-select"
+                    style={{ flex: 1, fontSize: 12, height: 32 }}
+                  >
+                    <option value="all">All Document Requests</option>
+                    <option value="RO-0004">RO-0004 Requests</option>
+                    <option value="RO-0005">RO-0005 Requests</option>
+                  </select>
+
+                  {/* Filter button */}
+                  <div style={{ position: 'relative' }}>
+                    <button
+                      className="btn-outline btn-sm"
+                      onClick={() => setFilterOpen(o => !o)}
+                      title="Filter by document type"
+                      data-filter-btn="true"
+                      style={{ position: 'relative', padding: '0 10px', height: 32 }}
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 13, height: 13 }}>
+                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+                      </svg>
+                      {docFilter !== 'all' && (
+                        <span style={{ position: 'absolute', top: -4, right: -4, width: 8, height: 8, background: '#114B9F', borderRadius: '50%' }} />
+                      )}
+                    </button>
+
+                    {filterOpen && (
+                      <div style={{ position: 'absolute', left: 0, top: 'calc(100% + 6px)', background: 'white', border: '1px solid rgba(0,0,0,.1)', borderRadius: 10, padding: 14, width: 220, zIndex: 300, boxShadow: '0 8px 24px rgba(0,0,0,.12)' }}
+                        data-filter-panel="true"
+                        onClick={e => e.stopPropagation()}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: '#B1B1B1', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Document Type</div>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', cursor: 'pointer', fontSize: 12, color: 'var(--navy)' }}>
+                          <input type="radio" name="doc_filter" checked={docFilter === 'all'} onChange={() => { setDocFilter('all'); setFilterOpen(false); }} style={{ accentColor: '#114B9F' }} />
+                          All types
+                        </label>
+                        {docTypeOptions.map(opt => (
+                          <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', cursor: 'pointer', fontSize: 12, color: 'var(--navy)' }}>
+                            <input type="radio" name="doc_filter" checked={docFilter === opt} onChange={() => { setDocFilter(opt); setFilterOpen(false); }} style={{ accentColor: '#114B9F' }} />
+                            {opt}
+                          </label>
+                        ))}
+                        {docFilter !== 'all' && (
+                          <button className="btn-outline btn-sm" style={{ width: '100%', justifyContent: 'center', marginTop: 8 }} onClick={() => { setDocFilter('all'); setFilterOpen(false); }}>
+                            Clear filter
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Refresh button */}
+                  <button className="btn-outline btn-sm" onClick={fetchData} title="Refresh" style={{ padding: '0 10px', height: 32 }}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 13, height: 13 }}>
+                      <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+                      <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Row 2: active filter chip */}
+                {docFilter !== 'all' && (
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <span
+                      style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 50, background: 'rgba(17,75,159,0.1)', color: '#114B9F', border: '1px solid rgba(17,75,159,0.2)', cursor: 'pointer' }}
+                      onClick={() => setDocFilter('all')}
+                    >
+                      {docFilter} ✕
+                    </span>
+                  </div>
+                )}
               </div>
               <div style={{ padding: '10px 12px 4px' }}>
                 <div className="search-box" style={{ minWidth: 0, width: '100%', boxSizing: 'border-box' }}>
