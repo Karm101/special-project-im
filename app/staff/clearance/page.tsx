@@ -334,7 +334,7 @@ export default function ClearancePage() {
         )}
 
         {!loading && ro4Requests.length > 0 && (
-          <div style={{ display: 'grid', gridTemplateColumns: '360px 1fr', gap: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '400px 1fr', gap: 20 }}>
 
             {/* ── Left: Request list ── */}
             <div className="drms-card">
@@ -370,7 +370,7 @@ export default function ClearancePage() {
                     </button>
 
                     {filterOpen && (
-                      <div style={{ position: 'absolute', left: 0, top: 'calc(100% + 6px)', background: 'white', border: '1px solid rgba(0,0,0,.1)', borderRadius: 10, padding: 14, width: 220, zIndex: 300, boxShadow: '0 8px 24px rgba(0,0,0,.12)' }}
+                      <div style={{ position: 'fixed', left: 48, top: 'auto', marginTop: 4, background: 'white', border: '1px solid rgba(0,0,0,.1)', borderRadius: 10, padding: 14, width: 220, zIndex: 1000, boxShadow: '0 8px 24px rgba(0,0,0,.12)' }}
                         data-filter-panel="true"
                         onClick={e => e.stopPropagation()}>
                         <div style={{ fontSize: 11, fontWeight: 700, color: '#B1B1B1', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Document Type</div>
@@ -431,7 +431,7 @@ export default function ClearancePage() {
                   const allDone    = totalClr > 0 && clrCount === totalClr;
                   return (
                     <div key={r.request_id} onClick={() => setSelectedId(r.request_id)} style={{ padding: '12px 16px', borderBottom: i < pagedRequests.length - 1 ? '1px solid var(--border-col)' : 'none', background: isSelected ? 'rgba(125,179,255,0.1)' : 'var(--surface)', borderLeft: isSelected ? '3px solid var(--navy)' : '3px solid transparent', cursor: 'pointer', transition: 'all 0.12s' }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>#{reqId} — {name}</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>#{reqId} — {name}</div>
                       <div style={{ fontSize: 11, color: 'var(--mid-gray)', marginTop: 3 }}>
                         {formatDate(r.date_submitted)} · {r.form_type} · {r.requester_info?.program_strand ?? '—'}
                       </div>
