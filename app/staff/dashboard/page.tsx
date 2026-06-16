@@ -65,13 +65,33 @@ const STATUS_OPTIONS = [
   'For Printing', 'For Release', 'Claimed', 'Shredded', 'Rejected',
 ];
 
+function getStatusPriority(status: string): number {
+  switch (status) {
+    case 'Pending':
+    case 'For Validation':  return 1;
+    case 'For Clearance':
+    case 'Invalid Request': return 2;
+    case 'For Billing':
+    case 'For Payment':     return 3;
+    case 'Paid':
+    case 'For Processing':
+    case 'For Printing':    return 4;
+    case 'For Release':     return 5;
+    case 'Claimed':
+    case 'Shredded':
+    case 'Rejected':        return 6;
+    default:                return 3;
+  }
+}
+
 export default function DashboardPage() {
   const router = useRouter();
 
   // ── State ─────────────────────────────────────────────────────────────
-  const [dept, setDept]             = useState<'college' | 'shs'>('college');
-  const [collegeTab, setCollegeTab] = useState<string>('all');
-  const [shsTab, setShsTab]         = useState<string>('all');
+  const [dept, setDept]               = useState<'college' | 'shs'>('college');
+  const [collegeTab, setCollegeTab]   = useState<string>('all');
+  const [shsTab, setShsTab]           = useState<string>('all');
+  const [sortMode, setSortMode]       = useState<'priority' | 'newest'>('priority');
 
   // Restore dept + tab when navigating back
   useEffect(() => {
@@ -224,8 +244,19 @@ export default function DashboardPage() {
       );
     }
 
+    // Sort
+    if (sortMode === 'newest') {
+      rows.sort((a, b) => new Date(b.date_submitted).getTime() - new Date(a.date_submitted).getTime());
+    } else {
+      rows.sort((a, b) => {
+        const priorityDiff = getStatusPriority(a.current_status) - getStatusPriority(b.current_status);
+        if (priorityDiff !== 0) return priorityDiff;
+        return new Date(a.date_submitted).getTime() - new Date(b.date_submitted).getTime();
+      });
+    }
+
     return rows;
-  }, [allRows, activeTab, search, activeFilters]);
+  }, [allRows, activeTab, search, activeFilters, sortMode]);
 
   const totalRows     = filteredRows.length;
   const paginatedRows = filteredRows.slice((page - 1) * 10, page * 10);
@@ -362,6 +393,24 @@ export default function DashboardPage() {
           </div>
 
           <div className="toolbar-right">
+            <button
+              className="btn-outline btn-sm"
+              onClick={() => setSortMode(s => s === 'priority' ? 'newest' : 'priority')}
+              title={sortMode === 'priority' ? 'Sorted by priority' : 'Sorted by newest'}
+              style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}
+            >
+              {sortMode === 'priority' ? (
+                <>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 13, height: 13 }}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                  Priority
+                </>
+              ) : (
+                <>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 13, height: 13 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  Newest
+                </>
+              )}
+            </button>
             <div style={{ position: 'relative' }}>
               <button className="btn-filter" data-filter-btn="true"
                 onClick={() => setFilterOpen(o => !o)} title="Filter">

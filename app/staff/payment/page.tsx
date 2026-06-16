@@ -72,6 +72,7 @@ export default function PaymentMonitorPage() {
   const [error, setError]         = useState<string | null>(null);
   const [updating, setUpdating]   = useState<number | null>(null);
   const [page, setPage]           = useState(1);
+  const [sortMode, setSortMode]   = useState<'priority' | 'newest'>('priority');
 
   // ── Fetch payments + request details ────────────────────────────────────
   useEffect(() => {
@@ -203,8 +204,20 @@ export default function PaymentMonitorPage() {
               (p.official_receipt_no ?? '').toLowerCase().includes(q);
       });
     }
+    // Sort
+    if (sortMode === 'newest') {
+      rows.sort((a, b) => new Date(b.payment_date ?? '').getTime() - new Date(a.payment_date ?? '').getTime());
+    } else {
+      rows.sort((a, b) => {
+        const priorityMap: Record<string, number> = { 'Overdue': 1, 'Pending': 2, 'Paid': 3 };
+        const priorityDiff = (priorityMap[a.payment_status] ?? 2) - (priorityMap[b.payment_status] ?? 2);
+        if (priorityDiff !== 0) return priorityDiff;
+        return new Date(a.payment_date ?? '').getTime() - new Date(b.payment_date ?? '').getTime();
+      });
+    }
+
     return rows;
-  }, [payments, activeTab, search, requests, activeFilters]);
+  }, [payments, activeTab, search, requests, activeFilters, sortMode]);
 
   const totalRows = visibleRows.length;
   const pagedRows  = visibleRows.slice((page - 1) * 10, page * 10);
@@ -253,6 +266,24 @@ export default function PaymentMonitorPage() {
         {/* Toolbar */}
         <div className="toolbar">
           <div className="toolbar-right">
+            <button
+              className="btn-outline btn-sm"
+              onClick={() => setSortMode(s => s === 'priority' ? 'newest' : 'priority')}
+              title={sortMode === 'priority' ? 'Sorted by priority' : 'Sorted by newest'}
+              style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}
+            >
+              {sortMode === 'priority' ? (
+                <>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 13, height: 13 }}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                  Priority
+                </>
+              ) : (
+                <>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 13, height: 13 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  Newest
+                </>
+              )}
+            </button>
             <div style={{ position: 'relative' }}>
               <button className="btn-filter" data-filter-btn="true" onClick={() => setFilterOpen(o => !o)} title="Filter">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>

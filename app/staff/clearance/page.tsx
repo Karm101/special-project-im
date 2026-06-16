@@ -124,7 +124,8 @@ export default function ClearancePage() {
   const [docFilter, setDocFilter]       = useState<string>('all');
   const [filterOpen, setFilterOpen]     = useState(false);
   const filterBtnRef = useRef<HTMLDivElement>(null);
-  const [filterPos, setFilterPos] = useState({ top: 0, left: 0 });
+  const [filterPos, setFilterPos]   = useState({ top: 0, left: 0 });
+  const [sortMode, setSortMode]     = useState<'priority' | 'newest'>('priority');
 
   // Token actions
   const [toggling, setToggling]         = useState<number | null>(null);
@@ -271,8 +272,19 @@ export default function ClearancePage() {
   const visibleRequests = useMemo(() => {
     let rows = [...ro4Requests];
 
-    // Sort newest first
-    rows.sort((a, b) => new Date(b.date_submitted).getTime() - new Date(a.date_submitted).getTime());
+    // Sort
+    if (sortMode === 'newest') {
+      rows.sort((a, b) => new Date(b.date_submitted).getTime() - new Date(a.date_submitted).getTime());
+    } else {
+      rows.sort((a, b) => {
+        const aClrs = clearances[a.request_id] ?? [];
+        const bClrs = clearances[b.request_id] ?? [];
+        const aPending = aClrs.filter(c => c.clearance_status !== 'Cleared').length;
+        const bPending = bClrs.filter(c => c.clearance_status !== 'Cleared').length;
+        if (bPending !== aPending) return bPending - aPending;
+        return new Date(a.date_submitted).getTime() - new Date(b.date_submitted).getTime();
+      });
+    }
 
     // Form type filter
     if (formFilter !== 'all') rows = rows.filter(r => r.form_type === formFilter);
@@ -299,7 +311,7 @@ export default function ClearancePage() {
     }
 
     return rows;
-  }, [ro4Requests, search, formFilter, docFilter]);
+  }, [ro4Requests, search, formFilter, docFilter, sortMode, clearances]);
 
   const pagedRequests = visibleRequests.slice((page - 1) * 9, page * 9);
 
@@ -409,6 +421,20 @@ export default function ClearancePage() {
                       </div>
                     )}
                   </div>
+
+                  {/* Sort toggle */}
+                  <button
+                    className="btn-outline btn-sm"
+                    onClick={() => setSortMode(s => s === 'priority' ? 'newest' : 'priority')}
+                    title={sortMode === 'priority' ? 'Sorted by priority' : 'Sorted by newest'}
+                    style={{ padding: '0 10px', height: 32, display: 'flex', alignItems: 'center', gap: 4, fontSize: 11 }}
+                  >
+                    {sortMode === 'priority' ? (
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 13, height: 13 }}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    ) : (
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 13, height: 13 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    )}
+                  </button>
 
                   {/* Refresh button */}
                   <button className="btn-outline btn-sm" onClick={fetchData} title="Refresh" style={{ padding: '0 10px', height: 32 }}>
