@@ -110,7 +110,7 @@ export function Sidebar() {
       <style>{`div:hover > .sb-tt { opacity: 1 !important; }`}</style>
       <div ref={sidebarRef} className="drms-root" style={{ width: SBW, background: 'var(--bg-nav)', borderRight: '1px solid rgba(0,0,0,.06)', display: 'flex', flexDirection: 'column', alignItems: expanded ? 'flex-start' : 'center', padding: '20px 0', flexShrink: 0, position: 'sticky', top: 0, height: '100vh', overflow: 'visible', transition: 'width .25s cubic-bezier(.4,0,.2,1)', zIndex: 200 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: expanded ? 10 : 0, width: '100%', paddingLeft: expanded ? 14 : 10, marginBottom: 14 }}>
-          <div style={{ width: 38, height: 38, minWidth: 38, borderRadius: 8, overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#001C43' }}>
+          <div style={{ width: 38, height: 38, minWidth: 38, borderRadius: 8, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <img src="/mmcm-logo.png" alt="MMCM" style={{ width: 34, height: 34, objectFit: 'contain' }} />
           </div>
           {expanded && (

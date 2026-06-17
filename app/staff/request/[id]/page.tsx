@@ -1209,7 +1209,7 @@ export default function RequestPage() {
     const css = `*{box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:12px;margin:0;padding:20px;color:#000}.page{max-width:750px;margin:0 auto}.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}.logo-area{display:flex;align-items:center;gap:10px}.logo-box{width:60px;height:60px}.school-name{font-size:14px;font-weight:900;color:#001C43}.form-title{font-size:18px;font-weight:900;text-align:center;margin:8px 0 4px;text-transform:uppercase;letter-spacing:1px}.rev-box{border:1px solid #000;padding:4px 8px;font-size:10px;text-align:right}.note{font-size:11px;margin-bottom:8px;font-style:italic}table.info{width:100%;border-collapse:collapse;margin-bottom:8px}table.info td{border:1px solid #000;padding:4px 6px;font-size:12px}table.info td.label{background:#f0f0f0;font-weight:700;width:30%}.section-header{background:#001C43;color:white;text-align:center;font-weight:700;font-size:12px;padding:4px;margin:6px 0 4px;letter-spacing:1px}.doc-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px 16px;margin:6px 0}.doc-item{font-size:12px;display:flex;align-items:center;gap:6px;padding:2px 0}.purpose-box{border:1px solid #000;min-height:60px;padding:6px;margin:6px 0;font-size:12px}.sig-line{border-top:1px solid #000;width:60%;margin:24px auto 2px}.sig-label{text-align:center;font-size:11px}.cut-line{border-top:2px dashed #000;margin:16px 0;text-align:center;font-size:10px;color:#666}.claim-slip{margin-top:4px}table.clearance{width:100%;border-collapse:collapse;margin:6px 0;font-size:11px}table.clearance th{background:#001C43;color:white;padding:4px 6px;text-align:left}table.clearance td{border:1px solid #ccc;padding:6px}.conditions{font-size:10px;margin-top:8px}.conditions li{margin-bottom:3px}@media print{body{padding:10px}@page{margin:10mm}}`;
 
     const html = `<!DOCTYPE html><html><head><title>${isTC ? 'Transfer Credential' : 'Credential Request'} — ${reqId}</title><style>${css}</style></head><body><div class="page">
-<div class="header"><div class="logo-area"><svg class="logo-box" viewBox="0 0 60 60"><rect width="60" height="60" rx="4" fill="#001C43"/><text x="30" y="42" font-size="28" font-weight="900" fill="white" text-anchor="middle" font-family="Arial">M</text></svg><div><div class="school-name">MAPÚA MALAYAN COLLEGES MINDANAO</div><div style="font-size:10px;color:#666;">Registrar's Office</div></div></div><div class="rev-box">REVISION NO. &nbsp; 00<br>REVISION DATE &nbsp;&nbsp;</div></div>
+<div class="header"><div class="logo-area"><img src="/mmcm-logo-with-name.png" style="height:60px;object-fit:contain;" /><div style="font-size:10px;color:#666;margin-left:4px;">Registrar's Office</div></div><div class="rev-box">REVISION NO. &nbsp; 00<br>REVISION DATE &nbsp;&nbsp;</div></div>
 <div class="form-title">${isTC ? 'Transfer Credential Request' : 'Credential Request'}</div>
 <div style="text-align:right;font-size:10px;color:#666;margin-bottom:4px;">${isTC ? 'RO-0004-FORM' : 'RO-0005-FORM'} &nbsp;|&nbsp; ${reqId}</div>
 <div class="note">Please print legibly. Use BLACK ink only.</div>
@@ -1238,7 +1238,7 @@ ${isTC ? `
 ` : `<div style="text-align:center;margin:12px 0 4px;"><div class="sig-line"></div><div class="sig-label">Student's Signature over printed name</div></div>`}
 <div class="cut-line">✂ &nbsp; cut here &nbsp; ✂</div>
 <div class="claim-slip">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;"><div style="display:flex;align-items:center;gap:8px;"><svg width="30" height="30" viewBox="0 0 60 60"><rect width="60" height="60" rx="4" fill="#001C43"/><text x="30" y="42" font-size="28" font-weight="900" fill="white" text-anchor="middle" font-family="Arial">M</text></svg><div style="font-size:13px;font-weight:900;">CLAIM SLIP</div></div><div style="font-size:11px;color:#666;">${isTC ? 'Transfer Credential Request' : 'Credential Request'}</div></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;"><div style="display:flex;align-items:center;gap:8px;"><img src="/mmcm-logo-with-name.png" style="height:36px;object-fit:contain;" /><div style="font-size:13px;font-weight:900;">CLAIM SLIP</div></div><div style="font-size:11px;color:#666;">${isTC ? 'Transfer Credential Request' : 'Credential Request'}</div></div>
   <table class="info">
     <tr><td class="label">Student Name</td><td>${name}</td><td class="label">Date of Request</td><td>${formatDate(data.date_submitted)}</td></tr>
     <tr><td class="label">Documents Requested</td><td>${data.requested_documents.map(d => d.document_name).join(', ')}</td><td class="label">Claim Date</td><td>${formatDate(data.expected_claim_date)}</td></tr>
@@ -1265,7 +1265,9 @@ ${isTC ? `
         <div className="modal-box-full">
           <div className="modal-header">
             <div className="modal-header-brand">
-              <div className="modal-header-icon">M</div>
+              <div className="modal-header-icon" style={{ overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <img src="/mmcm-logo.png" alt="MMCM" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              </div>
               <span className="modal-header-name">Registrar's Office — MMCM</span>
             </div>
             <span className="modal-title">Document Request Form — {displayId}</span>

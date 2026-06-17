@@ -291,7 +291,9 @@ export default function StudentTrackPage() {
     <div className="public-page drms-root">
       {/* Topbar */}
       <div className="pub-topbar">
-        <div className="pub-logo">M</div>
+        <div style={{ width: 38, height: 38, minWidth: 38, borderRadius: 8, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <img src="/mmcm-logo.png" alt="MMCM" style={{ width: 34, height: 34, objectFit: 'contain' }} />
+        </div>
         <div>
           <div className="pub-title">MMCM Registrar's Office</div>
           <div className="pub-sub">Document Request Monitoring System</div>

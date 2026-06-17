@@ -211,7 +211,9 @@ export default function ClearancePage() {
 
       {/* Header */}
       <div style={{ background: '#001C43', height: 64, display: 'flex', alignItems: 'center', padding: '0 32px', gap: 14, flexShrink: 0 }}>
-        <div style={{ width: 36, height: 36, borderRadius: 8, background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 14, fontWeight: 900 }}>M</div>
+        <div style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <img src="/mmcm-logo.png" alt="MMCM" style={{ width: 40, height: 40, objectFit: 'contain' }} />
+        </div>
         <div>
           <div style={{ fontSize: 14, fontWeight: 700, color: 'white' }}>MMCM Registrar's Office</div>
           <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>Document Request Clearance System</div>
