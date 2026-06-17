@@ -26,29 +26,77 @@ function formatDate(d: string | null) {
   return new Date(d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 }
 
+// ── SVG Icons ─────────────────────────────────────────────────────────────────
+function IconLock() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 32, height: 32 }}>
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+      <path d="M7 11V7a5 5 0 0110 0v4"/>
+    </svg>
+  );
+}
+function IconCheck() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 32, height: 32 }}>
+      <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+      <polyline points="22 4 12 14.01 9 11.01"/>
+    </svg>
+  );
+}
+function IconWarning() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 32, height: 32 }}>
+      <path d="M10.29 3.86L1.82 18h20.36L10.29 3.86z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/>
+      <line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+  );
+}
+function IconSuccess() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 40, height: 40 }}>
+      <circle cx="12" cy="12" r="10"/>
+      <polyline points="9 12 11 14 15 10"/>
+    </svg>
+  );
+}
+function IconSeal() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 24, height: 24 }}>
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+    </svg>
+  );
+}
+function IconUpload() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 24, height: 24 }}>
+      <polyline points="16 16 12 12 8 16"/>
+      <line x1="12" y1="12" x2="12" y2="21"/>
+      <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/>
+    </svg>
+  );
+}
+
 export default function ClearancePage() {
   const params = useParams();
   const token  = params?.token as string ?? '';
 
-  const [info, setInfo]               = useState<ClearanceInfo | null>(null);
-  const [loading, setLoading]         = useState(true);
-  const [error, setError]             = useState<string | null>(null);
+  const [info, setInfo]                   = useState<ClearanceInfo | null>(null);
+  const [loading, setLoading]             = useState(true);
+  const [error, setError]                 = useState<string | null>(null);
   const [alreadyCleared, setAlreadyCleared] = useState(false);
-  const [disabled, setDisabled]       = useState(false);
-  const [done, setDone]               = useState(false);
+  const [disabled, setDisabled]           = useState(false);
+  const [done, setDone]                   = useState(false);
 
-  // Form fields
-  const [name, setName]               = useState('');
-  const [nameError, setNameError]     = useState('');
-  const [remarks, setRemarks]         = useState('');
-
-  // Signature upload
-  const [sigFile, setSigFile]         = useState<File | null>(null);
-  const [sigPreview, setSigPreview]   = useState<string | null>(null);
-  const [sigError, setSigError]       = useState('');
-  const [uploading, setUploading]     = useState(false);
-  const [confirming, setConfirming]   = useState(false);
-  const fileInputRef                  = useRef<HTMLInputElement>(null);
+  const [name, setName]                   = useState('');
+  const [nameError, setNameError]         = useState('');
+  const [remarks, setRemarks]             = useState('');
+  const [sigFile, setSigFile]             = useState<File | null>(null);
+  const [sigPreview, setSigPreview]       = useState<string | null>(null);
+  const [sigError, setSigError]           = useState('');
+  const [uploading, setUploading]         = useState(false);
+  const [confirming, setConfirming]       = useState(false);
+  const fileInputRef                      = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!token) return;
@@ -98,7 +146,6 @@ export default function ClearancePage() {
     let signatureUrl = '';
 
     try {
-      // Upload signature to Supabase Storage
       const ext      = sigFile!.name.split('.').pop();
       const fileName = `${token}-${Date.now()}.${ext}`;
       const { error: uploadError } = await supabase.storage
@@ -128,7 +175,8 @@ export default function ClearancePage() {
         body: JSON.stringify({
           cleared_by_name:     name.trim(),
           signature_image_url: signatureUrl,
-          remarks:             remarks.trim() || null,
+          // Only send remarks if non-empty — never send null
+          ...(remarks.trim() ? { remarks: remarks.trim() } : {}),
         }),
       });
       const data = await res.json();
@@ -148,6 +196,16 @@ export default function ClearancePage() {
   const isSubmitting = uploading || confirming;
   const canConfirm   = name.trim().length > 0 && sigFile !== null && !isSubmitting;
 
+  const cardStyle: React.CSSProperties = {
+    background: 'white', borderRadius: 16, padding: 36,
+    width: '100%', maxWidth: 480,
+    boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
+  };
+
+  const iconWrap = (color: string) => ({
+    display: 'flex', justifyContent: 'center', marginBottom: 16, color,
+  });
+
   return (
     <div style={{ minHeight: '100vh', background: '#F3F3F3', display: 'flex', flexDirection: 'column', fontFamily: "'Montserrat', sans-serif" }}>
 
@@ -162,7 +220,7 @@ export default function ClearancePage() {
 
       {/* Body */}
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
-        <div style={{ background: 'white', borderRadius: 16, padding: 36, width: '100%', maxWidth: 480, boxShadow: '0 4px 24px rgba(0,0,0,0.12)' }}>
+        <div style={cardStyle}>
 
           {/* Loading */}
           {loading && (
@@ -174,7 +232,7 @@ export default function ClearancePage() {
           {/* Already Cleared */}
           {!loading && alreadyCleared && (
             <>
-              <div style={{ fontSize: 32, textAlign: 'center', marginBottom: 16 }}>✅</div>
+              <div style={{ ...iconWrap('#198754') }}><IconCheck /></div>
               <div style={{ fontSize: 18, fontWeight: 800, color: '#198754', textAlign: 'center', marginBottom: 8 }}>Already Cleared</div>
               <div style={{ fontSize: 13, color: '#B1B1B1', textAlign: 'center', lineHeight: 1.6 }}>
                 This clearance has already been completed. No further action is needed.
@@ -185,7 +243,7 @@ export default function ClearancePage() {
           {/* Disabled */}
           {!loading && disabled && (
             <>
-              <div style={{ fontSize: 32, textAlign: 'center', marginBottom: 16 }}>🔒</div>
+              <div style={{ ...iconWrap('#001C43') }}><IconLock /></div>
               <div style={{ fontSize: 18, fontWeight: 800, color: '#001C43', textAlign: 'center', marginBottom: 8 }}>Link Disabled</div>
               <div style={{ fontSize: 13, color: '#B1B1B1', textAlign: 'center', lineHeight: 1.6 }}>
                 This clearance link has been disabled by the Registrar's Office. Please contact them for a new link.
@@ -193,10 +251,10 @@ export default function ClearancePage() {
             </>
           )}
 
-          {/* Error */}
+          {/* Error / Invalid */}
           {!loading && error && !alreadyCleared && !disabled && (
             <>
-              <div style={{ fontSize: 32, textAlign: 'center', marginBottom: 16 }}>⚠️</div>
+              <div style={{ ...iconWrap('#E50019') }}><IconWarning /></div>
               <div style={{ fontSize: 18, fontWeight: 800, color: '#E50019', textAlign: 'center', marginBottom: 8 }}>Invalid Link</div>
               <div style={{ fontSize: 13, color: '#B1B1B1', textAlign: 'center', lineHeight: 1.6 }}>{error}</div>
             </>
@@ -205,13 +263,14 @@ export default function ClearancePage() {
           {/* Success */}
           {done && (
             <>
-              <div style={{ fontSize: 48, textAlign: 'center', marginBottom: 16 }}>🎉</div>
+              <div style={{ ...iconWrap('#198754') }}><IconSuccess /></div>
               <div style={{ fontSize: 20, fontWeight: 800, color: '#198754', textAlign: 'center', marginBottom: 8 }}>Clearance Confirmed!</div>
               <div style={{ fontSize: 13, color: '#666', textAlign: 'center', lineHeight: 1.6, marginBottom: 20 }}>
                 Thank you, <strong>{name}</strong>. Your clearance for <strong>{info?.office_name}</strong> has been recorded successfully.
               </div>
               <div style={{ background: '#F0FFF8', border: '1px solid #198754', borderRadius: 10, padding: 16, fontSize: 12, color: '#198754', lineHeight: 1.6 }}>
-                ✓ The Registrar's Office has been notified. You may now close this page.
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 13, height: 13, display: 'inline', marginRight: 4 }}><polyline points="20 6 9 17 4 12"/></svg>
+                The Registrar's Office has been notified of your clearance approval. You may now close this page.
               </div>
             </>
           )}
@@ -221,7 +280,9 @@ export default function ClearancePage() {
             <>
               {/* Title */}
               <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 56, height: 56, borderRadius: '50%', background: 'rgba(17,75,159,0.1)', fontSize: 24, marginBottom: 12 }}>🔏</div>
+                <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 56, height: 56, borderRadius: '50%', background: 'rgba(17,75,159,0.1)', marginBottom: 12, color: '#114B9F' }}>
+                  <IconSeal />
+                </div>
                 <div style={{ fontSize: 20, fontWeight: 800, color: '#001C43', marginBottom: 4 }}>Clearance Request</div>
                 <div style={{ display: 'inline-block', fontSize: 12, fontWeight: 700, background: 'rgba(17,75,159,0.1)', color: '#114B9F', padding: '4px 12px', borderRadius: 50 }}>
                   {info.office_name}
@@ -252,7 +313,7 @@ export default function ClearancePage() {
                 </div>
               </div>
 
-              {/* ── Name field ── */}
+              {/* Name field */}
               <div style={{ marginBottom: 16 }}>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#001C43', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.3 }}>
                   Your Full Name <span style={{ color: '#E50019' }}>*</span>
@@ -267,7 +328,7 @@ export default function ClearancePage() {
                 {nameError && <div style={{ fontSize: 11, color: '#E50019', marginTop: 4, fontWeight: 600 }}>{nameError}</div>}
               </div>
 
-              {/* ── Signature upload ── */}
+              {/* Signature upload */}
               <div style={{ marginBottom: 16 }}>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#001C43', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.3 }}>
                   E-Signature Image <span style={{ color: '#E50019' }}>*</span>
@@ -275,42 +336,39 @@ export default function ClearancePage() {
                 <div style={{ fontSize: 11, color: '#888', marginBottom: 8, lineHeight: 1.5 }}>
                   Please upload your e-signature image. This will appear on the official clearance form. JPG or PNG, max 5MB.
                 </div>
-
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png"
-                  style={{ display: 'none' }}
-                  onChange={handleFileChange}
-                />
-
+                <input ref={fileInputRef} type="file" accept="image/jpeg,image/png" style={{ display: 'none' }} onChange={handleFileChange} />
                 {!sigPreview ? (
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    style={{ width: '100%', padding: '20px 12px', border: `2px dashed ${sigError ? '#E50019' : '#B1B1B1'}`, borderRadius: 8, background: sigError ? '#fff8f8' : '#FAFAFA', cursor: 'pointer', fontSize: 13, color: '#888', fontFamily: "'Montserrat', sans-serif", display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}
+                    style={{ width: '100%', padding: '20px 12px', border: `2px dashed ${sigError ? '#E50019' : '#B1B1B1'}`, borderRadius: 8, background: sigError ? '#fff8f8' : '#FAFAFA', cursor: 'pointer', fontFamily: "'Montserrat', sans-serif", display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, color: '#888' }}
                   >
-                    <span style={{ fontSize: 24 }}>✍️</span>
-                    <span style={{ fontWeight: 600, color: '#114B9F' }}>Click to upload signature</span>
+                    <span style={{ color: '#114B9F' }}><IconUpload /></span>
+                    <span style={{ fontWeight: 600, color: '#114B9F', fontSize: 13 }}>Click to upload signature</span>
                     <span style={{ fontSize: 11 }}>JPG or PNG · max 5MB</span>
                   </button>
                 ) : (
                   <div style={{ border: '1px solid #198754', borderRadius: 8, padding: 12, background: '#F0FFF8', display: 'flex', alignItems: 'center', gap: 12 }}>
                     <img src={sigPreview} alt="Signature preview" style={{ height: 48, maxWidth: 140, objectFit: 'contain', borderRadius: 4, background: 'white', border: '1px solid #ddd', padding: 4 }} />
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: '#198754' }}>✓ Signature uploaded</div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: '#198754', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 13, height: 13 }}><polyline points="20 6 9 17 4 12"/></svg>
+                        Signature uploaded
+                      </div>
                       <div style={{ fontSize: 11, color: '#666', marginTop: 2 }}>{sigFile?.name}</div>
                     </div>
                     <button
                       onClick={() => { setSigFile(null); setSigPreview(null); setSigError(''); if (fileInputRef.current) fileInputRef.current.value = ''; }}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: '#888', padding: 4 }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888', padding: 4, display: 'flex', alignItems: 'center' }}
                       title="Remove"
-                    >✕</button>
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
                   </div>
                 )}
                 {sigError && <div style={{ fontSize: 11, color: '#E50019', marginTop: 4, fontWeight: 600 }}>{sigError}</div>}
               </div>
 
-              {/* ── Remarks field ── */}
+              {/* Remarks */}
               <div style={{ marginBottom: 20 }}>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#001C43', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.3 }}>
                   Remarks <span style={{ fontSize: 11, fontWeight: 500, color: '#B1B1B1' }}>(optional)</span>
@@ -325,17 +383,24 @@ export default function ClearancePage() {
               </div>
 
               {/* Info box */}
-              <div style={{ background: '#EBF5FB', border: '1px solid #72ACFF', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#001C43', lineHeight: 1.6, marginBottom: 20 }}>
-                ℹ️ By clicking Confirm Clearance, you are certifying that <strong>{info.student_name}</strong> has been cleared by the <strong>{info.office_name}</strong> for this document request.
+              <div style={{ background: '#EBF5FB', border: '1px solid #72ACFF', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#001C43', lineHeight: 1.6, marginBottom: 20, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14, flexShrink: 0, marginTop: 1 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                <span>By clicking Confirm Clearance, you are certifying that <strong>{info.student_name}</strong> has been cleared by the <strong>{info.office_name}</strong> for this document request.</span>
               </div>
 
               {/* Confirm button */}
               <button
                 onClick={handleConfirm}
                 disabled={!canConfirm}
-                style={{ width: '100%', padding: 13, background: canConfirm ? '#198754' : '#B1B1B1', border: 'none', borderRadius: 10, color: 'white', fontSize: 14, fontWeight: 700, cursor: canConfirm ? 'pointer' : 'not-allowed', fontFamily: "'Montserrat', sans-serif", transition: 'background 0.15s' }}
+                style={{ width: '100%', padding: 13, background: canConfirm ? '#198754' : '#B1B1B1', border: 'none', borderRadius: 10, color: 'white', fontSize: 14, fontWeight: 700, cursor: canConfirm ? 'pointer' : 'not-allowed', fontFamily: "'Montserrat', sans-serif", transition: 'background 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
               >
-                {uploading ? '⏳ Uploading signature...' : confirming ? 'Confirming...' : '✓ Confirm Clearance'}
+                {uploading ? (
+                  <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> Uploading signature...</>
+                ) : confirming ? (
+                  <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> Confirming...</>
+                ) : (
+                  <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}><polyline points="20 6 9 17 4 12"/></svg> Confirm Clearance</>
+                )}
               </button>
             </>
           )}
