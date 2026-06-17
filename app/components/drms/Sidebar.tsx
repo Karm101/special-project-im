@@ -110,7 +110,9 @@ export function Sidebar() {
       <style>{`div:hover > .sb-tt { opacity: 1 !important; }`}</style>
       <div ref={sidebarRef} className="drms-root" style={{ width: SBW, background: 'var(--bg-nav)', borderRight: '1px solid rgba(0,0,0,.06)', display: 'flex', flexDirection: 'column', alignItems: expanded ? 'flex-start' : 'center', padding: '20px 0', flexShrink: 0, position: 'sticky', top: 0, height: '100vh', overflow: 'visible', transition: 'width .25s cubic-bezier(.4,0,.2,1)', zIndex: 200 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: expanded ? 10 : 0, width: '100%', paddingLeft: expanded ? 14 : 10, marginBottom: 14 }}>
-          <div style={{ width: 38, height: 38, minWidth: 38, borderRadius: 8, background: 'linear-gradient(135deg,#001C43,#114B9F)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 14, fontWeight: 900, flexShrink: 0 }}>M</div>
+          <div style={{ width: 38, height: 38, minWidth: 38, borderRadius: 8, overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#001C43' }}>
+            <img src="/mmcm-logo.png" alt="MMCM" style={{ width: 34, height: 34, objectFit: 'contain' }} />
+          </div>
           {expanded && (
             <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-primary)', whiteSpace: 'nowrap', fontFamily: "'Montserrat', sans-serif" }}>Registrar's Office</span>

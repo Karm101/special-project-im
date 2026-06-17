@@ -7,7 +7,7 @@ import { API_BASE } from '@/lib/lib_api';
 // ── Replace with your MMCM campus photo ───────────────────────────────────────
 // To use a local photo: put the file in special-project-im/public/campus.jpg
 // then change this to: const CAMPUS_IMG = '/campus.jpg';
-const CAMPUS_IMG = 'https://images.unsplash.com/photo-1613688365965-8abc666fe1e2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080&q=80';
+const CAMPUS_IMG = '/mmcm-bg.jpeg';
 
 const EyeIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}>
@@ -154,7 +154,9 @@ export default function StudentLoginPage() {
 
             {/* Header */}
             <div style={{ textAlign: 'center', marginBottom: 28 }}>
-              <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'linear-gradient(135deg,#001C43,#114B9F)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 900, color: 'white', margin: '0 auto 14px', boxShadow: '0 4px 12px rgba(0,28,67,0.25)' }}>M</div>
+              <div style={{ width: 80, height: 80, margin: '0 auto 14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <img src="/mmcm-logo.png" alt="MMCM Logo" style={{ width: 80, height: 80, objectFit: 'contain' }} />
+              </div>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, marginBottom: 10, background: 'var(--surface-2)', padding: '4px 10px', borderRadius: 20 }}>
                 <div style={{ background: '#E50019', color: 'white', fontSize: 9, fontWeight: 800, padding: '2px 6px', borderRadius: 4, letterSpacing: 0.5 }}>RO</div>
                 <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--mid-gray)', letterSpacing: 0.3 }}>Registrar's Office · MMCM</span>
