@@ -26,7 +26,9 @@ function AdminSidebar() {
       {/* Logo */}
       <div style={{ padding: '24px 20px 16px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 8, background: 'linear-gradient(135deg,#114B9F,#1a6fd4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 16, fontWeight: 900 }}>M</div>
+          <div style={{ width: 36, height: 36, borderRadius: 8, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img src="/mmcm-logo.png" alt="MMCM" style={{ width: 36, height: 36, objectFit: 'contain' }} />
+          </div>
           <div>
             <div style={{ color: 'white', fontSize: 12, fontWeight: 800, fontFamily: "'Montserrat',sans-serif" }}>Admin Panel</div>
             <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontFamily: "'Montserrat',sans-serif" }}>MMCM — DRMS</div>

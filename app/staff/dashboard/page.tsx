@@ -96,7 +96,7 @@ export default function DashboardPage() {
   const [dept, setDept]               = useState<'college' | 'shs'>('college');
   const [collegeTab, setCollegeTab]   = useState<string>('all');
   const [shsTab, setShsTab]           = useState<string>('all');
-  const [sortMode, setSortMode]       = useState<'priority' | 'newest'>('priority');
+  const [sortMode, setSortMode]     = useState<'priority' | 'newest'>('newest');
 
   // Restore dept + tab when navigating back
   useEffect(() => {

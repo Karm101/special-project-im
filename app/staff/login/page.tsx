@@ -105,7 +105,7 @@ export default function StaffLoginPage() {
               </button>
 
               <div style={{ textAlign: 'center', fontSize: 13, paddingTop: 10, borderTop: '1px solid var(--border-col)' }}>
-                <span style={{ color: '#114B9F', cursor: 'pointer', fontWeight: 600 }} onClick={() => router.push('/')}>Are you a student?</span>
+                <span style={{ color: '#114B9F', cursor: 'pointer', fontWeight: 600 }} onClick={() => router.push('/')}>Student Portal →</span>
               </div>
             </div>
         </div>

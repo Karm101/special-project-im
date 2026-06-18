@@ -10,7 +10,11 @@ export default function AdminOverviewPage() {
   const [loading, setLoading] = useState(true);
   const [adminName, setAdminName] = useState('Admin');
   useEffect(() => {
-    setAdminName(sessionStorage.getItem('staff_name') ?? 'Admin');
+    const fullName = sessionStorage.getItem('staff_name') ?? 'Admin';
+    // staff_name is stored as "LastName, FirstName" — extract first name for greeting
+    const parts = fullName.replace(',', '').trim().split(/\s+/);
+    const firstName = parts.length >= 2 ? parts[1] : parts[0];
+    setAdminName(firstName || 'Admin');
   }, []);
 
   useEffect(() => {

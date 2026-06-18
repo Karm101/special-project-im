@@ -76,7 +76,7 @@ export default function PaymentMonitorPage() {
   const [error, setError]         = useState<string | null>(null);
   const [updating, setUpdating]   = useState<number | null>(null);
   const [page, setPage]           = useState(1);
-  const [sortMode, setSortMode]   = useState<'priority' | 'newest'>('priority');
+  const [sortMode, setSortMode]     = useState<'priority' | 'newest'>('newest');
 
   // ── Fetch payments + request details ────────────────────────────────────
   useEffect(() => {

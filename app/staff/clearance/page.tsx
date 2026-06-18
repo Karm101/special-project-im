@@ -130,7 +130,7 @@ export default function ClearancePage() {
   const [filterOpen, setFilterOpen]     = useState(false);
   const filterBtnRef = useRef<HTMLDivElement>(null);
   const [filterPos, setFilterPos]   = useState({ top: 0, left: 0 });
-  const [sortMode, setSortMode]     = useState<'priority' | 'newest'>('priority');
+  const [sortMode, setSortMode]     = useState<'priority' | 'newest'>('newest');
 
   // Token actions
   const [toggling, setToggling]         = useState<number | null>(null);
