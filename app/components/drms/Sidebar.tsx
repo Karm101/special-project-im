@@ -14,6 +14,7 @@ const IcoBell      = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentC
 const IcoLogout    = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20, display: 'block' }}><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>;
 const IcoChevRight = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" style={{ width: 10, height: 10, display: 'block' }}><polyline points="9 18 15 12 9 6"/></svg>;
 const IcoChevLeft  = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" style={{ width: 10, height: 10, display: 'block' }}><polyline points="15 18 9 12 15 6"/></svg>;
+const IcoAdmin     = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20, display: 'block' }}><circle cx="12" cy="8" r="4"/><path d="M12 14c-4.42 0-8 1.79-8 4v1h16v-1c0-2.21-3.58-4-8-4z"/><polyline points="16 3 18 5 22 3"/></svg>;
 
 interface NavItem { icon: React.ReactNode; label: string; path: string; notif?: boolean; }
 
@@ -47,9 +48,15 @@ export function Sidebar() {
   const pathname = usePathname();
   const [expanded, setExpanded] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   // Sidebar only collapses via the toggle button — no click-outside collapse
   // so users can keep it expanded while working on any page
+
+  useEffect(() => {
+    const role = sessionStorage.getItem('staff_role');
+    setIsSuperAdmin(role === 'Super Admin');
+  }, []);
 
   // Fetch live unread notification count
   useEffect(() => {
@@ -130,7 +137,20 @@ export function Sidebar() {
         </div>
 
         <div style={{ padding: '8px 7px', width: '100%', overflow: 'hidden' }}>
-          <div style={{ ...itemBase }} onClick={() => { sessionStorage.clear(); router.push('/staff/login'); }} title="Sign Out"
+          {isSuperAdmin && (
+            <div style={{ ...itemBase, marginBottom: 2 }}
+              onClick={() => router.push('/admin')}
+              title="Admin Panel"
+              onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = 'rgba(17,75,159,0.08)')}
+              onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}>
+              <span style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#114B9F' }}><IcoAdmin /></span>
+              {expanded && <span style={{ fontSize: 13, fontWeight: 600, color: '#114B9F', whiteSpace: 'nowrap', fontFamily: "'Montserrat', sans-serif" }}>Admin Panel</span>}
+              {!expanded && (
+                <span className="sb-tt" style={{ position: 'absolute', left: 'calc(100% + 8px)', top: '50%', transform: 'translateY(-50%)', background: '#001C43', color: 'white', fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 6, whiteSpace: 'nowrap', pointerEvents: 'none', opacity: 0, transition: 'opacity .15s', zIndex: 300, boxShadow: '0 2px 8px rgba(0,0,0,.2)' }}>Admin Panel</span>
+              )}
+            </div>
+          )}
+          <div style={{ ...itemBase }} onClick={() => { sessionStorage.clear(); router.push('/staff/login'); }}
             onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = '#FEEAEA')}
             onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}>
             <span style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#E50019' }}><IcoLogout /></span>
