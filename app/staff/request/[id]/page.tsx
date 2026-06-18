@@ -71,6 +71,7 @@ type Payment = {
 
 type RequestDetail = {
   request_id: number;
+  document_request_no: string | null;
   form_type: string;
   academic_level: string;
   submission_mode: string;
@@ -158,6 +159,10 @@ function statusToStageIndex(status: string): number {
     case 'Rejected':        return 2;
     default:                return 1;
   }
+}
+
+function formatRequestId(requestId: number, documentRequestNo?: string | null): string {
+  return documentRequestNo ?? `REQ-${String(requestId).padStart(3, '0')}`;
 }
 
 // ── Side Panel ────────────────────────────────────────────────────────────────
@@ -563,7 +568,7 @@ function FormTab({ data }: { data: RequestDetail }) {
       <div className="form-section">
         <div className="form-section-title">Request Details</div>
         <div className="field-grid">
-          <div className="field-group"><div className="field-label">Request ID</div><div className="field-value">#{`REQ-${String(data.request_id).padStart(3, '0')}`}</div></div>
+          <div className="field-group"><div className="field-label">Request ID</div><div className="field-value">{formatRequestId(data.request_id, data.document_request_no)}</div></div>
           <div className="field-group"><div className="field-label">Current Status</div><div className="field-value"><span className={`badge ${badge.cls}`}>{badge.label}</span></div></div>
           <div className="field-group"><div className="field-label">Form Type</div><div className="field-value">{data.form_type}</div></div>
           <div className="field-group"><div className="field-label">Submission Mode</div><div className="field-value">{data.submission_mode}</div></div>
@@ -1125,7 +1130,7 @@ export default function RequestPage() {
 
   const rawId     = params?.id as string ?? '';
   const numericId = parseInt(rawId.replace(/[^0-9]/g, ''), 10);
-  const displayId = `#REQ-${String(numericId).padStart(3, '0')}`;
+  const displayId = data ? formatRequestId(data.request_id, data.document_request_no) : `REQ-${String(numericId).padStart(3, '0')}`;
 
   useEffect(() => {
     if (!numericId) return;
@@ -1198,7 +1203,7 @@ export default function RequestPage() {
     const r     = data.requester_info;
     const name  = r ? `${r.last_name}, ${r.first_name}` : '—';
     const isTC  = data.form_type === 'RO-0004';
-    const reqId = `REQ-${String(data.request_id).padStart(3, '0')}`;
+    const reqId = formatRequestId(data.request_id, data.document_request_no);
 
     const docNames = data.requested_documents.map(d => d.document_name.toLowerCase());
     const checked  = (keyword: string) => docNames.some(n => n.includes(keyword)) ? '✓' : '___';

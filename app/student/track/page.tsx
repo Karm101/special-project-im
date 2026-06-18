@@ -157,6 +157,10 @@ const STAGES = [
   },
 ];
 
+function formatRequestId(requestId: number, documentRequestNo?: string | null): string {
+  return documentRequestNo ?? `REQ-${String(requestId).padStart(3, '0')}`;
+}
+
 export default function StudentTrackPage() {
   const router = useRouter();
   const [trackingInput, setTrackingInput] = useState('');
@@ -384,7 +388,7 @@ export default function StudentTrackPage() {
                       {/* Request ID */}
                       <div style={{ flexShrink: 0 }}>
                         <div style={{ fontSize: 12, fontWeight: 800, color: '#114B9F', fontFamily: "'Montserrat',sans-serif" }}>
-                          #{reqId}
+                          {formatRequestId(req.request_id, (req as any).document_request_no)}
                         </div>
                         <div style={{ fontSize: 10, color: 'var(--mid-gray)', marginTop: 2 }}>
                           {formatDate(req.date_submitted)}
@@ -475,7 +479,7 @@ export default function StudentTrackPage() {
             <div className="result-header">
               <div>
                 <div className="result-id">
-                  Request ID: REQ-{String(data.request_id).padStart(3, '0')}
+                  Request ID: {formatRequestId(data.request_id, (data as any).document_request_no)}
                 </div>
                 <div className="result-name">{requesterName}</div>
                 <div className="result-doc">{docList}</div>

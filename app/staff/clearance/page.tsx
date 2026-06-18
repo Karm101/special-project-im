@@ -26,6 +26,7 @@ type ApiClearance = {
 
 type ApiRequest = {
   request_id: number;
+  document_request_no: string | null;
   form_type: string;
   date_submitted: string;
   current_status: string;
@@ -112,6 +113,10 @@ function ClearanceDetailModal({ c, onClose }: { c: ApiClearance; onClose: () => 
       </div>
     </div>
   );
+}
+
+function formatRequestId(requestId: number, documentRequestNo?: string | null): string {
+  return documentRequestNo ?? `REQ-${String(requestId).padStart(3, '0')}`;
 }
 
 export default function ClearancePage() {
@@ -478,7 +483,7 @@ export default function ClearancePage() {
                   const allDone    = totalClr > 0 && clrCount === totalClr;
                   return (
                     <div key={r.request_id} onClick={() => setSelectedId(r.request_id)} style={{ padding: '12px 16px', borderBottom: i < pagedRequests.length - 1 ? '1px solid var(--border-col)' : 'none', background: isSelected ? 'rgba(125,179,255,0.1)' : 'var(--surface)', borderLeft: isSelected ? '3px solid var(--navy)' : '3px solid transparent', cursor: 'pointer', transition: 'all 0.12s' }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>#{reqId} — {name}</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{formatRequestId(r.request_id, r.document_request_no)} — {name}</div>
                       <div style={{ fontSize: 11, color: 'var(--mid-gray)', marginTop: 3 }}>
                         {formatDate(r.date_submitted)} · {r.form_type} · {r.requester_info?.program_strand ?? '—'}
                       </div>
@@ -505,7 +510,7 @@ export default function ClearancePage() {
                 <div className="drms-card-header" style={{ alignItems: 'flex-start' }}>
                   <div>
                     <span className="drms-card-title">
-                      #REQ-{String(selectedRequest.request_id).padStart(3, '0')} —{' '}
+                      {formatRequestId(selectedRequest.request_id, selectedRequest.document_request_no)} —{' '}
                       {selectedRequest.requester_info
                         ? `${selectedRequest.requester_info.last_name}, ${selectedRequest.requester_info.first_name}`
                         : '—'}

@@ -55,6 +55,10 @@ function statusBadge(status: string) {
   }
 }
 
+function formatRequestId(requestId: number, documentRequestNo?: string | null): string {
+  return documentRequestNo ?? `REQ-${String(requestId).padStart(3, '0')}`;
+}
+
 export default function PaymentMonitorPage() {
   const router = useRouter();
   const [activeTab, setActiveTab]   = useState('all');
@@ -323,8 +327,10 @@ export default function PaymentMonitorPage() {
               </thead>
               <tbody>
                 {pagedRows.map(p => {
-                  const reqId    = `REQ-${String(p.request).padStart(3, '0')}`;
                   const reqData  = requests[p.request];
+                  const reqId    = reqData?.document_request_no
+                    ? reqData.document_request_no
+                    : `REQ-${String(p.request).padStart(3, '0')}`;
                   const requester = reqData?.requester_info
                     ? `${reqData.requester_info.last_name}, ${reqData.requester_info.first_name}`
                     : '—';

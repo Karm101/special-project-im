@@ -11,6 +11,7 @@ import { API_BASE } from '@/lib/lib_api';
 // ── API response type ─────────────────────────────────────────────────────
 type ApiRow = {
   request_id: number;
+  document_request_no: string | null;
   requester_name: string;
   form_type: string;
   academic_level: string;
@@ -46,6 +47,10 @@ function statusToBadge(status: string): { cls: string; label: string } {
     case 'Rejected':        return { cls: 'b-rej',  label: 'Rejected' };
     default:                return { cls: 'b-sub',  label: status };
   }
+}
+
+function formatRequestId(requestId: number, documentRequestNo?: string | null): string {
+  return documentRequestNo ?? `REQ-${String(requestId).padStart(3, '0')}`;
 }
 
 function formatDate(dateStr: string | null): string {
@@ -237,7 +242,7 @@ export default function DashboardPage() {
     if (search.trim()) {
       const q = search.toLowerCase();
       rows = rows.filter(r =>
-        `REQ-${String(r.request_id).padStart(3, '0')}`.toLowerCase().includes(q) ||
+        formatRequestId(r.request_id, r.document_request_no).toLowerCase().includes(q) ||
         r.requester_name.toLowerCase().includes(q) ||
         r.form_type.toLowerCase().includes(q) ||
         r.current_status.toLowerCase().includes(q)
@@ -477,7 +482,7 @@ export default function DashboardPage() {
                         <td style={{ textAlign: 'center' }} onClick={e => e.stopPropagation()}>
                           <input type="checkbox" className="cb" />
                         </td>
-                        <td><span className="req-id">#{reqId}</span></td>
+                        <td><span className="req-id">{formatRequestId(r.request_id, r.document_request_no)}</span></td>
                         <td>{r.requester_name}</td>
                         <td>{r.form_type}</td>
                         <td style={{ color: '#B1B1B1' }}>{r.submission_mode}</td>
@@ -525,7 +530,7 @@ export default function DashboardPage() {
                     onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'none'; (e.currentTarget as HTMLElement).style.transform = 'none'; }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--blue)' }}>#{reqId}</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--blue)' }}>{formatRequestId(r.request_id, r.document_request_no)}</span>
                       <span className={`badge ${badge.cls}`}>{badge.label}</span>
                     </div>
                     <div>

@@ -56,6 +56,10 @@ function formatDate(d: Date): string {
   return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 }
 
+function formatRequestId(requestId: number, documentRequestNo?: string | null): string {
+  return documentRequestNo ?? `REQ-${String(requestId).padStart(3, '0')}`;
+}
+
 export default function StudentSubmitPage() {
   const router = useRouter();
   useAuthGuard('student');
@@ -63,6 +67,7 @@ export default function StudentSubmitPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submittedId, setSubmittedId] = useState<number | null>(null);
+  const [submittedDocNo, setSubmittedDocNo] = useState<string | null>(null);
 
   // ── Form state ─────────────────────────────────────────────────────────────
   const [studentNumber, setStudentNumber] = useState('');
@@ -221,6 +226,7 @@ export default function StudentSubmitPage() {
       if (!res.ok) throw new Error('Submission failed');
       const created = await res.json();
       setSubmittedId(created.request_id);
+      setSubmittedDocNo(created.document_request_no ?? null);
 
       // Upload authorization files if any
       if (authFiles.length > 0) {
@@ -596,7 +602,7 @@ export default function StudentSubmitPage() {
               Your Request ID is:
             </div>
             <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--blue)', marginBottom: 8, fontFamily: 'var(--drms-font)' }}>
-              REQ-{String(submittedId).padStart(3, '0')}
+              {formatRequestId(submittedId, submittedDocNo)}
             </div>
             <div style={{ fontSize: 12, color: 'var(--mid-gray)', marginBottom: 32 }}>
               Save this ID — you'll need it to track your request.
