@@ -358,7 +358,7 @@ export default function ClearancePage() {
         )}
 
         {!loading && ro4Requests.length > 0 && (
-          <div style={{ display: 'grid', gridTemplateColumns: '400px 1fr', gap: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: 20 }}>
 
             {/* ── Left: Request list ── */}
             <div className="drms-card">
@@ -482,7 +482,12 @@ export default function ClearancePage() {
                   const allDone    = totalClr > 0 && clrCount === totalClr;
                   return (
                     <div key={r.request_id} onClick={() => setSelectedId(r.request_id)} style={{ padding: '12px 16px', borderBottom: i < pagedRequests.length - 1 ? '1px solid var(--border-col)' : 'none', background: isSelected ? 'rgba(125,179,255,0.1)' : 'var(--surface)', borderLeft: isSelected ? '3px solid var(--navy)' : '3px solid transparent', cursor: 'pointer', transition: 'all 0.12s' }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{formatRequestId(r.request_id, r.document_request_no)} — {name}</div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}>
+                        {formatRequestId(r.request_id, r.document_request_no)}
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--mid-gray)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {name}
+                      </div>
                       <div style={{ fontSize: 11, color: 'var(--mid-gray)', marginTop: 3 }}>
                         {formatDate(r.date_submitted)} · {r.form_type} · {r.requester_info?.program_strand ?? '—'}
                       </div>
