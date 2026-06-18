@@ -14,6 +14,8 @@ const IcoChevL   = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentCol
 const IcoChevR   = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:15,height:15}}><polyline points="9 18 15 12 9 6"/></svg>;
 const IcoWarning = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:14,height:14,flexShrink:0}}><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>;
 const IcoEyeOff  = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:14,height:14}}><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>;
+const IcoBan     = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:14,height:14}}><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>;
+const IcoUnlock  = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:14,height:14}}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 019.9-1"/></svg>;
 
 // ── Types ────────────────────────────────────────────────────────────────────
 interface Student {
@@ -32,7 +34,7 @@ interface Student {
   user_id:           number | null;
 }
 
-type ModalType = 'view' | 'reset' | 'delete' | null;
+type ModalType = 'view' | 'reset' | 'toggle' | 'delete' | null;
 
 const PAGE_SIZE = 10;
 
@@ -67,10 +69,15 @@ export default function AdminStudentsPage() {
   const [pwLoading, setPwLoading]     = useState(false);
   const [pwSuccess, setPwSuccess]     = useState(false);
 
-  // Toggle / delete state
+  // Toggle state
+  const [toggleLoading, setToggleLoading] = useState(false);
+  const [toggleError, setToggleError]     = useState('');
+
+  // Delete state
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError]     = useState('');
-  const [toast, setToast]                 = useState('');
+
+  const [toast, setToast] = useState('');
 
   // ── Fetch ──────────────────────────────────────────────────────────────────
   const fetchStudents = useCallback(async () => {
@@ -95,29 +102,30 @@ export default function AdminStudentsPage() {
     setSelected(student);
     setModal(type);
     setNewPassword(''); setShowPw(false); setPwError(''); setPwSuccess(false);
-    setActionError('');
+    setActionError(''); setToggleError('');
   }
 
   function closeModal() {
     setModal(null); setSelected(null);
-    setNewPassword(''); setPwError(''); setPwSuccess(false); setActionError('');
+    setNewPassword(''); setPwError(''); setPwSuccess(false);
+    setActionError(''); setToggleError('');
   }
 
   // ── Actions ────────────────────────────────────────────────────────────────
-  async function handleToggle(student: Student) {
-    if (!student.user_id) return;
-    setActionLoading(true); setActionError('');
+  async function handleToggle() {
+    if (!selected?.user_id) return;
+    setToggleLoading(true); setToggleError('');
     try {
-      const res = await fetch(`${API_BASE}/admin/students/${student.user_id}/toggle/`, {
+      const res = await fetch(`${API_BASE}/admin/students/${selected.user_id}/toggle/`, {
         method: 'PATCH', headers: authHeaders(),
       });
       const data = await res.json();
-      if (!res.ok) { setActionError(data.error || 'Action failed.'); return; }
+      if (!res.ok) { setToggleError(data.error || 'Action failed.'); return; }
       showToast(`Account ${data.is_active ? 'enabled' : 'disabled'} successfully.`);
       closeModal();
       fetchStudents();
-    } catch { setActionError('Could not connect to server.'); }
-    finally { setActionLoading(false); }
+    } catch { setToggleError('Could not connect to server.'); }
+    finally { setToggleLoading(false); }
   }
 
   async function handleResetPassword() {
@@ -260,8 +268,8 @@ export default function AdminStudentsPage() {
                       )}
                       {/* Toggle enable/disable — only if has account */}
                       {s.has_account && (
-                        <ActionBtn title={s.is_active ? 'Disable account' : 'Enable account'} color={s.is_active ? '#6c757d' : '#198754'} onClick={() => handleToggle(s)}>
-                          {s.is_active ? <IcoToggle /> : <IcoEyeOff />}
+                        <ActionBtn title={s.is_active ? 'Disable account' : 'Enable account'} color={s.is_active ? '#6c757d' : '#198754'} onClick={() => openModal('toggle', s)}>
+                          {s.is_active ? <IcoBan /> : <IcoUnlock />}
                         </ActionBtn>
                       )}
                       {/* Delete — only if has account */}
@@ -346,11 +354,46 @@ export default function AdminStudentsPage() {
             </ModalCard>
           )}
 
+          {/* TOGGLE modal */}
+          {modal === 'toggle' && (
+            <ModalCard title={selected.is_active ? 'Disable Account' : 'Enable Account'} onClose={closeModal}>
+              <div style={{ fontSize: 13, color: 'var(--mid-gray)', marginBottom: 8, lineHeight: 1.6 }}>
+                {selected.is_active ? 'This will prevent the student from logging in.' : 'This will restore login access for the student.'}
+              </div>
+              <div style={{ padding: '10px 14px', background: 'var(--surface-2)', borderRadius: 8, marginBottom: 16, fontSize: 13 }}>
+                <strong>{selected.last_name}, {selected.first_name}</strong> — {selected.student_number}
+              </div>
+              {selected.is_active && (
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '10px 12px', background: 'rgba(108,117,125,0.08)', border: '1px solid rgba(108,117,125,0.25)', borderRadius: 8, marginBottom: 16 }}>
+                  <IcoWarning />
+                  <div style={{ fontSize: 12, color: '#6c757d', fontWeight: 600 }}>
+                    The student will not be able to log in or submit requests while disabled.
+                  </div>
+                </div>
+              )}
+              {toggleError && (
+                <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600, marginBottom: 12, display: 'flex', gap: 6, alignItems: 'flex-start' }}>
+                  <IcoWarning />{toggleError}
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={closeModal}
+                  style={{ flex: 1, padding: '10px 0', background: 'var(--surface-2)', color: 'var(--text-primary)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Montserrat',sans-serif" }}>
+                  Cancel
+                </button>
+                <button onClick={handleToggle} disabled={toggleLoading}
+                  style={{ flex: 1, padding: '10px 0', background: selected.is_active ? '#6c757d' : '#198754', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: toggleLoading ? 'not-allowed' : 'pointer', opacity: toggleLoading ? 0.7 : 1, fontFamily: "'Montserrat',sans-serif" }}>
+                  {toggleLoading ? 'Saving…' : selected.is_active ? 'Disable Account' : 'Enable Account'}
+                </button>
+              </div>
+            </ModalCard>
+          )}
+
           {/* DELETE modal */}
           {modal === 'delete' && (
             <ModalCard title="Delete Account" onClose={closeModal}>
               <div style={{ fontSize: 13, color: 'var(--mid-gray)', marginBottom: 8, lineHeight: 1.6 }}>
-                This will permanently delete the account for:
+                This will remove the login account for:
               </div>
               <div style={{ padding: '10px 14px', background: 'var(--surface-2)', borderRadius: 8, marginBottom: 16, fontSize: 13 }}>
                 <strong>{selected.last_name}, {selected.first_name}</strong> — {selected.student_number}
@@ -358,7 +401,7 @@ export default function AdminStudentsPage() {
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '10px 12px', background: 'rgba(229,0,25,0.07)', border: '1px solid #ffd0d0', borderRadius: 8, marginBottom: 16 }}>
                 <IcoWarning />
                 <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600 }}>
-                  This action cannot be undone. The student will need to register again.
+                  Login access will be removed. Request history and records are preserved. The student can re-register with the same student number if needed.
                 </div>
               </div>
               {actionError && (
