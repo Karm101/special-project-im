@@ -58,6 +58,10 @@ function getNotifStyle(notif: ApiNotification): {
   return { icon: '🔔', bg: '#F5F5F5', cat: 'Document Requests' };
 }
 
+function formatRequestId(requestId: number, documentRequestNo?: string | null): string {
+  return documentRequestNo ?? `REQ-${String(requestId).padStart(3, '0')}`;
+}
+
 export default function NotificationsPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState(0);
@@ -70,6 +74,7 @@ export default function NotificationsPage() {
   const [error, setError]       = useState<string | null>(null);
   const [markingAll, setMarkingAll] = useState(false);
   const [displayCount, setDisplayCount] = useState(10);
+  const [requestNoMap, setRequestNoMap] = useState<Record<number, string | null>>({});
 
   function handleRefresh() { fetchNotifs(); }
 
@@ -89,7 +94,24 @@ export default function NotificationsPage() {
       const res = await fetch(`${API_BASE}/notifications/${params}`);
       if (!res.ok) throw new Error('API error');
       const data = await res.json();
-      setNotifs(data.results ?? data);
+      const fetched: ApiNotification[] = data.results ?? data;
+      setNotifs(fetched);
+
+      // Fetch document_request_no for each unique request ID
+      const uniqueIds = [...new Set(fetched.map(n => n.request).filter(Boolean))];
+      const noMap: Record<number, string | null> = {};
+      await Promise.all(
+        uniqueIds.map(async (id) => {
+          try {
+            const r = await fetch(`${API_BASE}/requests/${id}/`);
+            if (r.ok) {
+              const d = await r.json();
+              noMap[id] = d.document_request_no ?? null;
+            }
+          } catch {}
+        })
+      );
+      setRequestNoMap(noMap);
     } catch {
       setError('Could not connect to the API. Make sure Django is running.');
     } finally {
@@ -306,7 +328,7 @@ export default function NotificationsPage() {
                     <div className="notif-icon-wrap" style={{ background: bg }}>{icon}</div>
                     <div className="notif-body">
                       <div className="notif-title">
-                        {`Request #REQ-${String(n.request).padStart(3, '0')}`}
+                        {`Request ${formatRequestId(n.request, requestNoMap[n.request])}`}
                         {' — '}
                         {n.sent_via === 'Email' ? '📧 Email' : '📱 SMS'}
                       </div>

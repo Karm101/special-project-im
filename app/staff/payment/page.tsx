@@ -321,7 +321,7 @@ export default function PaymentMonitorPage() {
             <table className="drms-table">
               <thead>
                 <tr>
-                  <th>Request ID</th><th>Requester</th><th>Amount</th>
+                  <th style={{ minWidth: 160 }}>Request ID</th><th>Requester</th><th>Amount</th>
                   <th>Date Billed</th><th>Payment Status</th><th>Official Receipt</th><th>Action</th>
                 </tr>
               </thead>
@@ -344,7 +344,7 @@ export default function PaymentMonitorPage() {
                       style={{ background: rowBg, cursor: 'pointer' }}
                       onClick={() => router.push(`/staff/request/${reqId}`)}
                     >
-                      <td><span className="req-id">#{reqId}</span></td>
+                      <td style={{ whiteSpace: 'nowrap' }}><span className="req-id">{reqId}</span></td><td><span className="req-id">#{reqId}</span></td>
                       <td>{requester}</td>
                       <td style={{ fontWeight: 700, color: parseFloat(p.amount) === 0 ? 'var(--mid-gray)' : 'var(--text-primary)' }}>{parseFloat(p.amount) === 0 ? 'Not set' : `₱${parseFloat(p.amount).toLocaleString()}`}</td>
                       <td style={{ color: 'var(--mid-gray)' }}>{formatDate(p.payment_date)}</td>
