@@ -45,7 +45,6 @@ type FormData = {
   repRelation: string;
   submissionMode: 'Online' | 'Onsite';
   purpose: string;
-  isBoardExam: boolean;
   selectedDocs: { docTypeId: number; docName: string; copies: number; processingDays: number }[];
 };
 
@@ -165,7 +164,6 @@ export default function NewRequestPage() {
     termSemester: '', contactNumber: '', email: '',
     hasRep: false, repName: '', repRelation: '',
     submissionMode: 'Onsite', purpose: '',
-    isBoardExam: false,
     selectedDocs: [],
   });
 
@@ -282,11 +280,8 @@ export default function NewRequestPage() {
   function toggleDoc(dt: DocType) {
     setForm(prev => {
       const exists = prev.selectedDocs.find(d => d.docTypeId === dt.document_type_id);
-      const next = exists
-        ? prev.selectedDocs.filter(d => d.docTypeId !== dt.document_type_id)
-        : [...prev.selectedDocs, { docTypeId: dt.document_type_id, docName: dt.document_name, copies: 1, processingDays: dt.processing_days }];
-      const torStillSelected = next.some(d => d.docName.toLowerCase().includes('transcript'));
-      return { ...prev, selectedDocs: next, isBoardExam: torStillSelected ? prev.isBoardExam : false };
+      if (exists) return { ...prev, selectedDocs: prev.selectedDocs.filter(d => d.docTypeId !== dt.document_type_id) };
+      return { ...prev, selectedDocs: [...prev.selectedDocs, { docTypeId: dt.document_type_id, docName: dt.document_name, copies: 1, processingDays: dt.processing_days }] };
     });
   }
 
@@ -294,9 +289,6 @@ export default function NewRequestPage() {
     setForm(prev => ({ ...prev, selectedDocs: prev.selectedDocs.map(d => d.docTypeId === docTypeId ? { ...d, copies } : d) }));
   }
 
-  const isTorSelected = form.selectedDocs.some(d =>
-    d.docName.toLowerCase().includes('transcript')
-  );
   const maxDays      = form.selectedDocs.reduce((max, d) => Math.max(max, d.processingDays), 7);
   const expectedClaim = formatDate(addWorkingDays(new Date(), maxDays));
 
@@ -353,7 +345,6 @@ export default function NewRequestPage() {
         academic_level:      form.academicLevel === 'Senior High School' ? 'SHS' : 'College',
         submission_mode:     form.submissionMode,
         purpose:             form.purpose,
-        is_board_exam:       form.isBoardExam,
         is_authorized_rep:   form.hasRep,
         representative_name: form.hasRep ? form.repName : null,
         rep_relation:        form.hasRep ? form.repRelation : null,
@@ -674,27 +665,6 @@ export default function NewRequestPage() {
                   })}
                 </div>
               )}
-              {/* Board Exam checkbox — only shows when TOR is selected */}
-              {isTorSelected && (
-                <div style={{ marginTop: 16, marginBottom: 4, padding: '12px 16px', background: 'rgba(17,75,159,0.05)', border: '1px solid rgba(17,75,159,0.2)', borderRadius: 8 }}>
-                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={form.isBoardExam}
-                      onChange={e => set('isBoardExam', e.target.checked)}
-                      style={{ width: 16, height: 16, marginTop: 2, accentColor: '#114B9F', flexShrink: 0 }}
-                    />
-                    <div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
-                        This document is requested for Board Exam / PRC Licensure
-                      </div>
-                      <div style={{ fontSize: 11, color: 'var(--mid-gray)', marginTop: 3, lineHeight: 1.5 }}>
-                        Check this if the TOR is for a PRC board exam or licensure application. This adds Program Chair and College Dean clearance offices.
-                      </div>
-                    </div>
-                  </label>
-                </div>
-              )}
 
               <div className="fg" ref={purposeRef} style={{ marginTop: 16 }}>
                 <label>Purpose / Reason for Request <span className="req-asterisk">*</span></label>
@@ -792,11 +762,6 @@ export default function NewRequestPage() {
                   <div className="field-label">Purpose</div>
                   <div className="field-value">{form.purpose}</div>
                 </div>
-                {form.isBoardExam && (
-                  <div style={{ marginTop: 10, padding: '8px 12px', background: 'rgba(17,75,159,0.05)', border: '1px solid rgba(17,75,159,0.2)', borderRadius: 8, fontSize: 12, color: '#114B9F', fontWeight: 600 }}>
-                    ✓ Board Exam / PRC Licensure — Program Chair and College Dean clearance offices will be added.
-                  </div>
-                )}
               </div>
 
               {submitError && (
