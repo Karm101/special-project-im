@@ -72,6 +72,7 @@ type Payment = {
 type RequestDetail = {
   request_id: number;
   document_request_no: string | null;
+  is_board_exam: boolean;
   form_type: string;
   academic_level: string;
   submission_mode: string;
@@ -667,6 +668,36 @@ function ClearanceTab({ data, onRefresh }: { data: RequestDetail; onRefresh: () 
   const [regenerating, setRegenerating] = useState<number | null>(null);
   const [copied, setCopied]             = useState<number | null>(null);
   const [detailModal, setDetailModal]   = useState<Clearance | null>(null);
+  const [addingBoardExam, setAddingBoardExam] = useState(false);
+
+  // Documents eligible for board exam clearance
+  const BOARD_EXAM_ELIGIBLE_DOCS = ['transcript'];
+  const hasBoardExamEligibleDoc = data.requested_documents.some(d =>
+    BOARD_EXAM_ELIGIBLE_DOCS.some(keyword =>
+      d.document_name.toLowerCase().includes(keyword)
+    )
+  );
+
+  async function handleAddBoardExamOffices() {
+    if (!confirm('This will add Program Chair and College Dean as clearance offices. This cannot be undone. Continue?')) return;
+    setAddingBoardExam(true);
+    try {
+      const res = await fetch(`${API_BASE}/requests/${data.request_id}/add-board-exam-offices/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const result = await res.json();
+      if (!res.ok) {
+        alert(result.error ?? 'Failed to add board exam offices.');
+        return;
+      }
+      onRefresh();
+    } catch {
+      alert('Could not connect to the server.');
+    } finally {
+      setAddingBoardExam(false);
+    }
+  }
 
   const clearances = data.clearances ?? [];
   const allCleared = clearances.length > 0 && clearances.every(c => c.clearance_status === 'Cleared');
@@ -736,6 +767,45 @@ function ClearanceTab({ data, onRefresh }: { data: RequestDetail; onRefresh: () 
           </span>
           <div className="info-text">
             <strong>{pendingCount} office{pendingCount !== 1 ? 's' : ''} pending clearance.</strong> Copy and send the link to each office. They can click the link to confirm clearance without logging in.
+          </div>
+        </div>
+      )}
+
+      {/* Board Exam / PRC clearance offices */}
+      {hasBoardExamEligibleDoc && (
+        <div style={{
+          marginBottom: 16, padding: '14px 16px',
+          background: data.is_board_exam ? 'rgba(25,135,84,0.06)' : 'rgba(17,75,159,0.04)',
+          border: `1px solid ${data.is_board_exam ? 'rgba(25,135,84,0.3)' : 'rgba(17,75,159,0.2)'}`,
+          borderRadius: 10,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
+                Board Exam / PRC Licensure
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--mid-gray)', lineHeight: 1.6 }}>
+                {data.is_board_exam
+                  ? 'Program Chair and College Dean clearance offices have been added to this request.'
+                  : 'If this TOR is for a PRC board exam or licensure application, click the button to add Program Chair and College Dean as required clearance offices.'}
+              </div>
+            </div>
+            {data.is_board_exam ? (
+              <span className="badge b-done" style={{ fontSize: 11, flexShrink: 0 }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 11, height: 11, marginRight: 4 }}><polyline points="20 6 9 17 4 12"/></svg>
+                Added
+              </span>
+            ) : (
+              <button
+                className="btn-outline btn-sm"
+                style={{ fontSize: 11, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 5, color: '#114B9F', borderColor: '#114B9F' }}
+                disabled={addingBoardExam}
+                onClick={handleAddBoardExamOffices}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 12, height: 12 }}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                {addingBoardExam ? 'Adding...' : 'Add Board Exam Offices'}
+              </button>
+            )}
           </div>
         </div>
       )}
