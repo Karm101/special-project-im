@@ -81,6 +81,7 @@ export default function StudentSubmitPage() {
   const [email, setEmail]                 = useState('');
   const [contactNumber, setContactNumber] = useState('');
   const [purpose, setPurpose]             = useState('');
+  const [isBoardExam, setIsBoardExam]     = useState(false);
   const [hasRep, setHasRep]               = useState(false);
   const [repName, setRepName]             = useState('');
   const [repRelation, setRepRelation]     = useState('');
@@ -161,8 +162,13 @@ export default function StudentSubmitPage() {
   function toggleDoc(dt: DocType) {
     setSelectedDocs(prev => {
       const exists = prev.find(d => d.docTypeId === dt.document_type_id);
-      if (exists) return prev.filter(d => d.docTypeId !== dt.document_type_id);
-      return [...prev, { docTypeId: dt.document_type_id, docName: dt.document_name, copies: 1, processingDays: dt.processing_days }];
+      const next = exists
+        ? prev.filter(d => d.docTypeId !== dt.document_type_id)
+        : [...prev, { docTypeId: dt.document_type_id, docName: dt.document_name, copies: 1, processingDays: dt.processing_days }];
+      // Reset board exam checkbox if TOR is deselected
+      const torStillSelected = next.some(d => d.docName.toLowerCase().includes('transcript'));
+      if (!torStillSelected) setIsBoardExam(false);
+      return next;
     });
   }
 
@@ -172,6 +178,10 @@ export default function StudentSubmitPage() {
 
   const maxDays = selectedDocs.reduce((m, d) => Math.max(m, d.processingDays), 7);
   const expectedClaim = formatDate(addWorkingDays(new Date(), maxDays));
+
+  const isTorSelected = selectedDocs.some(d =>
+    d.docName.toLowerCase().includes('transcript')
+  );
 
   // ── Validation ─────────────────────────────────────────────────────────────
   function validateStep1(): boolean {
@@ -196,6 +206,7 @@ export default function StudentSubmitPage() {
         academic_level:    academicLevel === 'Senior High School' ? 'SHS' : 'College',
         submission_mode:   'Online',
         purpose,
+        is_board_exam:     isBoardExam,
         is_authorized_rep: hasRep,
         representative_name: hasRep ? repName : null,
         rep_relation:       hasRep ? repRelation : null,
@@ -450,6 +461,28 @@ export default function StudentSubmitPage() {
                 </div>
               )}
             </div>
+
+            {/* Board Exam checkbox — only shows when TOR is selected */}
+            {isTorSelected && (
+              <div style={{ marginBottom: 16, padding: '12px 16px', background: 'rgba(17,75,159,0.05)', border: '1px solid rgba(17,75,159,0.2)', borderRadius: 8 }}>
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={isBoardExam}
+                    onChange={e => setIsBoardExam(e.target.checked)}
+                    style={{ width: 16, height: 16, marginTop: 2, accentColor: '#114B9F', flexShrink: 0 }}
+                  />
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+                      This document is requested for Board Exam / PRC Licensure
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--mid-gray)', marginTop: 3, lineHeight: 1.5 }}>
+                      Check this if your TOR is for a PRC board exam or licensure application. This adds Program Chair and College Dean clearance offices to your request.
+                    </div>
+                  </div>
+                </label>
+              </div>
+            )}
 
             {/* Purpose */}
             <div className="fg" style={{ marginBottom: 20 }}>
