@@ -207,9 +207,7 @@ export default function StudentLoginPage() {
                   <div style={{ textAlign: 'center', fontSize: 13 }}>
                     <span style={{ color: '#114B9F', cursor: 'pointer', fontWeight: 600 }} onClick={() => router.push('/student/track')}>Just want to track?</span>
                   </div>
-                  <div style={{ textAlign: 'center', fontSize: 13, paddingTop: 10, borderTop: '1px solid var(--border-col)' }}>
-                    <span style={{ color: '#114B9F', cursor: 'pointer', fontWeight: 600 }} onClick={() => router.push('/staff/login')}>Are you staff?</span>
-                  </div>
+                
                 </div>
               </div>
             )}

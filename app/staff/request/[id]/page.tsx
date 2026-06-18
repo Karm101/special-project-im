@@ -309,7 +309,10 @@ function SidePanel({
       {billingModal && (
         <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 12 }}>
           <div style={{ background: 'white', borderRadius: 12, padding: 24, maxWidth: 320, margin: 16 }}>
-            <div style={{ fontSize: 14, fontWeight: 800, color: '#001C43', marginBottom: 8 }}>💳 Billing Reminder</div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: '#001C43', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+              Billing Reminder
+            </div>
             <div style={{ fontSize: 12, color: '#444', lineHeight: 1.6, marginBottom: 16 }}>
               You are about to mark this request as <strong>For Billing</strong>.<br /><br />
               The student will be notified via the school's billing system (SMS/email) with their statement of account.<br /><br />
@@ -414,7 +417,10 @@ function SidePanel({
       {/* Reject mode */}
       {rejectMode && (
         <div style={{ padding: '12px 14px', borderTop: '1px solid rgba(0,0,0,0.06)', background: '#fff8f8' }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#E50019', marginBottom: 8 }}>⚠️ Confirm Rejection</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#E50019', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 13, height: 13 }}><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            Confirm Rejection
+          </div>
           <div style={{ fontSize: 11, color: '#666', marginBottom: 8, lineHeight: 1.5 }}>Edit the message below — include the specific reason.</div>
           <textarea className="drms-textarea" style={{ fontSize: 12, minHeight: 80, resize: 'vertical', borderColor: '#E50019' }}
             value={comment} onChange={e => setComment(e.target.value)} autoFocus />
@@ -430,7 +436,10 @@ function SidePanel({
       {/* Invalid Request mode */}
       {invalidMode && (
         <div style={{ padding: '12px 14px', borderTop: '1px solid rgba(0,0,0,0.06)', background: '#fff8f8' }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#E50019', marginBottom: 8 }}>⚠️ Mark as Invalid Request</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#E50019', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 13, height: 13 }}><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            Mark as Invalid Request
+          </div>
           <div style={{ fontSize: 11, color: '#666', marginBottom: 8, lineHeight: 1.5 }}>
             Use this when the requested document is inappropriate for the student's current level, department, or academic status.
           </div>
@@ -448,7 +457,10 @@ function SidePanel({
       {/* For Clearance mode */}
       {clearanceMode && (
         <div style={{ padding: '12px 14px', borderTop: '1px solid rgba(0,0,0,0.06)', background: '#fffbe6' }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#856404', marginBottom: 8 }}>🔒 Place on Clearance Hold</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#856404', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 13, height: 13 }}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            Place on Clearance Hold
+          </div>
           <div style={{ fontSize: 11, color: '#666', marginBottom: 8, lineHeight: 1.5 }}>
             Use this when the student has outstanding clearances with specific offices. Add a remark specifying which offices need to clear first.
           </div>
@@ -484,9 +496,10 @@ function SidePanel({
             </button>
           )}
           {canClearance && (
-            <button className="btn-action" style={{ background: '#856404', color: 'white', border: 'none', borderRadius: 8, padding: '8px 12px', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}
+            <button className="btn-action" style={{ background: '#856404', color: 'white', border: 'none', borderRadius: 8, padding: '8px 12px', cursor: 'pointer', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}
               disabled={updating} onClick={handleClearanceClick}>
-              🔒 Put on Clearance Hold
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+              Put on Clearance Hold
             </button>
           )}
           {canInvalid && (
@@ -630,7 +643,9 @@ function FormTab({ data }: { data: RequestDetail }) {
         )}
         {data.payment_info && data.payment_info.payment_status !== 'Paid' && (
           <div className="info-box warn" style={{ marginTop: 10 }}>
-            <span className="info-icon">💳</span>
+            <span className="info-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+            </span>
             <div className="info-text" style={{ fontSize: 12 }}>
               Payment is pending. Once the student pays at the Treasury Office, advance the status to <strong>Paid</strong> using the button in the side panel.
             </div>
@@ -711,7 +726,9 @@ function ClearanceTab({ data, onRefresh }: { data: RequestDetail; onRefresh: () 
         </div>
       ) : (
         <div className="info-box warn" style={{ marginBottom: 16 }}>
-          <span className="info-icon">🔒</span>
+          <span className="info-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+          </span>
           <div className="info-text">
             <strong>{pendingCount} office{pendingCount !== 1 ? 's' : ''} pending clearance.</strong> Copy and send the link to each office. They can click the link to confirm clearance without logging in.
           </div>
@@ -1001,7 +1018,9 @@ function JourneyTab({ data }: { data: RequestDetail }) {
       {/* Rejected/Invalid/Shredded banner */}
       {isRejected && (
         <div className="info-box warn" style={{ marginBottom: 16 }}>
-          <span className="info-icon">⚠️</span>
+          <span className="info-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </span>
           <div className="info-text">
             This request was marked as <strong>{data.current_status}</strong>.
             {data.status_logs?.find(l => ['Rejected','Invalid Request','Shredded'].includes(l.status))?.remarks
@@ -1014,7 +1033,9 @@ function JourneyTab({ data }: { data: RequestDetail }) {
       {/* For Clearance banner */}
       {data.current_status === 'For Clearance' && (
         <div className="info-box warn" style={{ marginBottom: 16, borderColor: '#856404' }}>
-          <span className="info-icon">🔒</span>
+          <span className="info-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+          </span>
           <div className="info-text">
             This request is on <strong>Clearance Hold</strong>.
             {data.status_logs?.find(l => l.status === 'For Clearance')?.remarks

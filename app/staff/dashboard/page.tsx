@@ -324,8 +324,14 @@ export default function DashboardPage() {
 
         {/* Dept toggle */}
         <div className="dept-toggle">
-          <button className={`dt-btn${isCollege ? ' active' : ''}`} onClick={() => setDept('college')}>🎓 College</button>
-          <button className={`dt-btn${!isCollege ? ' active' : ''}`} onClick={() => setDept('shs')}>📚 Senior High School</button>
+          <button className={`dt-btn${isCollege ? ' active' : ''}`} onClick={() => setDept('college')}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 15, height: 15 }}><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+            College
+          </button>
+          <button className={`dt-btn${!isCollege ? ' active' : ''}`} onClick={() => setDept('shs')}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 15, height: 15 }}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            Senior High School
+          </button>
         </div>
 
         {/* Stat cards */}
