@@ -181,7 +181,7 @@ export default function StudentLoginPage() {
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
                     <Label t="Password" req />
-                    <span style={{ fontSize: 11, color: '#114B9F', cursor: 'pointer', fontWeight: 600 }}>Forgot password?</span>
+                    <span style={{ fontSize: 11, color: '#114B9F', cursor: 'pointer', fontWeight: 600 }}onClick={() => router.push('/student/reset-password')}>Forgot password?</span>
                   </div>
                   <div style={{ position: 'relative' }}>
                     <input style={inp()} type={showLoginPw ? 'text' : 'password'} placeholder="Enter your password"
