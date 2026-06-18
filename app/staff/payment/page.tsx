@@ -327,8 +327,8 @@ export default function PaymentMonitorPage() {
               </thead>
               <tbody>
                 {pagedRows.map(p => {
-                  const reqData  = requests[p.request];
-                  const reqId    = reqData?.document_request_no
+                  const reqData   = requests[p.request];
+                  const reqId     = reqData?.document_request_no
                     ? reqData.document_request_no
                     : `REQ-${String(p.request).padStart(3, '0')}`;
                   const requester = reqData?.requester_info
@@ -344,7 +344,7 @@ export default function PaymentMonitorPage() {
                       style={{ background: rowBg, cursor: 'pointer' }}
                       onClick={() => router.push(`/staff/request/${reqId}`)}
                     >
-                      <td style={{ whiteSpace: 'nowrap' }}><span className="req-id">{reqId}</span></td><td><span className="req-id">#{reqId}</span></td>
+                      <td style={{ whiteSpace: 'nowrap' }}><span className="req-id">{reqId}</span></td>
                       <td>{requester}</td>
                       <td style={{ fontWeight: 700, color: parseFloat(p.amount) === 0 ? 'var(--mid-gray)' : 'var(--text-primary)' }}>{parseFloat(p.amount) === 0 ? 'Not set' : `₱${parseFloat(p.amount).toLocaleString()}`}</td>
                       <td style={{ color: 'var(--mid-gray)' }}>{formatDate(p.payment_date)}</td>

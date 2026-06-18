@@ -314,7 +314,7 @@ export default function ClearancePage() {
         const name = r.requester_info
           ? `${r.requester_info.last_name}, ${r.requester_info.first_name}`.toLowerCase()
           : '';
-        const id = `REQ-${String(r.request_id).padStart(3, '0')}`.toLowerCase();
+        const id = formatRequestId(r.request_id, r.document_request_no).toLowerCase();
         return name.includes(q) || id.includes(q);
       });
     }
@@ -474,7 +474,6 @@ export default function ClearancePage() {
               </div>
               <div style={{ padding: '4px 0' }}>
                 {pagedRequests.map((r, i) => {
-                  const reqId      = `REQ-${String(r.request_id).padStart(3, '0')}`;
                   const name       = r.requester_info ? `${r.requester_info.last_name}, ${r.requester_info.first_name}` : '—';
                   const clrs       = clearances[r.request_id] ?? [];
                   const clrCount   = clrs.filter(c => c.clearance_status === 'Cleared').length;
@@ -483,7 +482,7 @@ export default function ClearancePage() {
                   const allDone    = totalClr > 0 && clrCount === totalClr;
                   return (
                     <div key={r.request_id} onClick={() => setSelectedId(r.request_id)} style={{ padding: '12px 16px', borderBottom: i < pagedRequests.length - 1 ? '1px solid var(--border-col)' : 'none', background: isSelected ? 'rgba(125,179,255,0.1)' : 'var(--surface)', borderLeft: isSelected ? '3px solid var(--navy)' : '3px solid transparent', cursor: 'pointer', transition: 'all 0.12s' }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{formatRequestId(r.request_id, r.document_request_no)} — {name}</div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{formatRequestId(r.request_id, r.document_request_no)} — {name}</div>
                       <div style={{ fontSize: 11, color: 'var(--mid-gray)', marginTop: 3 }}>
                         {formatDate(r.date_submitted)} · {r.form_type} · {r.requester_info?.program_strand ?? '—'}
                       </div>
