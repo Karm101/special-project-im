@@ -513,12 +513,16 @@ export default function ClearancePage() {
               <div className="drms-card">
                 <div className="drms-card-header" style={{ alignItems: 'flex-start' }}>
                   <div>
-                    <span className="drms-card-title">
-                      {formatRequestId(selectedRequest.request_id, selectedRequest.document_request_no)} —{' '}
-                      {selectedRequest.requester_info
-                        ? `${selectedRequest.requester_info.last_name}, ${selectedRequest.requester_info.first_name}`
-                        : '—'}
-                    </span>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-primary)' }}>
+                        {formatRequestId(selectedRequest.request_id, selectedRequest.document_request_no)}
+                      </div>
+                      <div style={{ fontSize: 12, color: 'var(--mid-gray)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {selectedRequest.requester_info
+                          ? `${selectedRequest.requester_info.last_name}, ${selectedRequest.requester_info.first_name}`
+                          : '—'}
+                      </div>
+                    </div>
                     <div style={{ fontSize: 12, color: 'var(--mid-gray)', marginTop: 2 }}>
                       {selectedRequest.form_type} · {selectedRequest.current_status}
                     </div>

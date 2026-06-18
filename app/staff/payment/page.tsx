@@ -321,7 +321,7 @@ export default function PaymentMonitorPage() {
             <table className="drms-table">
               <thead>
                 <tr>
-                  <th style={{ minWidth: 160 }}>Request ID</th><th>Requester</th><th>Amount</th>
+                  <th style={{ minWidth: 160 }}>Request ID</th><th>Requester</th>
                   <th>Date Billed</th><th>Payment Status</th><th>Official Receipt</th><th>Action</th>
                 </tr>
               </thead>
@@ -346,7 +346,7 @@ export default function PaymentMonitorPage() {
                     >
                       <td style={{ whiteSpace: 'nowrap' }}><span className="req-id">{reqId}</span></td>
                       <td>{requester}</td>
-                      <td style={{ fontWeight: 700, color: parseFloat(p.amount) === 0 ? 'var(--mid-gray)' : 'var(--text-primary)' }}>{parseFloat(p.amount) === 0 ? 'Not set' : `₱${parseFloat(p.amount).toLocaleString()}`}</td>
+                      
                       <td style={{ color: 'var(--mid-gray)' }}>{formatDate(p.payment_date)}</td>
                       <td><span className={`badge ${badge.cls}`}>{badge.label}</span></td>
                       <td style={{ color: 'var(--mid-gray)' }}>{p.official_receipt_no ?? '—'}</td>
@@ -367,7 +367,7 @@ export default function PaymentMonitorPage() {
                   );
                 })}
                 {pagedRows.length === 0 && (
-                  <tr><td colSpan={7} style={{ textAlign: 'center', padding: 24, color: 'var(--mid-gray)', fontSize: 13 }}>No records found.</td></tr>
+                  <tr><td colSpan={6} style={{ textAlign: 'center', padding: 24, color: 'var(--mid-gray)', fontSize: 13 }}>No records found.</td></tr>
                 )}
               </tbody>
             </table>
