@@ -4,11 +4,20 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { API_BASE } from '@/lib/lib_api';
 
+const IcoInfo = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16, display: 'block', flexShrink: 0 }}>
+    <circle cx="12" cy="12" r="10"/>
+    <line x1="12" y1="8" x2="12" y2="8"/>
+    <line x1="12" y1="12" x2="12" y2="16"/>
+  </svg>
+);
+
 export default function AdminOverviewPage() {
   const router = useRouter();
   const [stats, setStats] = useState({ users: 0, documents: 0, activeDocuments: 0, requests: 0 });
   const [loading, setLoading] = useState(true);
   const [adminName, setAdminName] = useState('Admin');
+
   useEffect(() => {
     const fullName = sessionStorage.getItem('staff_name') ?? 'Admin';
     // staff_name is stored as "LastName, FirstName" — extract first name for greeting
@@ -44,9 +53,9 @@ export default function AdminOverviewPage() {
   }, []);
 
   const cards = [
-    { label: 'Staff Accounts',      value: stats.users,           color: '#114B9F', path: '/admin/users',     action: 'Manage Users' },
-    { label: 'Active Document Types', value: stats.activeDocuments, color: '#198754', path: '/admin/documents', action: 'Manage Documents' },
-    { label: 'Total Requests',       value: stats.requests,        color: '#FFA323', path: '/staff/dashboard', action: 'View Dashboard' },
+    { label: 'Staff Accounts',        value: stats.users,           color: '#114B9F', path: '/admin/users',          action: 'Manage Users'      },
+    { label: 'Active Document Types', value: stats.activeDocuments, color: '#198754', path: '/staff/document-types', action: 'Manage Documents'  },
+    { label: 'Total Requests',        value: stats.requests,        color: '#FFA323', path: '/staff/dashboard',      action: 'View Dashboard'    },
   ];
 
   return (
@@ -67,10 +76,10 @@ export default function AdminOverviewPage() {
       </div>
 
       <div className="info-box">
-        <span className="info-icon">ℹ️</span>
+        <span className="info-icon"><IcoInfo /></span>
         <div className="info-text">
-          This admin panel allows you to manage staff accounts, document types, and system settings without needing backend access.
-          Changes here take effect immediately across the entire system.
+          This admin panel allows you to manage staff accounts and system settings without needing backend access.
+          Document types are managed from the staff app. Changes take effect immediately across the entire system.
         </div>
       </div>
     </div>

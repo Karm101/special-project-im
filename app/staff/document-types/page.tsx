@@ -174,7 +174,7 @@ export default function StaffDocumentTypesPage() {
   const inactive = docs.filter(d => !d.is_active);
 
   return (
-    <div>
+    <div style={{ padding: '28px 32px' }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
         <div>
