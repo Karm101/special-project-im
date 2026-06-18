@@ -18,27 +18,30 @@ type AdminUser = {
   role: string;
 };
 
+const PAGE_SIZE = 10;
+
 function getToken() {
   return typeof window !== 'undefined' ? sessionStorage.getItem('auth_token') ?? '' : '';
 }
 
 export default function AdminUsersPage() {
   const router = useRouter();
-  const [users, setUsers]       = useState<AdminUser[]>([]);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState<string | null>(null);
-  const [search, setSearch]     = useState('');
+  const [users, setUsers]     = useState<AdminUser[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState<string | null>(null);
+  const [search, setSearch]   = useState('');
+  const [page, setPage]       = useState(1);
 
   // ── Edit modal state ────────────────────────────────────────────────────
-  const [editModal, setEditModal]   = useState<AdminUser | null>(null);
+  const [editModal, setEditModal]     = useState<AdminUser | null>(null);
   const [editLoading, setEditLoading] = useState(false);
-  const [editError, setEditError]   = useState('');
+  const [editError, setEditError]     = useState('');
 
   // ── Reset password modal state ──────────────────────────────────────────
-  const [resetModal, setResetModal]   = useState<AdminUser | null>(null);
-  const [newPassword, setNewPassword] = useState('');
+  const [resetModal, setResetModal]     = useState<AdminUser | null>(null);
+  const [newPassword, setNewPassword]   = useState('');
   const [resetLoading, setResetLoading] = useState(false);
-  const [resetError, setResetError]   = useState('');
+  const [resetError, setResetError]     = useState('');
   const [resetSuccess, setResetSuccess] = useState('');
 
   // ── Create user modal state ─────────────────────────────────────────────
@@ -67,6 +70,9 @@ export default function AdminUsersPage() {
   }
 
   useEffect(() => { fetchUsers(); }, []);
+
+  // Reset to page 1 whenever search changes
+  useEffect(() => { setPage(1); }, [search]);
 
   // ── Edit user ─────────────────────────────────────────────────────────
   async function handleEditSave() {
@@ -141,14 +147,45 @@ export default function AdminUsersPage() {
     }
   }
 
-  const visible = users.filter(u =>
+  // ── Pagination logic ──────────────────────────────────────────────────
+  const filtered = users.filter(u =>
     `${u.first_name} ${u.last_name}`.toLowerCase().includes(search.toLowerCase()) ||
     u.email.toLowerCase().includes(search.toLowerCase()) ||
     u.username.toLowerCase().includes(search.toLowerCase())
   );
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage   = Math.min(page, totalPages);
+  const pageStart  = (safePage - 1) * PAGE_SIZE;
+  const visible    = filtered.slice(pageStart, pageStart + PAGE_SIZE);
+
   const inp: React.CSSProperties = { width: '100%', padding: '9px 12px', fontSize: 13, border: '1.5px solid var(--border-col)', borderRadius: 8, fontFamily: 'var(--drms-font)', background: 'var(--surface)', color: 'var(--text-primary)', boxSizing: 'border-box' };
   const sel: React.CSSProperties = { ...inp, cursor: 'pointer' };
+
+  // Page number buttons — show at most 5 pages around current
+  function getPageNumbers() {
+    const pages: (number | '...')[] = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (safePage > 3) pages.push('...');
+      for (let i = Math.max(2, safePage - 1); i <= Math.min(totalPages - 1, safePage + 1); i++) {
+        pages.push(i);
+      }
+      if (safePage < totalPages - 2) pages.push('...');
+      pages.push(totalPages);
+    }
+    return pages;
+  }
+
+  const btnPage: React.CSSProperties = {
+    minWidth: 34, height: 34, borderRadius: 8, border: '1.5px solid var(--border-col)',
+    background: 'transparent', cursor: 'pointer', fontSize: 13, fontWeight: 600,
+    color: 'var(--text-primary)', fontFamily: 'var(--drms-font)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    transition: 'background .15s',
+  };
 
   return (
     <div>
@@ -162,11 +199,26 @@ export default function AdminUsersPage() {
       </div>
 
       {/* Search */}
-      <div className="search-box" style={{ maxWidth: 360, marginBottom: 16 }}>
-        <input type="text" placeholder="Search by name, email, or username..." value={search} onChange={e => setSearch(e.target.value)} />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, gap: 12 }}>
+        <div className="search-box" style={{ maxWidth: 360 }}>
+          <input
+            type="text"
+            placeholder="Search by name, email, or username..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+        </div>
+        {!loading && (
+          <div style={{ fontSize: 12, color: 'var(--mid-gray)', whiteSpace: 'nowrap' }}>
+            {filtered.length === 0
+              ? 'No results'
+              : `Showing ${pageStart + 1}–${Math.min(pageStart + PAGE_SIZE, filtered.length)} of ${filtered.length} user${filtered.length !== 1 ? 's' : ''}`
+            }
+          </div>
+        )}
       </div>
 
-      {error && <div className="info-box warn" style={{ marginBottom: 16 }}><span className="info-icon">⚠️</span><div className="info-text">{error}</div></div>}
+      {error && <div className="info-box warn" style={{ marginBottom: 16 }}><span className="info-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14, display: "inline-block", verticalAlign: "middle", marginRight: 4, flexShrink: 0 }}><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span><div className="info-text">{error}</div></div>}
 
       {/* Table */}
       <div className="table-wrap">
@@ -179,7 +231,9 @@ export default function AdminUsersPage() {
             </tr>
           </thead>
           <tbody>
-            {loading && <tr><td colSpan={8} style={{ textAlign: 'center', padding: 32, color: 'var(--mid-gray)' }}>Loading...</td></tr>}
+            {loading && (
+              <tr><td colSpan={8} style={{ textAlign: 'center', padding: 32, color: 'var(--mid-gray)' }}>Loading...</td></tr>
+            )}
             {!loading && visible.map(u => (
               <tr key={u.user_id}>
                 <td style={{ fontWeight: 600 }}>{u.last_name}, {u.first_name}</td>
@@ -208,6 +262,48 @@ export default function AdminUsersPage() {
         </table>
       </div>
 
+      {/* Pagination controls */}
+      {!loading && totalPages > 1 && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 16 }}>
+          {/* Previous */}
+          <button
+            style={{ ...btnPage, opacity: safePage === 1 ? 0.4 : 1, cursor: safePage === 1 ? 'not-allowed' : 'pointer' }}
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={safePage === 1}
+          >
+            ‹
+          </button>
+
+          {getPageNumbers().map((p, i) =>
+            p === '...'
+              ? <span key={`ellipsis-${i}`} style={{ fontSize: 13, color: 'var(--mid-gray)', padding: '0 4px' }}>…</span>
+              : (
+                <button
+                  key={p}
+                  style={{
+                    ...btnPage,
+                    background:   safePage === p ? '#114B9F' : 'transparent',
+                    color:        safePage === p ? 'white'   : 'var(--text-primary)',
+                    borderColor:  safePage === p ? '#114B9F' : 'var(--border-col)',
+                  }}
+                  onClick={() => setPage(p as number)}
+                >
+                  {p}
+                </button>
+              )
+          )}
+
+          {/* Next */}
+          <button
+            style={{ ...btnPage, opacity: safePage === totalPages ? 0.4 : 1, cursor: safePage === totalPages ? 'not-allowed' : 'pointer' }}
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            disabled={safePage === totalPages}
+          >
+            ›
+          </button>
+        </div>
+      )}
+
       {/* ── Edit Modal ── */}
       {editModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setEditModal(null)}>
@@ -233,7 +329,7 @@ export default function AdminUsersPage() {
                 <input type="checkbox" checked={editModal.is_active} onChange={e => setEditModal({ ...editModal, is_active: e.target.checked })} style={{ width: 16, height: 16, accentColor: '#114B9F' }} />
                 <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>Account is Active</span>
               </div>
-              {editError && <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600 }}>⚠️ {editError}</div>}
+              {editError && <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600 }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14, display: "inline-block", verticalAlign: "middle", marginRight: 4, flexShrink: 0 }}><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>{editError}</div>}
               <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
                 <button className="btn-primary" style={{ flex: 1, justifyContent: 'center' }} onClick={handleEditSave} disabled={editLoading}>{editLoading ? 'Saving...' : 'Save Changes'}</button>
                 <button className="btn-outline" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setEditModal(null)}>Cancel</button>
@@ -253,8 +349,8 @@ export default function AdminUsersPage() {
               <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--mid-gray)', display: 'block', marginBottom: 4 }}>New Password</label>
               <input style={inp} type="password" placeholder="At least 8 characters" value={newPassword} onChange={e => { setNewPassword(e.target.value); setResetError(''); setResetSuccess(''); }} />
             </div>
-            {resetError   && <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600, marginBottom: 10 }}>⚠️ {resetError}</div>}
-            {resetSuccess && <div style={{ fontSize: 12, color: '#198754', fontWeight: 600, marginBottom: 10 }}>✅ {resetSuccess}</div>}
+            {resetError   && <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600, marginBottom: 10 }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14, display: "inline-block", verticalAlign: "middle", marginRight: 4, flexShrink: 0 }}><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>{resetError}</div>}
+            {resetSuccess && <div style={{ fontSize: 12, color: '#198754', fontWeight: 600, marginBottom: 10 }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14, display: "inline-block", verticalAlign: "middle", marginRight: 4, flexShrink: 0 }}><polyline points="20 6 9 17 4 12"/></svg>{resetSuccess}</div>}
             <div style={{ display: 'flex', gap: 10 }}>
               <button className="btn-primary" style={{ flex: 1, justifyContent: 'center' }} onClick={handleResetPassword} disabled={resetLoading}>{resetLoading ? 'Resetting...' : 'Reset Password'}</button>
               <button className="btn-outline" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setResetModal(null)}>Cancel</button>
@@ -287,7 +383,7 @@ export default function AdminUsersPage() {
                   <option>RO Staff</option><option>Super Admin</option>
                 </select>
               </div>
-              {createError && <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600 }}>⚠️ {createError}</div>}
+              {createError && <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600 }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14, display: "inline-block", verticalAlign: "middle", marginRight: 4, flexShrink: 0 }}><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>{createError}</div>}
               <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
                 <button className="btn-primary" style={{ flex: 1, justifyContent: 'center' }} onClick={handleCreateUser} disabled={createLoading}>{createLoading ? 'Creating...' : 'Create Account'}</button>
                 <button className="btn-outline" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setCreateModal(false)}>Cancel</button>
