@@ -249,8 +249,6 @@ export default function StaffDocumentTypesPage() {
               <th>Days</th>
               <th>Status</th>
               <th>Actions</th>
-              <th>Academic Level</th>
-              <th>Processing Days</th>
             </tr>
           </thead>
           <tbody>
