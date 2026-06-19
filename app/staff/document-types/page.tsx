@@ -267,26 +267,32 @@ export default function StaffDocumentTypesPage() {
                   </span>
                 </td>
                 <td>
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    <button
-                      className="btn-outline btn-sm"
-                      style={{
-                        borderColor: doc.is_active ? '#E50019' : undefined,
-                        color: doc.is_active ? '#E50019' : undefined,
-                      }}
-                      onClick={() => toggleActive(doc)}
-                    >
-                      {doc.is_active ? 'Disable' : 'Enable'}
-                    </button>
-                    <button
-                      className="btn-outline btn-sm"
-                      style={{ fontSize: 11, color: '#E50019', borderColor: '#E50019' }}
-                      onClick={() => { setDeleteModal(doc); setDeleteError(''); }}
-                    >
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 12, height: 12 }}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
-                      Delete
-                    </button>
-                  </div>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                        <button
+                            className="btn-outline btn-sm"
+                            onClick={() => { setEditModal({ ...doc }); setEditError(''); setEditSuccess(''); }}
+                        >
+                            Edit
+                        </button>
+                        <button
+                            className="btn-outline btn-sm"
+                            style={{
+                            borderColor: doc.is_active ? '#E50019' : undefined,
+                            color: doc.is_active ? '#E50019' : undefined,
+                            }}
+                            onClick={() => toggleActive(doc)}
+                        >
+                            {doc.is_active ? 'Disable' : 'Enable'}
+                        </button>
+                        <button
+                            className="btn-outline btn-sm"
+                            style={{ fontSize: 11, color: '#E50019', borderColor: '#E50019' }}
+                            onClick={() => { setDeleteModal(doc); setDeleteError(''); }}
+                        >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 12, height: 12 }}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+                            Delete
+                        </button>
+                    </div>
                 </td>
               </tr>
             ))}
