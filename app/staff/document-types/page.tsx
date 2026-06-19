@@ -6,6 +6,7 @@ import { API_BASE } from '@/lib/lib_api';
 type DocType = {
   document_type_id: number;
   document_name: string;
+  doc_code: string | null;
   academic_level: string;
   processing_days: number;
   description: string | null;
@@ -14,6 +15,7 @@ type DocType = {
 
 type CreateForm = {
   document_name: string;
+  doc_code: string;
   academic_level: string;
   processing_days: number;
   description: string;
@@ -22,6 +24,7 @@ type CreateForm = {
 
 const BLANK_FORM: CreateForm = {
   document_name: '',
+  doc_code: '',
   academic_level: 'All',
   processing_days: 7,
   description: '',
@@ -42,6 +45,11 @@ export default function StaffDocumentTypesPage() {
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError]     = useState('');
   const [editSuccess, setEditSuccess] = useState('');
+
+  // ── Delete modal ──────────────────────────────────────────────────────────
+  const [deleteModal, setDeleteModal]     = useState<DocType | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError]     = useState('');
 
   // ── Create modal ──────────────────────────────────────────────────────────
   const [createModal, setCreateModal]     = useState(false);
@@ -78,6 +86,7 @@ export default function StaffDocumentTypesPage() {
         headers: { 'Content-Type': 'application/json', Authorization: `Token ${getToken()}` },
         body: JSON.stringify({
           document_name:   editModal.document_name,
+          doc_code:        editModal.doc_code?.trim().toUpperCase() || null,
           academic_level:  editModal.academic_level,
           processing_days: editModal.processing_days,
           description:     editModal.description,
@@ -130,6 +139,7 @@ export default function StaffDocumentTypesPage() {
         headers: { 'Content-Type': 'application/json', Authorization: `Token ${getToken()}` },
         body: JSON.stringify({
           document_name:   createForm.document_name.trim(),
+          doc_code:        createForm.doc_code.trim().toUpperCase() || null,
           academic_level:  createForm.academic_level === 'All' ? null : createForm.academic_level,
           processing_days: createForm.processing_days,
           description:     createForm.description.trim() || null,
@@ -153,6 +163,25 @@ export default function StaffDocumentTypesPage() {
       setCreateError(err.message ?? 'Failed to create. Please try again.');
     } finally {
       setCreateLoading(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!deleteModal) return;
+    setDeleteLoading(true);
+    setDeleteError('');
+    try {
+      const res = await fetch(`${API_BASE}/document-types/${deleteModal.document_type_id}/`, {
+        method: 'DELETE',
+        headers: { Authorization: `Token ${getToken()}` },
+      });
+      if (!res.ok) throw new Error('Delete failed');
+      fetchDocs();
+      setDeleteModal(null);
+    } catch {
+      setDeleteError('Failed to delete. This document type may be in use by existing requests.');
+    } finally {
+      setDeleteLoading(false);
     }
   }
 
@@ -215,10 +244,13 @@ export default function StaffDocumentTypesPage() {
           <thead>
             <tr>
               <th>Document Name</th>
-              <th>Academic Level</th>
-              <th>Processing Days</th>
+              <th>Code</th>
+              <th>Level</th>
+              <th>Days</th>
               <th>Status</th>
               <th>Actions</th>
+              <th>Academic Level</th>
+              <th>Processing Days</th>
             </tr>
           </thead>
           <tbody>
@@ -228,6 +260,7 @@ export default function StaffDocumentTypesPage() {
             {!loading && docs.map(doc => (
               <tr key={doc.document_type_id} style={{ opacity: doc.is_active ? 1 : 0.5 }}>
                 <td style={{ fontWeight: 600 }}>{doc.document_name}</td>
+                      <td><span style={{ fontSize: 11, fontWeight: 700, background: 'rgba(17,75,159,0.08)', color: '#114B9F', padding: '2px 8px', borderRadius: 4 }}>{doc.doc_code ?? '—'}</span></td>
                 <td>{doc.academic_level ?? 'All'}</td>
                 <td>{doc.processing_days} working days</td>
                 <td>
@@ -239,12 +272,6 @@ export default function StaffDocumentTypesPage() {
                   <div style={{ display: 'flex', gap: 6 }}>
                     <button
                       className="btn-outline btn-sm"
-                      onClick={() => { setEditModal({ ...doc }); setEditError(''); setEditSuccess(''); }}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="btn-outline btn-sm"
                       style={{
                         borderColor: doc.is_active ? '#E50019' : undefined,
                         color: doc.is_active ? '#E50019' : undefined,
@@ -252,6 +279,14 @@ export default function StaffDocumentTypesPage() {
                       onClick={() => toggleActive(doc)}
                     >
                       {doc.is_active ? 'Disable' : 'Enable'}
+                    </button>
+                    <button
+                      className="btn-outline btn-sm"
+                      style={{ fontSize: 11, color: '#E50019', borderColor: '#E50019' }}
+                      onClick={() => { setDeleteModal(doc); setDeleteError(''); }}
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 12, height: 12 }}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+                      Delete
                     </button>
                   </div>
                 </td>
@@ -289,6 +324,18 @@ export default function StaffDocumentTypesPage() {
                   placeholder="e.g. Certificate of Latin Honor"
                   value={createForm.document_name}
                   onChange={e => setCreateForm({ ...createForm, document_name: e.target.value })}
+                />
+              </div>
+
+                <div>
+                <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--mid-gray)', display: 'block', marginBottom: 4 }}>
+                  Document Code <span style={{ fontWeight: 400, color: '#B1B1B1' }}>(used in Request ID, e.g. TOR, COE, Dip)</span>
+                </label>
+                <input
+                  style={inp}
+                  placeholder="e.g. CLH"
+                  value={createForm.doc_code}
+                  onChange={e => setCreateForm({ ...createForm, doc_code: e.target.value })}
                 />
               </div>
 
@@ -370,6 +417,37 @@ export default function StaffDocumentTypesPage() {
         </div>
       )}
 
+      {/* ── Delete Modal ── */}
+      {deleteModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          onClick={() => setDeleteModal(null)}>
+          <div style={{ background: 'var(--surface)', borderRadius: 12, padding: 28, width: 400, boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: 16, fontWeight: 800, color: '#E50019', marginBottom: 8 }}>Delete Document Type</div>
+            <div style={{ fontSize: 13, color: 'var(--mid-gray)', marginBottom: 16, lineHeight: 1.6 }}>
+              Are you sure you want to delete <strong>{deleteModal.document_name}</strong>?
+            </div>
+            <div style={{ background: 'rgba(229,0,25,0.06)', border: '1px solid rgba(229,0,25,0.2)', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#E50019', marginBottom: 20, lineHeight: 1.6 }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 13, height: 13, display: 'inline', marginRight: 4 }}><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              This cannot be undone. If existing requests reference this document type, deletion may fail to protect data integrity.
+            </div>
+            {deleteError && <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600, marginBottom: 12 }}>{deleteError}</div>}
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                style={{ flex: 1, padding: 10, background: '#E50019', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--drms-font)' }}
+                disabled={deleteLoading}
+                onClick={handleDelete}
+              >
+                {deleteLoading ? 'Deleting...' : 'Yes, Delete'}
+              </button>
+              <button className="btn-outline" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setDeleteModal(null)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Edit Modal ── */}
       {editModal && (
         <div
@@ -390,6 +468,18 @@ export default function StaffDocumentTypesPage() {
                   onChange={e => setEditModal({ ...editModal, document_name: e.target.value })}
                 />
               </div>
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--mid-gray)', display: 'block', marginBottom: 4 }}>
+                  Document Code <span style={{ fontWeight: 400, color: '#B1B1B1' }}>(used in Request ID)</span>
+                </label>
+                <input
+                  style={inp}
+                  placeholder="e.g. CLH"
+                  value={editModal.doc_code ?? ''}
+                  onChange={e => setEditModal({ ...editModal, doc_code: e.target.value })}
+                />
+              </div>
+
               <div>
                 <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--mid-gray)', display: 'block', marginBottom: 4 }}>Academic Level</label>
                 <select
