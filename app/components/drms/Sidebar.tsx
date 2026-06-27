@@ -17,16 +17,18 @@ const IcoChevLeft  = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentC
 const IcoAdmin     = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20, display: 'block' }}><circle cx="12" cy="8" r="4"/><path d="M12 14c-4.42 0-8 1.79-8 4v1h16v-1c0-2.21-3.58-4-8-4z"/><polyline points="16 3 18 5 22 3"/></svg>;
 // Document Types icon — a list with a tag
 const IcoDocTypes  = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20, display: 'block' }}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>;
+const IcoOffices   = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20, display: 'block' }}><path d="M12 2l8 4v6c0 4.4-3.3 8.5-8 10-4.7-1.5-8-5.6-8-10V6l8-4z"/><polyline points="9 12 11 14 15 10"/></svg>;
 
 interface NavItem { icon: React.ReactNode; label: string; path: string; notif?: boolean; }
 
 const topNav: NavItem[] = [
-  { icon: <IcoReports />,   label: 'Reports & Analytics', path: '/staff/reports'       },
-  { icon: <IcoRequests />,  label: 'Document Requests',   path: '/staff/dashboard'     },
-  { icon: <IcoPayment />,   label: 'Payment Monitor',     path: '/staff/payment'       },
-  { icon: <IcoClaimSlip />, label: 'Claim Slip Monitor',  path: '/staff/claimslip'     },
-  { icon: <IcoClearance />, label: 'Clearance Tracking',  path: '/staff/clearance'     },
-  { icon: <IcoDocTypes />,  label: 'Document Types',      path: '/staff/document-types' },
+  { icon: <IcoReports />,   label: 'Reports & Analytics', path: '/staff/reports'            },
+  { icon: <IcoRequests />,  label: 'Document Requests',   path: '/staff/dashboard'          },
+  { icon: <IcoPayment />,   label: 'Payment Monitor',     path: '/staff/payment'            },
+  { icon: <IcoClaimSlip />, label: 'Claim Slip Monitor',  path: '/staff/claimslip'          },
+  { icon: <IcoClearance />, label: 'Clearance Tracking',  path: '/staff/clearance'          },
+  { icon: <IcoDocTypes />,  label: 'Document Types',      path: '/staff/document-types'     },
+  { icon: <IcoOffices />,   label: 'Clearance Offices',   path: '/staff/clearance-offices'  },
 ];
 const midNav: NavItem[] = [
   { icon: <IcoNewReq />, label: 'New Request',   path: '/staff/dashboard/new'          },
