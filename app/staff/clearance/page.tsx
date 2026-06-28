@@ -741,7 +741,7 @@ export default function ClearancePage() {
 
                 {/* View full request */}
                 <div style={{ padding: '0 20px 16px' }}>
-                  <button className="btn-outline btn-sm" onClick={() => router.push(`/staff/request/REQ-${String(selectedRequest.request_id).padStart(3, '0')}`)}>
+                  <button className="btn-outline btn-sm" onClick={() => router.push(`/staff/request/${formatRequestId(selectedRequest.request_id, selectedRequest.document_request_no)}`)}>
                     View Full Request →
                   </button>
                 </div>
