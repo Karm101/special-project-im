@@ -137,6 +137,16 @@ export default function ClearancePage() {
   const [regenerating, setRegenerating] = useState<number | null>(null);
   const [copied, setCopied]             = useState<number | null>(null);
 
+  // Add/Remove office
+  const [removeModal, setRemoveModal]         = useState<ApiClearance | null>(null);
+  const [removing, setRemoving]               = useState(false);
+  const [addOfficeModal, setAddOfficeModal]   = useState<number | null>(null);
+  const [configOffices, setConfigOffices]     = useState<string[]>([]);
+  const [selectedOffices, setSelectedOffices] = useState<Set<string>>(new Set());
+  const [freeTextOffice, setFreeTextOffice]   = useState('');
+  const [addOfficeLoading, setAddOfficeLoading] = useState(false);
+  const [addOfficeError, setAddOfficeError]     = useState('');
+
   // API state
   const [ro4Requests, setRo4Requests]   = useState<ApiRequest[]>([]);
   const [clearances, setClearances]     = useState<Record<number, ApiClearance[]>>({});
@@ -245,6 +255,63 @@ export default function ClearancePage() {
       await refreshSelected(requestId);
     } catch { alert('Failed to regenerate token.'); }
     finally { setRegenerating(null); }
+  }
+
+  async function handleRemoveOffice() {
+    if (!removeModal) return;
+    setRemoving(true);
+    try {
+      const res = await fetch(`${API_BASE}/clearance/${removeModal.clearance_id}/remove/`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (!res.ok) { alert(data.error ?? 'Failed to remove.'); return; }
+      setRemoveModal(null);
+      if (selectedRequest) await refreshSelected(selectedRequest.request_id);
+    } catch { alert('Could not connect to server.'); }
+    finally { setRemoving(false); }
+  }
+
+  async function openAddOfficeModal(requestId: number, formType: string) {
+    try {
+      const res = await fetch(`${API_BASE}/clearance-office-config/?form_type=${formType}&active_only=true`);
+      if (res.ok) {
+        const configs = await res.json();
+        const names: string[] = Array.from(new Set(configs.map((c: any) => c.office_name as string))).sort() as string[];
+        setConfigOffices(names);
+      }
+    } catch {}
+    setSelectedOffices(new Set());
+    setFreeTextOffice('');
+    setAddOfficeError('');
+    setAddOfficeModal(requestId);
+  }
+
+  async function handleAddOffices() {
+    if (!addOfficeModal) return;
+    const toAdd = [...Array.from(selectedOffices), ...(freeTextOffice.trim() ? [freeTextOffice.trim()] : [])];
+    if (toAdd.length === 0) { setAddOfficeError('Select at least one office or enter a name.'); return; }
+    setAddOfficeLoading(true);
+    setAddOfficeError('');
+    try {
+      const results = await Promise.all(
+        toAdd.map(office_name =>
+          fetch(`${API_BASE}/requests/${addOfficeModal}/add-clearance-office/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ office_name }),
+          })
+        )
+      );
+      const failed = results.filter(r => !r.ok);
+      if (failed.length > 0) {
+        setAddOfficeError(`${failed.length} office(s) could not be added — they may already exist.`);
+      } else {
+        setAddOfficeModal(null);
+        if (selectedRequest) await refreshSelected(selectedRequest.request_id);
+      }
+    } catch { setAddOfficeError('Could not connect to server.'); }
+    finally { setAddOfficeLoading(false); }
   }
 
   // ── Derived values ────────────────────────────────────────────────────────
@@ -644,12 +711,32 @@ export default function ClearancePage() {
                                   </>
                                 )}
                               </button>
+                              <button
+                                className="btn-outline btn-sm"
+                                style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 5, color: '#E50019', borderColor: '#E50019' }}
+                                onClick={() => setRemoveModal(c)}
+                              >
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 12, height: 12 }}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+                                Remove
+                              </button>
                             </div>
                           )}
                         </div>
                       );
                     })
                   )}
+                </div>
+
+                {/* Add office */}
+                <div style={{ padding: '0 20px 8px' }}>
+                  <button
+                    className="btn-outline btn-sm"
+                    style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 5 }}
+                    onClick={() => openAddOfficeModal(selectedRequest.request_id, selectedRequest.form_type)}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 13, height: 13 }}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Add Office
+                  </button>
                 </div>
 
                 {/* View full request */}
@@ -663,6 +750,76 @@ export default function ClearancePage() {
           </div>
         )}
       </div>
+
+      {/* Remove Office Modal */}
+      {removeModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => setRemoveModal(null)}>
+          <div style={{ background: 'var(--surface)', borderRadius: 12, padding: 24, width: 400, boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: 15, fontWeight: 800, color: '#E50019', marginBottom: 8 }}>Remove Office</div>
+            <div style={{ fontSize: 13, color: 'var(--mid-gray)', marginBottom: 16, lineHeight: 1.6 }}>
+              Remove <strong>{removeModal.office_name}</strong> from this request?
+            </div>
+            <div style={{ background: 'rgba(229,0,25,0.06)', border: '1px solid rgba(229,0,25,0.2)', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#E50019', marginBottom: 20, lineHeight: 1.6 }}>
+              This only affects this request. The office configuration is not changed. You can add it back at any time.
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button style={{ flex: 1, padding: 10, background: '#E50019', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Montserrat',sans-serif" }} disabled={removing} onClick={handleRemoveOffice}>
+                {removing ? 'Removing...' : 'Yes, Remove'}
+              </button>
+              <button className="btn-outline btn-sm" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setRemoveModal(null)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Office Modal */}
+      {addOfficeModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => setAddOfficeModal(null)}>
+          <div style={{ background: 'var(--surface)', borderRadius: 12, padding: 24, width: 440, boxShadow: '0 8px 32px rgba(0,0,0,0.2)', maxHeight: '80vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 4 }}>Add Clearance Office</div>
+            <div style={{ fontSize: 12, color: 'var(--mid-gray)', marginBottom: 16 }}>Select from the configured list or enter a new office name.</div>
+
+            {configOffices.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--mid-gray)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Configured offices</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 200, overflowY: 'auto', border: '1px solid var(--border-col)', borderRadius: 8, padding: 10 }}>
+                  {configOffices.map(name => {
+                    const alreadyIn = (selectedClearances ?? []).some(c => c.office_name === name);
+                    return (
+                      <label key={name} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: alreadyIn ? 'not-allowed' : 'pointer', opacity: alreadyIn ? 0.4 : 1 }}>
+                        <input type="checkbox" checked={selectedOffices.has(name)} disabled={alreadyIn}
+                          onChange={e => { const next = new Set(selectedOffices); e.target.checked ? next.add(name) : next.delete(name); setSelectedOffices(next); }}
+                          style={{ width: 15, height: 15, accentColor: '#114B9F' }} />
+                        <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>{name}</span>
+                        {alreadyIn && <span style={{ fontSize: 11, color: 'var(--mid-gray)', fontStyle: 'italic' }}>already added</span>}
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--mid-gray)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>New office name</div>
+              <input type="text" placeholder="e.g. Program Chair" value={freeTextOffice}
+                onChange={e => { setFreeTextOffice(e.target.value); setAddOfficeError(''); }}
+                style={{ width: '100%', padding: '9px 12px', fontSize: 13, border: '1.5px solid var(--border-col)', borderRadius: 8, fontFamily: "'Montserrat',sans-serif", outline: 'none', background: 'var(--surface)', color: 'var(--text-primary)', boxSizing: 'border-box' }} />
+            </div>
+
+            {addOfficeError && <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600, marginBottom: 12 }}>{addOfficeError}</div>}
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                style={{ flex: 1, padding: 10, background: '#001C43', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Montserrat',sans-serif" }}
+                disabled={addOfficeLoading} onClick={handleAddOffices}
+              >
+                {addOfficeLoading ? 'Adding...' : `Add ${selectedOffices.size + (freeTextOffice.trim() ? 1 : 0) || ''} Office${selectedOffices.size + (freeTextOffice.trim() ? 1 : 0) !== 1 ? 's' : ''}`}
+              </button>
+              <button className="btn-outline btn-sm" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setAddOfficeModal(null)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Detail modal */}
       {detailModal && (

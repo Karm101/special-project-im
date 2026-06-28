@@ -669,6 +669,14 @@ function ClearanceTab({ data, onRefresh }: { data: RequestDetail; onRefresh: () 
   const [copied, setCopied]             = useState<number | null>(null);
   const [detailModal, setDetailModal]   = useState<Clearance | null>(null);
   const [addingBoardExam, setAddingBoardExam] = useState(false);
+  const [removeModal, setRemoveModal]   = useState<Clearance | null>(null);
+  const [removing, setRemoving]         = useState(false);
+  const [addOfficeModal, setAddOfficeModal] = useState(false);
+  const [configOffices, setConfigOffices]   = useState<string[]>([]);
+  const [selectedOffices, setSelectedOffices] = useState<Set<string>>(new Set());
+  const [freeTextOffice, setFreeTextOffice]   = useState('');
+  const [addOfficeLoading, setAddOfficeLoading] = useState(false);
+  const [addOfficeError, setAddOfficeError]     = useState('');
 
   // Documents eligible for board exam clearance
   const BOARD_EXAM_ELIGIBLE_DOCS = ['transcript'];
@@ -696,6 +704,78 @@ function ClearanceTab({ data, onRefresh }: { data: RequestDetail; onRefresh: () 
       alert('Could not connect to the server.');
     } finally {
       setAddingBoardExam(false);
+    }
+  }
+
+  async function handleRemoveOffice() {
+    if (!removeModal) return;
+    setRemoving(true);
+    try {
+      const res = await fetch(`${API_BASE}/clearance/${removeModal.clearance_id}/remove/`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error ?? 'Failed to remove office.');
+        return;
+      }
+      setRemoveModal(null);
+      onRefresh();
+    } catch {
+      alert('Could not connect to server.');
+    } finally {
+      setRemoving(false);
+    }
+  }
+
+  async function openAddOfficeModal() {
+    // Fetch configured offices for this form type
+    try {
+      const res = await fetch(`${API_BASE}/clearance-office-config/?form_type=${data.form_type}&active_only=true`);
+      if (res.ok) {
+        const configs = await res.json();
+        const names: string[] = Array.from(new Set(configs.map((c: any) => c.office_name as string))).sort() as string[];
+        setConfigOffices(names);
+      }
+    } catch {}
+    setSelectedOffices(new Set());
+    setFreeTextOffice('');
+    setAddOfficeError('');
+    setAddOfficeModal(true);
+  }
+
+  async function handleAddOffices() {
+    const toAdd = [
+      ...Array.from(selectedOffices),
+      ...(freeTextOffice.trim() ? [freeTextOffice.trim()] : []),
+    ];
+    if (toAdd.length === 0) {
+      setAddOfficeError('Select at least one office or enter a name.');
+      return;
+    }
+    setAddOfficeLoading(true);
+    setAddOfficeError('');
+    try {
+      const results = await Promise.all(
+        toAdd.map(office_name =>
+          fetch(`${API_BASE}/requests/${data.request_id}/add-clearance-office/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ office_name }),
+          })
+        )
+      );
+      const failed = results.filter(r => !r.ok);
+      if (failed.length > 0) {
+        setAddOfficeError(`${failed.length} office(s) could not be added — they may already exist.`);
+      } else {
+        setAddOfficeModal(false);
+        onRefresh();
+      }
+    } catch {
+      setAddOfficeError('Could not connect to server.');
+    } finally {
+      setAddOfficeLoading(false);
     }
   }
 
@@ -898,7 +978,6 @@ function ClearanceTab({ data, onRefresh }: { data: RequestDetail; onRefresh: () 
                           )}
                         </button>
                       )}
-
                       {/* Toggle enable/disable */}
                       <button className="btn-outline btn-sm" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }} disabled={toggling === c.clearance_id} onClick={() => toggleActive(c.clearance_id, c.is_active)}>
                         {toggling === c.clearance_id ? '...' : c.is_active ? (
@@ -907,12 +986,20 @@ function ClearanceTab({ data, onRefresh }: { data: RequestDetail; onRefresh: () 
                           <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 12, height: 12 }}><path d="M12 2l8 4v6c0 4.4-3.3 8.5-8 10-4.7-1.5-8-5.6-8-10V6l8-4z"/><polyline points="9 12 11 14 15 10"/></svg> Enable Link</>
                         )}
                       </button>
-
                       {/* Regenerate */}
                       <button className="btn-outline btn-sm" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }} disabled={regenerating === c.clearance_id} onClick={() => regenerateToken(c.clearance_id)}>
                         {regenerating === c.clearance_id ? '...' : (
                           <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 12, height: 12 }}><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> New Link</>
                         )}
+                      </button>
+                      {/* Remove office — foolproof undo */}
+                      <button
+                        className="btn-outline btn-sm"
+                        style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 5, color: '#E50019', borderColor: '#E50019' }}
+                        onClick={() => setRemoveModal(c)}
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 12, height: 12 }}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+                        Remove
                       </button>
                     </div>
                   )}
@@ -922,6 +1009,18 @@ function ClearanceTab({ data, onRefresh }: { data: RequestDetail; onRefresh: () 
           </div>
         </div>
       )}
+
+      {/* Add office button */}
+        <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--border-col)' }}>
+          <button
+            className="btn-outline btn-sm"
+            style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 5 }}
+            onClick={openAddOfficeModal}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 13, height: 13 }}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Office
+          </button>
+        </div>
 
       {/* How it works */}
       <div className="form-section">
@@ -934,6 +1033,102 @@ function ClearanceTab({ data, onRefresh }: { data: RequestDetail; onRefresh: () 
           <div style={{ marginTop: 8, color: '#856404' }}>⚠️ If you sent a link to the wrong person, click <strong>Disable Link</strong> to immediately invalidate it, then click <strong>New Link</strong> to generate a fresh one.</div>
         </div>
       </div>
+
+      {/* ── Remove Office Modal ── */}
+      {removeModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+          onClick={() => setRemoveModal(null)}>
+          <div style={{ background: 'white', borderRadius: 12, padding: 24, width: 400, boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: 15, fontWeight: 800, color: '#E50019', marginBottom: 8 }}>Remove Office</div>
+            <div style={{ fontSize: 13, color: '#444', marginBottom: 16, lineHeight: 1.6 }}>
+              Remove <strong>{removeModal.office_name}</strong> from this request's clearance list?
+            </div>
+            <div style={{ background: 'rgba(229,0,25,0.06)', border: '1px solid rgba(229,0,25,0.2)', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#E50019', marginBottom: 20, lineHeight: 1.6 }}>
+              This only affects this specific request. The office configuration is not changed. You can add it back at any time.
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                style={{ flex: 1, padding: 10, background: '#E50019', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif" }}
+                disabled={removing}
+                onClick={handleRemoveOffice}
+              >
+                {removing ? 'Removing...' : 'Yes, Remove'}
+              </button>
+              <button className="btn-outline btn-sm" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setRemoveModal(null)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Add Office Modal ── */}
+      {addOfficeModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+          onClick={() => setAddOfficeModal(false)}>
+          <div style={{ background: 'white', borderRadius: 12, padding: 24, width: 440, boxShadow: '0 8px 32px rgba(0,0,0,0.2)', maxHeight: '80vh', overflowY: 'auto' }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: 15, fontWeight: 800, color: '#001C43', marginBottom: 4 }}>Add Clearance Office</div>
+            <div style={{ fontSize: 12, color: '#888', marginBottom: 16 }}>Select from the configured list or enter a new office name.</div>
+
+            {/* Configured offices */}
+            {configOffices.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
+                  Configured offices for {data.form_type}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 200, overflowY: 'auto', border: '1px solid #eee', borderRadius: 8, padding: 10 }}>
+                  {configOffices.map(name => {
+                    const alreadyIn = clearances.some(c => c.office_name === name);
+                    return (
+                      <label key={name} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: alreadyIn ? 'not-allowed' : 'pointer', opacity: alreadyIn ? 0.4 : 1 }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedOffices.has(name)}
+                          disabled={alreadyIn}
+                          onChange={e => {
+                            const next = new Set(selectedOffices);
+                            e.target.checked ? next.add(name) : next.delete(name);
+                            setSelectedOffices(next);
+                          }}
+                          style={{ width: 15, height: 15, accentColor: '#114B9F' }}
+                        />
+                        <span style={{ fontSize: 13, color: '#001C43' }}>{name}</span>
+                        {alreadyIn && <span style={{ fontSize: 11, color: '#B1B1B1', fontStyle: 'italic' }}>already on this request</span>}
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Free text */}
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>New office name</div>
+              <input
+                type="text"
+                placeholder="e.g. Program Chair"
+                value={freeTextOffice}
+                onChange={e => { setFreeTextOffice(e.target.value); setAddOfficeError(''); }}
+                style={{ width: '100%', padding: '9px 12px', fontSize: 13, border: '1.5px solid #ddd', borderRadius: 8, fontFamily: "'Montserrat', sans-serif", outline: 'none', boxSizing: 'border-box' }}
+              />
+              <div style={{ fontSize: 11, color: '#B1B1B1', marginTop: 3 }}>Leave blank if selecting from the list above</div>
+            </div>
+
+            {addOfficeError && <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600, marginBottom: 12 }}>{addOfficeError}</div>}
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                style={{ flex: 1, padding: 10, background: selectedOffices.size + (freeTextOffice.trim() ? 1 : 0) > 0 ? '#001C43' : '#B1B1B1', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: selectedOffices.size + (freeTextOffice.trim() ? 1 : 0) > 0 ? 'pointer' : 'not-allowed', fontFamily: "'Montserrat', sans-serif" }}
+                disabled={addOfficeLoading}
+                onClick={handleAddOffices}
+              >
+                {addOfficeLoading ? 'Adding...' : `Add ${selectedOffices.size + (freeTextOffice.trim() ? 1 : 0) || ''} Office${selectedOffices.size + (freeTextOffice.trim() ? 1 : 0) !== 1 ? 's' : ''}`}
+              </button>
+              <button className="btn-outline btn-sm" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setAddOfficeModal(false)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Clearance Detail Modal ── */}
       {detailModal && (
