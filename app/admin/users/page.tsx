@@ -114,8 +114,12 @@ export default function AdminUsersPage() {
         setInviteCreated(link);
         setNewInviteOffice('');
         fetchInvites();
+      } else {
+        alert(`Failed to create invite: ${data.error ?? JSON.stringify(data)}`);
       }
-    } catch {} finally { setCreatingInvite(false); }
+    } catch (e: any) {
+      alert(`Error: ${e.message}`);
+    } finally { setCreatingInvite(false); }
   }
 
   async function toggleInvite(id: number) {
