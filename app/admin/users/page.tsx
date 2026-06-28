@@ -53,6 +53,105 @@ export default function AdminUsersPage() {
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError]     = useState('');
 
+  // ── Clearance Offices state ──────────────────────────────────────────
+  const [coTab, setCoTab]               = useState<'staff' | 'clearance'>('staff');
+  const [invites, setInvites]           = useState<any[]>([]);
+  const [inviteLoading, setInviteLoading] = useState(false);
+  const [newInviteOffice, setNewInviteOffice] = useState('');
+  const [creatingInvite, setCreatingInvite]   = useState(false);
+  const [inviteCreated, setInviteCreated]     = useState<string | null>(null);
+  const [configOffices, setConfigOffices]     = useState<string[]>([]);
+  const [coStaff, setCoStaff]               = useState<any[]>([]);
+
+  async function fetchInvites() {
+    setInviteLoading(true);
+    try {
+      const token = sessionStorage.getItem('staff_token');
+      const res = await fetch(`${API_BASE}/clearance-office/invite/list/`, {
+        headers: { 'Authorization': `Token ${token}` },
+      });
+      if (res.ok) setInvites(await res.json());
+    } catch {} finally { setInviteLoading(false); }
+  }
+
+  async function fetchConfigOffices() {
+    try {
+      const res = await fetch(`${API_BASE}/clearance-office-config/?active_only=true`);
+      if (res.ok) {
+        const data = await res.json();
+        const names = Array.from(new Set(data.map((c: any) => c.office_name as string))).sort() as string[];
+        setConfigOffices(names);
+      }
+    } catch {}
+  }
+
+  async function fetchCOStaff() {
+    try {
+      const token = sessionStorage.getItem('staff_token');
+      const res = await fetch(`${API_BASE}/admin/users/`, {
+        headers: { 'Authorization': `Token ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCoStaff((data.results ?? data).filter((s: any) => s.role === 'Clearance Office'));
+      }
+    } catch {}
+  }
+
+  async function createInvite() {
+    if (!newInviteOffice) return;
+    setCreatingInvite(true);
+    try {
+      const token = sessionStorage.getItem('staff_token');
+      const res = await fetch(`${API_BASE}/clearance-office/invite/create/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Token ${token}` },
+        body: JSON.stringify({ office_name: newInviteOffice }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        const link = `${window.location.origin}/clearance-office/register/${data.token}`;
+        setInviteCreated(link);
+        setNewInviteOffice('');
+        fetchInvites();
+      }
+    } catch {} finally { setCreatingInvite(false); }
+  }
+
+  async function toggleInvite(id: number) {
+    try {
+      const token = sessionStorage.getItem('staff_token');
+      await fetch(`${API_BASE}/clearance-office/invite/${id}/toggle/`, {
+        method: 'PATCH', headers: { 'Authorization': `Token ${token}` },
+      });
+      fetchInvites();
+    } catch {}
+  }
+
+  async function regenerateInvite(id: number) {
+    if (!confirm('This will invalidate the current invite link. Continue?')) return;
+    try {
+      const token = sessionStorage.getItem('staff_token');
+      const res = await fetch(`${API_BASE}/clearance-office/invite/${id}/regenerate/`, {
+        method: 'POST', headers: { 'Authorization': `Token ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        const link = `${window.location.origin}/clearance-office/register/${data.token}`;
+        setInviteCreated(link);
+        fetchInvites();
+      }
+    } catch {}
+  }
+
+  useEffect(() => {
+    if (coTab === 'clearance') {
+      fetchInvites();
+      fetchConfigOffices();
+      fetchCOStaff();
+    }
+  }, [coTab]);
+
   async function fetchUsers() {
     setLoading(true);
     setError(null);
@@ -198,6 +297,17 @@ export default function AdminUsersPage() {
         <button className="btn-primary" onClick={() => setCreateModal(true)}>+ New Staff Account</button>
       </div>
 
+      {/* Tab switcher */}
+      <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid var(--border-col)', marginBottom: 20 }}>
+        {(['staff', 'clearance'] as const).map(t => (
+          <button key={t} onClick={() => setCoTab(t)} style={{ padding: '10px 20px', fontSize: 13, fontWeight: coTab === t ? 700 : 500, border: 'none', borderBottom: coTab === t ? '2px solid #114B9F' : '2px solid transparent', background: 'none', color: coTab === t ? '#114B9F' : 'var(--mid-gray)', cursor: 'pointer', fontFamily: 'var(--drms-font)', marginBottom: -1 }}>
+            {t === 'staff' ? 'RO Staff' : 'Clearance Offices'}
+          </button>
+        ))}
+      </div>
+
+      {coTab === 'staff' && (
+      <>
       {/* Search */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, gap: 12 }}>
         <div className="search-box" style={{ maxWidth: 360 }}>
@@ -301,6 +411,14 @@ export default function AdminUsersPage() {
           >
             ›
           </button>
+        </div>
+      )}
+      </>
+      )}
+
+      {coTab === 'clearance' && (
+        <div>
+          <div style={{ fontSize: 13, color: 'var(--mid-gray)', padding: '20px 0' }}>Clearance Office management coming soon.</div>
         </div>
       )}
 
