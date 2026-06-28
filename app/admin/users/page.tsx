@@ -66,7 +66,7 @@ export default function AdminUsersPage() {
   async function fetchInvites() {
     setInviteLoading(true);
     try {
-      const token = sessionStorage.getItem('staff_token');
+      const token = sessionStorage.getItem('auth_token');
       const res = await fetch(`${API_BASE}/clearance-office/invite/list/`, {
         headers: { 'Authorization': `Token ${token}` },
       });
@@ -87,7 +87,7 @@ export default function AdminUsersPage() {
 
   async function fetchCOStaff() {
     try {
-      const token = sessionStorage.getItem('staff_token');
+      const token = sessionStorage.getItem('auth_token');
       const res = await fetch(`${API_BASE}/admin/users/`, {
         headers: { 'Authorization': `Token ${token}` },
       });
@@ -102,7 +102,7 @@ export default function AdminUsersPage() {
     if (!newInviteOffice) return;
     setCreatingInvite(true);
     try {
-      const token = sessionStorage.getItem('staff_token');
+      const token = sessionStorage.getItem('auth_token');
       const res = await fetch(`${API_BASE}/clearance-office/invite/create/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Token ${token}` },
@@ -120,7 +120,7 @@ export default function AdminUsersPage() {
 
   async function toggleInvite(id: number) {
     try {
-      const token = sessionStorage.getItem('staff_token');
+      const token = sessionStorage.getItem('auth_token');
       await fetch(`${API_BASE}/clearance-office/invite/${id}/toggle/`, {
         method: 'PATCH', headers: { 'Authorization': `Token ${token}` },
       });
@@ -131,7 +131,7 @@ export default function AdminUsersPage() {
   async function regenerateInvite(id: number) {
     if (!confirm('This will invalidate the current invite link. Continue?')) return;
     try {
-      const token = sessionStorage.getItem('staff_token');
+      const token = sessionStorage.getItem('auth_token');
       const res = await fetch(`${API_BASE}/clearance-office/invite/${id}/regenerate/`, {
         method: 'POST', headers: { 'Authorization': `Token ${token}` },
       });
