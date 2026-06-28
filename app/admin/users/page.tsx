@@ -418,7 +418,124 @@ export default function AdminUsersPage() {
 
       {coTab === 'clearance' && (
         <div>
-          <div style={{ fontSize: 13, color: 'var(--mid-gray)', padding: '20px 0' }}>Clearance Office management coming soon.</div>
+          {/* Create invite */}
+          <div className="drms-card" style={{ padding: 20, marginBottom: 20 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 12 }}>Create Invite Link</div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <select
+                value={newInviteOffice}
+                onChange={e => setNewInviteOffice(e.target.value)}
+                style={{ flex: 1, padding: '9px 12px', fontSize: 13, border: '1.5px solid var(--border-col)', borderRadius: 8, fontFamily: 'var(--drms-font)', background: 'var(--surface)', color: 'var(--text-primary)', outline: 'none', cursor: 'pointer' }}
+              >
+                <option value="">Select office...</option>
+                {configOffices.map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
+              <button className="btn-primary" style={{ padding: '9px 18px', fontSize: 13, whiteSpace: 'nowrap' }} disabled={!newInviteOffice || creatingInvite} onClick={createInvite}>
+                {creatingInvite ? 'Creating...' : 'Create Invite'}
+              </button>
+            </div>
+
+            {inviteCreated && (
+              <div style={{ marginTop: 12, background: 'rgba(25,135,84,0.06)', border: '1px solid rgba(25,135,84,0.2)', borderRadius: 8, padding: '10px 14px' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#198754', marginBottom: 6 }}>Invite link created — share this with the office:</div>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <code style={{ flex: 1, fontSize: 11, color: '#001C43', wordBreak: 'break-all', background: 'var(--surface)', padding: '6px 10px', borderRadius: 6, border: '1px solid var(--border-col)' }}>
+                    {inviteCreated}
+                  </code>
+                  <button className="btn-outline btn-sm" style={{ fontSize: 11, whiteSpace: 'nowrap' }} onClick={() => navigator.clipboard.writeText(inviteCreated!)}>
+                    Copy
+                  </button>
+                </div>
+                <button onClick={() => setInviteCreated(null)} style={{ fontSize: 11, color: 'var(--mid-gray)', background: 'none', border: 'none', cursor: 'pointer', marginTop: 4, fontFamily: 'var(--drms-font)' }}>Dismiss</button>
+              </div>
+            )}
+          </div>
+
+          {/* Existing invites */}
+          <div className="drms-card" style={{ padding: 0, overflow: 'hidden', marginBottom: 20 }}>
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border-col)', fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
+              Active Invites
+            </div>
+            {inviteLoading ? (
+              <div style={{ padding: 24, textAlign: 'center', color: 'var(--mid-gray)', fontSize: 13 }}>Loading...</div>
+            ) : invites.length === 0 ? (
+              <div style={{ padding: 24, textAlign: 'center', color: 'var(--mid-gray)', fontSize: 13, fontStyle: 'italic' }}>No invites created yet.</div>
+            ) : (
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                <thead>
+                  <tr style={{ background: 'var(--surface-2)' }}>
+                    {['Office', 'Created', 'Status', 'Used', 'Actions'].map(h => (
+                      <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontWeight: 700, color: 'var(--mid-gray)', fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5 }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {invites.map(inv => (
+                    <tr key={inv.id} style={{ borderTop: '1px solid var(--border-col)' }}>
+                      <td style={{ padding: '10px 16px', fontWeight: 600, color: 'var(--text-primary)' }}>{inv.office_name}</td>
+                      <td style={{ padding: '10px 16px', color: 'var(--mid-gray)' }}>{new Date(inv.created_at).toLocaleDateString()}</td>
+                      <td style={{ padding: '10px 16px' }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 50, background: inv.is_active ? 'rgba(25,135,84,0.1)' : 'rgba(0,0,0,0.06)', color: inv.is_active ? '#198754' : 'var(--mid-gray)' }}>
+                          {inv.is_active ? 'Active' : 'Disabled'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '10px 16px', color: 'var(--mid-gray)' }}>
+                        {inv.is_used ? `Used ${inv.used_at ? new Date(inv.used_at).toLocaleDateString() : ''}` : '—'}
+                      </td>
+                      <td style={{ padding: '10px 16px' }}>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          {!inv.is_used && (
+                            <>
+                              <button className="btn-outline btn-sm" style={{ fontSize: 11 }} onClick={() => toggleInvite(inv.id)}>
+                                {inv.is_active ? 'Disable' : 'Enable'}
+                              </button>
+                              <button className="btn-outline btn-sm" style={{ fontSize: 11 }} onClick={() => regenerateInvite(inv.id)}>
+                                New Link
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          {/* Clearance office accounts */}
+          <div className="drms-card" style={{ padding: 0, overflow: 'hidden' }}>
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border-col)', fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
+              Clearance Office Accounts
+            </div>
+            {coStaff.length === 0 ? (
+              <div style={{ padding: 24, textAlign: 'center', color: 'var(--mid-gray)', fontSize: 13, fontStyle: 'italic' }}>No clearance office accounts yet.</div>
+            ) : (
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                <thead>
+                  <tr style={{ background: 'var(--surface-2)' }}>
+                    {['Name', 'Office', 'Email', 'Setup'].map(h => (
+                      <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontWeight: 700, color: 'var(--mid-gray)', fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5 }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {coStaff.map(s => (
+                    <tr key={s.staff_id} style={{ borderTop: '1px solid var(--border-col)' }}>
+                      <td style={{ padding: '10px 16px', fontWeight: 600, color: 'var(--text-primary)' }}>{s.display_name ?? `${s.last_name}, ${s.first_name}`}</td>
+                      <td style={{ padding: '10px 16px', color: 'var(--mid-gray)' }}>{s.office_name ?? '—'}</td>
+                      <td style={{ padding: '10px 16px', color: 'var(--mid-gray)' }}>{s.email}</td>
+                      <td style={{ padding: '10px 16px' }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 50, background: s.is_setup_complete ? 'rgba(25,135,84,0.1)' : 'rgba(255,163,35,0.1)', color: s.is_setup_complete ? '#198754' : '#FFA323' }}>
+                          {s.is_setup_complete ? 'Complete' : 'Pending Setup'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
         </div>
       )}
 
