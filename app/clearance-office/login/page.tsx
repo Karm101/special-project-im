@@ -61,25 +61,29 @@ export default function ClearanceOfficeLoginPage() {
       <div style={{ width: '100%', maxWidth: 400 }}>
 
         {/* Logo + header */}
-        <div style={{ textAlign: 'center', marginBottom: 24, background: 'rgba(255,255,255,0.92)', borderRadius: 14, padding: '20px 28px' }}>
-          <img src="/mmcm-logo-with-name.png" alt="MMCM" style={{ height: 56, marginBottom: 12, display: 'block', margin: '0 auto 12px' }} />
-          <div style={{ fontSize: 20, fontWeight: 800, color: '#001C43', fontFamily: "'Montserrat', sans-serif" }}>
-            Clearance Office Portal
+        {/* Single connected card */}
+        <div style={{ background: 'rgba(255,255,255,0.97)', borderRadius: 14, boxShadow: '0 4px 24px rgba(0,0,0,0.2)', overflow: 'hidden' }}>
+          
+          {/* Header section */}
+          <div style={{ textAlign: 'center', padding: '28px 28px 20px', borderBottom: '1px solid #eee' }}>
+            <img src="/mmcm-logo-with-name.png" alt="MMCM" style={{ height: 52, display: 'block', margin: '0 auto 12px' }} />
+            <div style={{ fontSize: 18, fontWeight: 800, color: '#001C43', fontFamily: "'Montserrat', sans-serif" }}>
+              Clearance Office Portal
+            </div>
+            <div style={{ fontSize: 12, color: '#555', marginTop: 4, fontFamily: "'Montserrat', sans-serif" }}>
+              Mapúa Malayan Colleges Mindanao — Registrar's Office
+            </div>
           </div>
-          <div style={{ fontSize: 12, color: '#555', marginTop: 4, fontFamily: "'Montserrat', sans-serif" }}>
-            Mapúa Malayan Colleges Mindanao — Registrar's Office
-          </div>
-        </div>
 
         {/* Card */}
-        <div style={{ background: 'white', borderRadius: 14, padding: 28, boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }}>
+        <div style={{ padding: 28 }}>
           <div style={{ fontSize: 15, fontWeight: 800, color: '#001C43', marginBottom: 20, fontFamily: "'Montserrat', sans-serif" }}>
             Sign In
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div>
-              <label style={{ fontSize: 11, fontWeight: 700, color: '#888', display: 'block', marginBottom: 5, fontFamily: "'Montserrat', sans-serif" }}>USERNAME</label>
+              <label style={{ fontSize: 11, fontWeight: 700, color: '#888', display: 'block', marginBottom: 5, fontFamily: "'Montserrat', sans-serif" }}>USERNAME/EMAIL</label>
               <input
                 style={inp}
                 placeholder="Email or username"
@@ -121,6 +125,7 @@ export default function ClearanceOfficeLoginPage() {
 
         <div style={{ textAlign: 'center', marginTop: 16, fontSize: 11, color: '#aaa', fontFamily: "'Montserrat', sans-serif" }}>
           Need an account? Contact the Registrar's Office.
+        </div>
         </div>
       </div>
     </div>

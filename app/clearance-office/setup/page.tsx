@@ -97,17 +97,21 @@ export default function ClearanceOfficeSetupPage() {
     <div style={{ minHeight: '100vh', background: `url('/mmcm-bg.jpeg') center/cover no-repeat fixed`, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{ width: '100%', maxWidth: 440 }}>
 
-        <div style={{ textAlign: 'center', marginBottom: 24, background: 'rgba(255,255,255,0.92)', borderRadius: 14, padding: '20px 28px' }}>
-          <img src="/mmcm-logo-with-name.png" alt="MMCM" style={{ height: 56, marginBottom: 12, display: 'block', margin: '0 auto 12px' }} />
-          <div style={{ fontSize: 20, fontWeight: 800, color: '#001C43', fontFamily: "'Montserrat', sans-serif" }}>
-            Clearance Office Portal
+        {/* Single connected card */}
+        <div style={{ background: 'rgba(255,255,255,0.97)', borderRadius: 14, boxShadow: '0 4px 24px rgba(0,0,0,0.2)', overflow: 'hidden' }}>
+          
+          {/* Header section */}
+          <div style={{ textAlign: 'center', padding: '28px 28px 20px', borderBottom: '1px solid #eee' }}>
+            <img src="/mmcm-logo-with-name.png" alt="MMCM" style={{ height: 52, display: 'block', margin: '0 auto 12px' }} />
+            <div style={{ fontSize: 18, fontWeight: 800, color: '#001C43', fontFamily: "'Montserrat', sans-serif" }}>
+              Clearance Office Portal
+            </div>
+            <div style={{ fontSize: 12, color: '#555', marginTop: 4, fontFamily: "'Montserrat', sans-serif" }}>
+              Mapúa Malayan Colleges Mindanao — Registrar's Office
+            </div>
           </div>
-          <div style={{ fontSize: 12, color: '#555', marginTop: 4, fontFamily: "'Montserrat', sans-serif" }}>
-            Mapúa Malayan Colleges Mindanao — Registrar's Office
-          </div>
-        </div>
 
-        <div style={{ background: 'white', borderRadius: 14, padding: 28, boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }}>
+        <div style={{ padding: 28 }}>
 
           {/* Info */}
           <div style={{ background: 'rgba(17,75,159,0.06)', border: '1px solid rgba(17,75,159,0.15)', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#114B9F', marginBottom: 20, lineHeight: 1.6, fontFamily: "'Montserrat', sans-serif" }}>
@@ -164,7 +168,8 @@ export default function ClearanceOfficeSetupPage() {
               {uploading ? 'Uploading signature...' : saving ? 'Saving...' : 'Complete Setup'}
             </button>
           </div>
-        </div>
+          </div>
+          </div>
       </div>
     </div>
   );

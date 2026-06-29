@@ -511,10 +511,7 @@ export default function AdminUsersPage() {
                 style={{ flex: 1, padding: '9px 12px', fontSize: 13, border: '1.5px solid var(--border-col)', borderRadius: 8, fontFamily: 'var(--drms-font)', background: 'var(--surface)', color: 'var(--text-primary)', outline: 'none', cursor: 'pointer' }}
               >
                 <option value="">Select office...</option>
-                {configOffices
-                  .filter(o => !coStaff.some(s => s.office_name === o && s.status !== 'no_account'))
-                  .map(o => <option key={o} value={o}>{o}</option>)
-                }
+                {configOffices.map(o => <option key={o} value={o}>{o}</option>)}
               </select>
               <button
                 className="btn-primary"
