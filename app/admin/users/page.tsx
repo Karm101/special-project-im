@@ -543,8 +543,27 @@ export default function AdminUsersPage() {
               </div>
             ) : (
               <div>
-                {coStaff.map(s => (
-                  <div key={s.office_name} style={{ borderBottom: '1px solid var(--border-col)', padding: '14px 20px' }}>
+                {(() => {
+                  // Group by office_name
+                  const groups: Record<string, any[]> = {};
+                  coStaff.forEach(s => {
+                    const key = s.office_name;
+                    if (!groups[key]) groups[key] = [];
+                    groups[key].push(s);
+                  });
+
+                  return Object.entries(groups).map(([officeName, accounts]) => (
+                    <div key={officeName}>
+                      {/* Office group header — only show if multiple accounts */}
+                      {accounts.length > 1 && (
+                        <div style={{ padding: '8px 20px', background: 'rgba(17,75,159,0.04)', borderBottom: '1px solid var(--border-col)', borderTop: '1px solid var(--border-col)' }}>
+                          <span style={{ fontSize: 11, fontWeight: 800, color: '#114B9F', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                            {officeName} — {accounts.length} accounts
+                          </span>
+                        </div>
+                      )}
+                      {accounts.map((s, idx) => (
+                        <div key={s.staff_id ?? `${s.office_name}-${idx}`} style={{ borderBottom: '1px solid var(--border-col)', padding: '14px 20px', paddingLeft: accounts.length > 1 ? 32 : 20 }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
 
                       {/* Office info */}
@@ -609,7 +628,7 @@ export default function AdminUsersPage() {
                                 }}>
                                   {s.invite_used ? 'Used' : s.invite_active ? 'Active' : 'Disabled'}
                                 </span>
-                                {!s.invite_used && (
+                                {!s.invite_used && s.status !== 'active' && (
                                   <>
                                     <button className="btn-outline btn-sm" style={{ fontSize: 10 }}
                                       onClick={() => copyInviteLink(s.invite_token, s.staff_id)}>
@@ -625,7 +644,7 @@ export default function AdminUsersPage() {
                                     </button>
                                   </>
                                 )}
-                                {s.invite_used && (
+                                {s.invite_used && s.status !== 'active' && (
                                   <button className="btn-outline btn-sm" style={{ fontSize: 10 }}
                                     onClick={() => regenerateInviteForOffice(s.office_name)}>
                                     New Link
@@ -682,6 +701,9 @@ export default function AdminUsersPage() {
                     </div>
                   </div>
                 ))}
+                    </div>
+                  ));
+                })()}
               </div>
             )}
           </div>
