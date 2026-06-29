@@ -31,6 +31,13 @@ export default function AdminUsersPage() {
   const [error, setError]     = useState<string | null>(null);
   const [search, setSearch]   = useState('');
   const [page, setPage]       = useState(1);
+  const [createAccountError, setCreateAccountError] = useState('');
+  const [showPasswordId, setShowPasswordId]         = useState<number | null>(null);
+  const [copiedInviteId, setCopiedInviteId]         = useState<number | null>(null);
+  const [resetAccountModal, setResetAccountModal]   = useState<any | null>(null);
+  const [deleteAccountModal, setDeleteAccountModal] = useState<any | null>(null);
+  const [resetLoading2, setResetLoading2]           = useState(false);
+  const [deleteAccountLoading, setDeleteAccountLoading] = useState(false);
 
   // ── Edit modal state ────────────────────────────────────────────────────
   const [editModal, setEditModal]     = useState<AdminUser | null>(null);
@@ -88,38 +95,94 @@ export default function AdminUsersPage() {
   async function fetchCOStaff() {
     try {
       const token = sessionStorage.getItem('auth_token');
-      const res = await fetch(`${API_BASE}/admin/users/`, {
+      const res = await fetch(`${API_BASE}/clearance-office/accounts/`, {
         headers: { 'Authorization': `Token ${token}` },
       });
-      if (res.ok) {
-        const data = await res.json();
-        setCoStaff((data.results ?? data).filter((s: any) => s.role === 'Clearance Office'));
-      }
+      if (res.ok) setCoStaff(await res.json());
     } catch {}
   }
 
-  async function createInvite() {
+  async function createAccount() {
     if (!newInviteOffice) return;
     setCreatingInvite(true);
+    setCreateAccountError('');
     try {
       const token = sessionStorage.getItem('auth_token');
-      const res = await fetch(`${API_BASE}/clearance-office/invite/create/`, {
+      const res = await fetch(`${API_BASE}/clearance-office/accounts/create/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Token ${token}` },
         body: JSON.stringify({ office_name: newInviteOffice }),
       });
       const data = await res.json();
+      if (!res.ok) { setCreateAccountError(data.error ?? 'Failed to create account.'); return; }
+      setNewInviteOffice('');
+      fetchCOStaff();
+    } catch { setCreateAccountError('Could not connect to server.'); }
+    finally { setCreatingInvite(false); }
+  }
+
+  async function copyInviteLink(inviteToken: string, staffId: number) {
+    const link = `${window.location.origin}/clearance-office/register/${inviteToken}`;
+    await navigator.clipboard.writeText(link);
+    setCopiedInviteId(staffId);
+    setTimeout(() => setCopiedInviteId(null), 2000);
+  }
+
+  async function toggleInviteForOffice(inviteId: number, currentActive: boolean) {
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      await fetch(`${API_BASE}/clearance-office/invite/${inviteId}/toggle/`, {
+        method: 'PATCH', headers: { 'Authorization': `Token ${token}` },
+      });
+      fetchCOStaff();
+    } catch {}
+  }
+
+  async function regenerateInviteForOffice(officeName: string) {
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch(`${API_BASE}/clearance-office/invite-or-create/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Token ${token}` },
+        body: JSON.stringify({ office_name: officeName }),
+      });
+      const data = await res.json();
       if (res.ok) {
         const link = `${window.location.origin}/clearance-office/register/${data.token}`;
-        setInviteCreated(link);
-        setNewInviteOffice('');
-        fetchInvites();
-      } else {
-        alert(`Failed to create invite: ${data.error ?? JSON.stringify(data)}`);
+        await navigator.clipboard.writeText(link);
+        fetchCOStaff();
+        alert(`New invite link copied to clipboard for ${officeName}!`);
       }
-    } catch (e: any) {
-      alert(`Error: ${e.message}`);
-    } finally { setCreatingInvite(false); }
+    } catch {}
+  }
+
+  async function handleResetAccount() {
+    if (!resetAccountModal) return;
+    setResetLoading2(true);
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch(`${API_BASE}/clearance-office/accounts/${resetAccountModal.staff_id}/reset/`, {
+        method: 'PATCH', headers: { 'Authorization': `Token ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok) { setResetAccountModal(null); fetchCOStaff(); }
+      else alert(data.error ?? 'Reset failed.');
+    } catch { alert('Could not connect to server.'); }
+    finally { setResetLoading2(false); }
+  }
+
+  async function handleDeleteAccount() {
+    if (!deleteAccountModal) return;
+    setDeleteAccountLoading(true);
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch(`${API_BASE}/clearance-office/accounts/${deleteAccountModal.staff_id}/delete/`, {
+        method: 'DELETE', headers: { 'Authorization': `Token ${token}` },
+      });
+      if (res.ok) { setDeleteAccountModal(null); fetchCOStaff(); }
+      else { const data = await res.json(); alert(data.error ?? 'Delete failed.'); }
+    } catch { alert('Could not connect to server.'); }
+    finally { setDeleteAccountLoading(false); }
   }
 
   async function toggleInvite(id: number) {
@@ -150,7 +213,6 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     if (coTab === 'clearance') {
-      fetchInvites();
       fetchConfigOffices();
       fetchCOStaff();
     }
@@ -422,9 +484,14 @@ export default function AdminUsersPage() {
 
       {coTab === 'clearance' && (
         <div>
-          {/* Create invite */}
+          {/* Create Office Account */}
           <div className="drms-card" style={{ padding: 20, marginBottom: 20 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 12 }}>Create Invite Link</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
+              Create Clearance Office Account
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--mid-gray)', marginBottom: 12 }}>
+              Creates a placeholder account for the office. Super Admin can access the dashboard immediately. Send the invite link for the office to activate their account.
+            </div>
             <div style={{ display: 'flex', gap: 10 }}>
               <select
                 value={newInviteOffice}
@@ -432,112 +499,168 @@ export default function AdminUsersPage() {
                 style={{ flex: 1, padding: '9px 12px', fontSize: 13, border: '1.5px solid var(--border-col)', borderRadius: 8, fontFamily: 'var(--drms-font)', background: 'var(--surface)', color: 'var(--text-primary)', outline: 'none', cursor: 'pointer' }}
               >
                 <option value="">Select office...</option>
-                {configOffices.map(o => <option key={o} value={o}>{o}</option>)}
+                {configOffices
+                  .filter(o => !coStaff.some(s => s.office_name === o && s.status !== 'no_account'))
+                  .map(o => <option key={o} value={o}>{o}</option>)
+                }
               </select>
-              <button className="btn-primary" style={{ padding: '9px 18px', fontSize: 13, whiteSpace: 'nowrap' }} disabled={!newInviteOffice || creatingInvite} onClick={createInvite}>
-                {creatingInvite ? 'Creating...' : 'Create Invite'}
+              <button
+                className="btn-primary"
+                style={{ padding: '9px 18px', fontSize: 13, whiteSpace: 'nowrap' }}
+                disabled={!newInviteOffice || creatingInvite}
+                onClick={createAccount}
+              >
+                {creatingInvite ? 'Creating...' : 'Create Account'}
+              </button>
+            </div>
+            {createAccountError && (
+              <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600, marginTop: 8 }}>{createAccountError}</div>
+            )}
+          </div>
+
+          {/* Office accounts table */}
+          <div className="drms-card" style={{ padding: 0, overflow: 'hidden' }}>
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border-col)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Clearance Offices</div>
+              <button className="btn-outline btn-sm" style={{ fontSize: 11 }} onClick={fetchCOStaff}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 12, height: 12 }}><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+                Refresh
               </button>
             </div>
 
-            {inviteCreated && (
-              <div style={{ marginTop: 12, background: 'rgba(25,135,84,0.06)', border: '1px solid rgba(25,135,84,0.2)', borderRadius: 8, padding: '10px 14px' }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: '#198754', marginBottom: 6 }}>Invite link created — share this with the office:</div>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <code style={{ flex: 1, fontSize: 11, color: '#001C43', wordBreak: 'break-all', background: 'var(--surface)', padding: '6px 10px', borderRadius: 6, border: '1px solid var(--border-col)' }}>
-                    {inviteCreated}
-                  </code>
-                  <button className="btn-outline btn-sm" style={{ fontSize: 11, whiteSpace: 'nowrap' }} onClick={() => navigator.clipboard.writeText(inviteCreated!)}>
-                    Copy
-                  </button>
-                </div>
-                <button onClick={() => setInviteCreated(null)} style={{ fontSize: 11, color: 'var(--mid-gray)', background: 'none', border: 'none', cursor: 'pointer', marginTop: 4, fontFamily: 'var(--drms-font)' }}>Dismiss</button>
-              </div>
-            )}
-          </div>
-
-          {/* Existing invites */}
-          <div className="drms-card" style={{ padding: 0, overflow: 'hidden', marginBottom: 20 }}>
-            <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border-col)', fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
-              Active Invites
-            </div>
-            {inviteLoading ? (
-              <div style={{ padding: 24, textAlign: 'center', color: 'var(--mid-gray)', fontSize: 13 }}>Loading...</div>
-            ) : invites.length === 0 ? (
-              <div style={{ padding: 24, textAlign: 'center', color: 'var(--mid-gray)', fontSize: 13, fontStyle: 'italic' }}>No invites created yet.</div>
-            ) : (
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-                <thead>
-                  <tr style={{ background: 'var(--surface-2)' }}>
-                    {['Office', 'Created', 'Status', 'Used', 'Actions'].map(h => (
-                      <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontWeight: 700, color: 'var(--mid-gray)', fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5 }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {invites.map(inv => (
-                    <tr key={inv.id} style={{ borderTop: '1px solid var(--border-col)' }}>
-                      <td style={{ padding: '10px 16px', fontWeight: 600, color: 'var(--text-primary)' }}>{inv.office_name}</td>
-                      <td style={{ padding: '10px 16px', color: 'var(--mid-gray)' }}>{new Date(inv.created_at).toLocaleDateString()}</td>
-                      <td style={{ padding: '10px 16px' }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 50, background: inv.is_active ? 'rgba(25,135,84,0.1)' : 'rgba(0,0,0,0.06)', color: inv.is_active ? '#198754' : 'var(--mid-gray)' }}>
-                          {inv.is_active ? 'Active' : 'Disabled'}
-                        </span>
-                      </td>
-                      <td style={{ padding: '10px 16px', color: 'var(--mid-gray)' }}>
-                        {inv.is_used ? `Used ${inv.used_at ? new Date(inv.used_at).toLocaleDateString() : ''}` : '—'}
-                      </td>
-                      <td style={{ padding: '10px 16px' }}>
-                        <div style={{ display: 'flex', gap: 6 }}>
-                          {!inv.is_used && (
-                            <>
-                              <button className="btn-outline btn-sm" style={{ fontSize: 11 }} onClick={() => toggleInvite(inv.id)}>
-                                {inv.is_active ? 'Disable' : 'Enable'}
-                              </button>
-                              <button className="btn-outline btn-sm" style={{ fontSize: 11 }} onClick={() => regenerateInvite(inv.id)}>
-                                New Link
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-
-          {/* Clearance office accounts */}
-          <div className="drms-card" style={{ padding: 0, overflow: 'hidden' }}>
-            <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border-col)', fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
-              Clearance Office Accounts
-            </div>
             {coStaff.length === 0 ? (
-              <div style={{ padding: 24, textAlign: 'center', color: 'var(--mid-gray)', fontSize: 13, fontStyle: 'italic' }}>No clearance office accounts yet.</div>
+              <div style={{ padding: 24, textAlign: 'center', color: 'var(--mid-gray)', fontSize: 13, fontStyle: 'italic' }}>
+                No clearance offices configured yet.
+              </div>
             ) : (
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-                <thead>
-                  <tr style={{ background: 'var(--surface-2)' }}>
-                    {['Name', 'Office', 'Email', 'Setup'].map(h => (
-                      <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontWeight: 700, color: 'var(--mid-gray)', fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5 }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {coStaff.map(s => (
-                    <tr key={s.staff_id} style={{ borderTop: '1px solid var(--border-col)' }}>
-                      <td style={{ padding: '10px 16px', fontWeight: 600, color: 'var(--text-primary)' }}>{s.display_name ?? `${s.last_name}, ${s.first_name}`}</td>
-                      <td style={{ padding: '10px 16px', color: 'var(--mid-gray)' }}>{s.office_name ?? '—'}</td>
-                      <td style={{ padding: '10px 16px', color: 'var(--mid-gray)' }}>{s.email}</td>
-                      <td style={{ padding: '10px 16px' }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 50, background: s.is_setup_complete ? 'rgba(25,135,84,0.1)' : 'rgba(255,163,35,0.1)', color: s.is_setup_complete ? '#198754' : '#FFA323' }}>
-                          {s.is_setup_complete ? 'Complete' : 'Pending Setup'}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div>
+                {coStaff.map(s => (
+                  <div key={s.office_name} style={{ borderBottom: '1px solid var(--border-col)', padding: '14px 20px' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+
+                      {/* Office info */}
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                          <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{s.office_name}</span>
+                          <span style={{
+                            fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 50,
+                            background: s.status === 'active' ? 'rgba(25,135,84,0.1)' : s.status === 'activated' ? 'rgba(17,75,159,0.1)' : s.status === 'placeholder' ? 'rgba(255,163,35,0.1)' : 'rgba(0,0,0,0.06)',
+                            color: s.status === 'active' ? '#198754' : s.status === 'activated' ? '#114B9F' : s.status === 'placeholder' ? '#FFA323' : 'var(--mid-gray)',
+                          }}>
+                            {s.status === 'active' ? 'Fully Active' : s.status === 'activated' ? 'Activated — Setup Pending' : s.status === 'placeholder' ? 'Placeholder' : 'No Account'}
+                          </span>
+                        </div>
+
+                        {/* Account details */}
+                        {s.status !== 'no_account' && (
+                          <div style={{ fontSize: 12, color: 'var(--mid-gray)', display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            <div>Display: {s.display_name ?? '—'}</div>
+                            <div>Email: {s.email ?? '—'}</div>
+                            {/* Show placeholder password only for placeholder accounts */}
+                            {s.status === 'placeholder' && s.placeholder_password && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <span>Password:</span>
+                                <code style={{ fontSize: 11, background: 'var(--surface-2)', padding: '1px 6px', borderRadius: 4, border: '1px solid var(--border-col)' }}>
+                                  {showPasswordId === s.staff_id ? s.placeholder_password : '••••••••••••'}
+                                </code>
+                                <button
+                                  onClick={() => setShowPasswordId(showPasswordId === s.staff_id ? null : s.staff_id)}
+                                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#114B9F', fontSize: 11, fontFamily: 'var(--drms-font)', fontWeight: 600 }}
+                                >
+                                  {showPasswordId === s.staff_id ? 'Hide' : 'Show'}
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Invite link section */}
+                        {s.status !== 'no_account' && (
+                          <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                            {s.has_invite ? (
+                              <>
+                                <span style={{ fontSize: 11, color: 'var(--mid-gray)' }}>Invite:</span>
+                                <span style={{
+                                  fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 50,
+                                  background: s.invite_active ? 'rgba(25,135,84,0.1)' : 'rgba(0,0,0,0.06)',
+                                  color: s.invite_active ? '#198754' : 'var(--mid-gray)',
+                                }}>
+                                  {s.invite_used ? 'Used' : s.invite_active ? 'Active' : 'Disabled'}
+                                </span>
+                                {!s.invite_used && (
+                                  <>
+                                    <button className="btn-outline btn-sm" style={{ fontSize: 10 }}
+                                      onClick={() => copyInviteLink(s.invite_token, s.staff_id)}>
+                                      {copiedInviteId === s.staff_id ? '✓ Copied!' : 'Copy Link'}
+                                    </button>
+                                    <button className="btn-outline btn-sm" style={{ fontSize: 10 }}
+                                      onClick={() => toggleInviteForOffice(s.invite_id, s.invite_active)}>
+                                      {s.invite_active ? 'Disable' : 'Enable'}
+                                    </button>
+                                    <button className="btn-outline btn-sm" style={{ fontSize: 10 }}
+                                      onClick={() => regenerateInviteForOffice(s.office_name)}>
+                                      New Link
+                                    </button>
+                                  </>
+                                )}
+                                {s.invite_used && (
+                                  <button className="btn-outline btn-sm" style={{ fontSize: 10 }}
+                                    onClick={() => regenerateInviteForOffice(s.office_name)}>
+                                    New Link
+                                  </button>
+                                )}
+                              </>
+                            ) : (
+                              <button className="btn-outline btn-sm" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}
+                                onClick={() => regenerateInviteForOffice(s.office_name)}>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 11, height: 11 }}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                Create Invite Link
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Actions */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
+                        {s.status === 'no_account' ? (
+                          <button
+                            className="btn-primary btn-sm"
+                            style={{ fontSize: 11 }}
+                            onClick={() => { setNewInviteOffice(s.office_name); }}
+                          >
+                            Create Account
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              className="btn-outline btn-sm"
+                              style={{ fontSize: 11 }}
+                              onClick={() => window.open(`/clearance-office/dashboard?office=${encodeURIComponent(s.office_name)}`, '_blank')}
+                            >
+                              View Dashboard →
+                            </button>
+                            <button
+                              className="btn-outline btn-sm"
+                              style={{ fontSize: 11 }}
+                              onClick={() => setResetAccountModal(s)}
+                            >
+                              Reset Account
+                            </button>
+                            <button
+                              className="btn-outline btn-sm"
+                              style={{ fontSize: 11, color: '#E50019', borderColor: '#E50019' }}
+                              onClick={() => setDeleteAccountModal(s)}
+                            >
+                              Remove
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         </div>
@@ -627,6 +750,48 @@ export default function AdminUsersPage() {
                 <button className="btn-primary" style={{ flex: 1, justifyContent: 'center' }} onClick={handleCreateUser} disabled={createLoading}>{createLoading ? 'Creating...' : 'Create Account'}</button>
                 <button className="btn-outline" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setCreateModal(false)}>Cancel</button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reset Account Modal */}
+      {resetAccountModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => setResetAccountModal(null)}>
+          <div style={{ background: 'var(--surface)', borderRadius: 12, padding: 28, width: 420, boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 8 }}>Reset Account</div>
+            <div style={{ fontSize: 13, color: 'var(--mid-gray)', marginBottom: 16, lineHeight: 1.6 }}>
+              Reset <strong>{resetAccountModal.office_name}</strong> back to placeholder state?
+            </div>
+            <div style={{ background: 'rgba(255,163,35,0.08)', border: '1px solid rgba(255,163,35,0.3)', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#7a4f00', marginBottom: 20, lineHeight: 1.6 }}>
+              This will clear the account's password, display name, and e-signature. The office will lose login access until they re-activate via a new invite link. Clearance history is preserved.
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button style={{ flex: 1, padding: 10, background: '#FFA323', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--drms-font)' }} disabled={resetLoading2} onClick={handleResetAccount}>
+                {resetLoading2 ? 'Resetting...' : 'Yes, Reset'}
+              </button>
+              <button className="btn-outline" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setResetAccountModal(null)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Account Modal */}
+      {deleteAccountModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => setDeleteAccountModal(null)}>
+          <div style={{ background: 'var(--surface)', borderRadius: 12, padding: 28, width: 420, boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: 16, fontWeight: 800, color: '#E50019', marginBottom: 8 }}>Remove Account</div>
+            <div style={{ fontSize: 13, color: 'var(--mid-gray)', marginBottom: 16, lineHeight: 1.6 }}>
+              Remove the account for <strong>{deleteAccountModal.office_name}</strong>?
+            </div>
+            <div style={{ background: 'rgba(229,0,25,0.06)', border: '1px solid rgba(229,0,25,0.2)', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#E50019', marginBottom: 20, lineHeight: 1.6 }}>
+              The account and invite link will be permanently deleted. Clearance records and history for this office are preserved. This office will still appear in the list if it exists in the office configuration.
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button style={{ flex: 1, padding: 10, background: '#E50019', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--drms-font)' }} disabled={deleteAccountLoading} onClick={handleDeleteAccount}>
+                {deleteAccountLoading ? 'Removing...' : 'Yes, Remove'}
+              </button>
+              <button className="btn-outline" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setDeleteAccountModal(null)}>Cancel</button>
             </div>
           </div>
         </div>
