@@ -92,6 +92,12 @@ export default function ClearanceOfficeDashboard() {
   const userSelectedRef = useRef(false);
   
   const [isDark, setIsDark] = useState(false);
+  const bg     = isDark ? '#0f1117' : '#f4f6fb';
+  const card   = isDark ? '#1c2236' : 'white';
+  const border = isDark ? 'rgba(255,255,255,0.07)' : '#eaecf0';
+  const txt    = isDark ? '#dde1ed' : '#001C43';
+  const sub    = isDark ? '#8890a4' : '#888';
+  const subtle = isDark ? '#252e45' : '#f8f9fa';
 
   function showToast(msg: string) {
     setToast(msg);
@@ -236,7 +242,7 @@ export default function ClearanceOfficeDashboard() {
   const tabStyle = (t: string): React.CSSProperties => ({
     padding: '8px 18px', fontSize: 13, fontWeight: activeTab === t ? 700 : 500,
     border: 'none', borderBottom: activeTab === t ? '2px solid #114B9F' : '2px solid transparent',
-    background: 'none', color: activeTab === t ? '#114B9F' : '#888',
+    background: 'none', color: activeTab === t ? '#114B9F' : sub,
     cursor: 'pointer', fontFamily: "'Montserrat', sans-serif", transition: 'all .15s',
   });
 
@@ -248,7 +254,7 @@ export default function ClearanceOfficeDashboard() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f4f6fb', fontFamily: "'Montserrat', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: bg, fontFamily: "'Montserrat', sans-serif" }}>
 
       {/* Top nav */}
       <div style={{ background: '#001C43', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 56 }}>
@@ -315,9 +321,9 @@ export default function ClearanceOfficeDashboard() {
             { label: 'Cleared Today', value: cleared.filter(c => c.cleared_at && new Date(c.cleared_at).toDateString() === new Date().toDateString()).length, color: '#198754', bg: 'rgba(25,135,84,0.1)' },
             { label: 'Total Cleared', value: cleared.length, color: '#114B9F', bg: 'rgba(17,75,159,0.1)' },
           ].map(s => (
-            <div key={s.label} style={{ background: 'white', borderRadius: 10, padding: '16px 20px', border: '1px solid #eaecf0', borderBottom: `3px solid ${s.color}` }}>
+            <div key={s.label} style={{ background: card, borderRadius: 10, padding: '16px 20px', border: `1px solid ${border}`, borderBottom: `3px solid ${s.color}` }}>
               <div style={{ fontSize: 28, fontWeight: 800, color: s.color }}>{loading ? '—' : s.value}</div>
-              <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>{s.label}</div>
+              <div style={{ fontSize: 12, color: sub, marginTop: 2 }}>{s.label}</div>
             </div>
           ))}
         </div>
@@ -329,8 +335,8 @@ export default function ClearanceOfficeDashboard() {
         )}
 
         {/* Tabs */}
-        <div style={{ background: 'white', borderRadius: 12, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
-          <div style={{ display: 'flex', borderBottom: '1px solid #eaecf0', padding: '0 20px' }}>
+        <div style={{ background: card, borderRadius: 12, boxShadow: isDark ? '0 2px 12px rgba(0,0,0,0.4)' : '0 2px 12px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+          <div style={{ display: 'flex', borderBottom: `1px solid ${border}`, padding: '0 20px' }}>
             <button style={tabStyle('pending')} onClick={() => setActiveTab('pending')}>
               Pending
               {pending.length > 0 && <span style={{ marginLeft: 6, background: '#E50019', color: 'white', fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 50 }}>{pending.length}</span>}
@@ -366,13 +372,13 @@ export default function ClearanceOfficeDashboard() {
                   {auditLogs.map(log => {
                     const meta = ACTION_LABELS[log.action] ?? { label: log.action, color: '#888' };
                     return (
-                      <div key={log.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 0', borderBottom: '1px solid #f0f0f0' }}>
+                      <div key={log.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 0', borderBottom: `1px solid ${border}` }}>
                         <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 50, background: `${meta.color}18`, color: meta.color, whiteSpace: 'nowrap', flexShrink: 0 }}>
                           {meta.label}
                         </span>
                         <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: 12, color: '#001C43', fontWeight: 600 }}>{log.performed_by}</div>
-                          <div style={{ fontSize: 11, color: '#888', marginTop: 1 }}>{log.details}</div>
+                          <div style={{ fontSize: 12, color: txt, fontWeight: 600 }}>{log.performed_by}</div>
+                          <div style={{ fontSize: 11, color: sub, marginTop: 1 }}>{log.details}</div>
                         </div>
                         <div style={{ fontSize: 11, color: '#aaa', whiteSpace: 'nowrap', flexShrink: 0 }}>{formatDate(log.created_at)}</div>
                       </div>
@@ -388,7 +394,7 @@ export default function ClearanceOfficeDashboard() {
             <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', minHeight: 480 }}>
 
               {/* Left — list */}
-              <div style={{ borderRight: '1px solid #eaecf0', overflowY: 'auto', maxHeight: 600 }}>
+              <div style={{ borderRight: `1px solid ${border}`, overflowY: 'auto', maxHeight: 600 }}>
                 {loading && (
                   <div style={{ padding: 32, textAlign: 'center', color: '#888', fontSize: 13 }}>Loading...</div>
                 )}
@@ -403,18 +409,18 @@ export default function ClearanceOfficeDashboard() {
                     <div
                       key={c.clearance_id}
                       onClick={() => { setSelectedId(c.clearance_id); userSelectedRef.current = true; }}
-                      style={{ padding: '14px 16px', borderBottom: '1px solid #f0f0f0', cursor: 'pointer', background: isSelected ? 'rgba(17,75,159,0.06)' : 'white', borderLeft: isSelected ? '3px solid #114B9F' : '3px solid transparent', transition: 'all .12s' }}
+                      style={{ padding: '14px 16px', borderBottom: `1px solid ${border}`, cursor: 'pointer', background: isSelected ? (isDark ? 'rgba(125,179,255,0.1)' : 'rgba(17,75,159,0.06)') : card, borderLeft: isSelected ? '3px solid #114B9F' : '3px solid transparent', transition: 'all .12s' }}
                     >
-                      <div style={{ fontSize: 12, fontWeight: 700, color: '#001C43' }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: txt }}>
                         {formatRequestId(c.request.request_id, c.request.document_request_no)}
                       </div>
-                      <div style={{ fontSize: 11, color: '#888', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontSize: 11, color: sub, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {c.request.student_name}
                       </div>
-                      <div style={{ fontSize: 11, color: '#aaa', marginTop: 2 }}>
+                      <div style={{ fontSize: 11, color: isDark ? '#6b7280' : '#aaa', marginTop: 2 }}>
                         {c.request.documents}
                       </div>
-                      <div style={{ fontSize: 10, color: '#ccc', marginTop: 3 }}>
+                      <div style={{ fontSize: 10, color: isDark ? '#4b5563' : '#ccc', marginTop: 3 }}>
                         Submitted {new Date(c.request.date_submitted).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </div>
                     </div>
@@ -428,10 +434,10 @@ export default function ClearanceOfficeDashboard() {
 
                   {/* Request info */}
                   <div style={{ marginBottom: 20 }}>
-                    <div style={{ fontSize: 16, fontWeight: 800, color: '#001C43', marginBottom: 4 }}>
+                    <div style={{ fontSize: 16, fontWeight: 800, color: txt, marginBottom: 4 }}>
                       {formatRequestId(selected.request.request_id, selected.request.document_request_no)}
                     </div>
-                    <div style={{ fontSize: 12, color: '#888' }}>{selected.request.form_type} · {selected.request.current_status}</div>
+                    <div style={{ fontSize: 12, color: sub }}>{selected.request.form_type} · {selected.request.current_status}</div>
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
@@ -443,17 +449,17 @@ export default function ClearanceOfficeDashboard() {
                       { label: 'Documents', value: selected.request.documents },
                     ].map(f => (
                       <div key={f.label} style={{ gridColumn: f.label === 'Documents' ? '1 / -1' : undefined }}>
-                        <div style={{ fontSize: 10, fontWeight: 700, color: '#aaa', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 3 }}>{f.label}</div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: '#001C43' }}>{f.value}</div>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: isDark ? '#6b7280' : '#aaa', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 3 }}>{f.label}</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: txt }}>{f.value}</div>
                       </div>
                     ))}
                   </div>
 
                   {/* Purpose */}
                   {selected.request.purpose && (
-                    <div style={{ background: '#f8f9fa', borderRadius: 8, padding: '10px 14px', marginBottom: 20 }}>
+                    <div style={{ background: subtle, borderRadius: 8, padding: '10px 14px', marginBottom: 20 }}>
                       <div style={{ fontSize: 10, fontWeight: 700, color: '#aaa', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Purpose</div>
-                      <div style={{ fontSize: 13, color: '#444', lineHeight: 1.6 }}>{selected.request.purpose}</div>
+                      <div style={{ fontSize: 13, color: isDark ? '#9ca3af' : '#444', lineHeight: 1.6 }}></div>
                     </div>
                   )}
 
@@ -471,7 +477,7 @@ export default function ClearanceOfficeDashboard() {
                     <div>
                       {/* Signature preview */}
                       {sigUrl && (
-                        <div style={{ marginBottom: 16, padding: '12px 14px', background: '#f8f9fa', borderRadius: 8 }}>
+                        <div style={{ marginBottom: 16, padding: '12px 14px', background: subtle, borderRadius: 8 }}>
                           <div style={{ fontSize: 10, fontWeight: 700, color: '#aaa', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>Your signature (auto-populated)</div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                             <img src={sigUrl} alt="Your signature" style={{ height: 40, maxWidth: 120, objectFit: 'contain', border: '1px solid #eee', borderRadius: 4, padding: 4, background: 'white' }} />
@@ -508,14 +514,14 @@ export default function ClearanceOfficeDashboard() {
       {/* Confirm clearance modal */}
       {confirmModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => setConfirmModal(null)}>
-          <div style={{ background: 'white', borderRadius: 14, padding: 28, width: 440, boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: 16, fontWeight: 800, color: '#001C43', marginBottom: 4, fontFamily: "'Montserrat', sans-serif" }}>Confirm Clearance</div>
-            <div style={{ fontSize: 12, color: '#888', marginBottom: 20, fontFamily: "'Montserrat', sans-serif" }}>
+          <div style={{ background: card, borderRadius: 14, padding: 28, width: 440, boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: 16, fontWeight: 800, color: txt, marginBottom: 4, fontFamily: "'Montserrat', sans-serif" }}>Confirm Clearance</div>
+            <div style={{ fontSize: 12, color: sub, marginBottom: 20, fontFamily: "'Montserrat', sans-serif" }}>
               You are confirming clearance for <strong>{confirmModal.request.student_name}</strong>
             </div>
 
             {/* Auto-populate preview */}
-            <div style={{ background: '#f8f9fa', borderRadius: 8, padding: '12px 14px', marginBottom: 16 }}>
+            <div style={{ background: subtle, borderRadius: 8, padding: '12px 14px', marginBottom: 16 }}>
               <div style={{ fontSize: 10, fontWeight: 700, color: '#aaa', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8, fontFamily: "'Montserrat', sans-serif" }}>Will be recorded as</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 {sigUrl && <img src={sigUrl} alt="Signature" style={{ height: 36, maxWidth: 100, objectFit: 'contain', border: '1px solid #eee', borderRadius: 4, padding: 4, background: 'white' }} />}
@@ -536,7 +542,7 @@ export default function ClearanceOfficeDashboard() {
                 onChange={e => setRemarks(e.target.value)}
                 placeholder="Any notes or remarks..."
                 rows={3}
-                style={{ width: '100%', padding: '9px 12px', fontSize: 13, border: '1.5px solid #dde3ed', borderRadius: 8, fontFamily: "'Montserrat', sans-serif", outline: 'none', resize: 'vertical', boxSizing: 'border-box', color: '#001C43' }}
+                style={{ width: '100%', padding: '9px 12px', fontSize: 13, border: `1.5px solid ${border}`, borderRadius: 8, fontFamily: "'Montserrat', sans-serif", outline: 'none', resize: 'vertical', boxSizing: 'border-box', color: txt, background: isDark ? '#252e45' : 'white' }}
               />
             </div>
 
@@ -554,7 +560,7 @@ export default function ClearanceOfficeDashboard() {
               </button>
               <button
                 onClick={() => setConfirmModal(null)}
-                style={{ flex: 1, padding: 11, background: 'none', border: '1.5px solid #dde3ed', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif", color: '#001C43' }}
+                style={{ flex: 1, padding: 11, background: 'none', border: `1.5px solid ${border}`, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif", color: txt }}
               >
                 Cancel
               </button>
