@@ -34,7 +34,7 @@ export default function ClearanceOfficeLoginPage() {
       sessionStorage.setItem('co_role',        data.role);
       sessionStorage.setItem('co_signature',   data.signature_image_url ?? '');
       sessionStorage.setItem('co_setup',       String(data.is_setup_complete));
-      sessionStorage.setItem('co_email', data.email ?? '');
+      
 
       if (!data.is_setup_complete && data.role !== 'Super Admin') {
         router.push('/clearance-office/setup');
@@ -57,7 +57,7 @@ export default function ClearanceOfficeLoginPage() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+    <div style={{ minHeight: '100vh', background: `url('/mmcm-bg.jpeg') center/cover no-repeat fixed`, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{ width: '100%', maxWidth: 400 }}>
 
         {/* Logo + header */}

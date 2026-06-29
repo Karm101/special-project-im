@@ -4,9 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { API_BASE } from '@/lib/lib_api';
 
-// ── Replace with your MMCM campus photo ───────────────────────────────────────
 // To use a local photo: put the file in special-project-im/public/campus.jpg
-// then change this to: const CAMPUS_IMG = '/campus.jpg';
+
 const CAMPUS_IMG = '/mmcm-bg.jpeg';
 
 const EyeIcon = () => (

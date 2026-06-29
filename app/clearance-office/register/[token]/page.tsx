@@ -107,7 +107,7 @@ export default function ClearanceOfficeRegisterPage() {
   );
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+    <div style={{ minHeight: '100vh', background: `url('/mmcm-bg.jpeg') center/cover no-repeat fixed`, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{ width: '100%', maxWidth: 480 }}>
 
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
