@@ -255,6 +255,12 @@ export default function ClearanceOfficeDashboard() {
           <button onClick={signOut} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', padding: '6px 12px', borderRadius: 6, fontSize: 12, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif" }}>
             Sign Out
           </button>
+          <button
+            onClick={() => router.push('/clearance-office/profile')}
+            style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', padding: '6px 12px', borderRadius: 6, fontSize: 12, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif" }}
+          >
+            My Profile
+          </button>
         </div>
       </div>
 

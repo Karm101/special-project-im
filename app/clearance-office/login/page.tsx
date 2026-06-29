@@ -34,6 +34,7 @@ export default function ClearanceOfficeLoginPage() {
       sessionStorage.setItem('co_role',        data.role);
       sessionStorage.setItem('co_signature',   data.signature_image_url ?? '');
       sessionStorage.setItem('co_setup',       String(data.is_setup_complete));
+      sessionStorage.setItem('co_email', data.email ?? '');
 
       if (!data.is_setup_complete && data.role !== 'Super Admin') {
         router.push('/clearance-office/setup');

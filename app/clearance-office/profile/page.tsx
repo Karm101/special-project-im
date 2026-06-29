@@ -1,0 +1,312 @@
+"use client";
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@supabase/supabase-js';
+import { API_BASE } from '@/lib/lib_api';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+export default function ClearanceOfficeProfilePage() {
+  const router = useRouter();
+
+  const [token, setToken]           = useState('');
+  const [officeName, setOfficeName] = useState('');
+  const [role, setRole]             = useState('');
+
+  // Profile fields
+  const [displayName, setDisplayName]   = useState('');
+  const [email, setEmail]               = useState('');
+  const [sigUrl, setSigUrl]             = useState('');
+
+  // Edit states
+  const [editName, setEditName]         = useState('');
+  const [editingName, setEditingName]   = useState(false);
+  const [savingName, setSavingName]     = useState(false);
+  const [nameError, setNameError]       = useState('');
+  const [nameSuccess, setNameSuccess]   = useState('');
+
+  // Password reset
+  const [showPwForm, setShowPwForm]     = useState(false);
+  const [oldPw, setOldPw]               = useState('');
+  const [newPw, setNewPw]               = useState('');
+  const [confirmPw, setConfirmPw]       = useState('');
+  const [pwLoading, setPwLoading]       = useState(false);
+  const [pwError, setPwError]           = useState('');
+  const [pwSuccess, setPwSuccess]       = useState('');
+
+  // Signature
+  const [sigFile, setSigFile]           = useState<File | null>(null);
+  const [sigPreview, setSigPreview]     = useState('');
+  const [uploadingSig, setUploadingSig] = useState(false);
+  const [sigError, setSigError]         = useState('');
+  const [sigSuccess, setSigSuccess]     = useState('');
+
+  useEffect(() => {
+    const t  = sessionStorage.getItem('co_token') ?? '';
+    const on = sessionStorage.getItem('co_office_name') ?? '';
+    const dn = sessionStorage.getItem('co_display_name') ?? '';
+    const r  = sessionStorage.getItem('co_role') ?? '';
+    const sig = sessionStorage.getItem('co_signature') ?? '';
+    const em = sessionStorage.getItem('co_email') ?? '';
+
+    if (!t) { router.push('/clearance-office/login'); return; }
+
+    setToken(t);
+    setOfficeName(on);
+    setDisplayName(dn);
+    setEditName(dn);
+    setRole(r);
+    setSigUrl(sig);
+    setEmail(em);
+  }, []);
+
+  async function handleSaveName() {
+    if (!editName.trim()) { setNameError('Display name is required.'); return; }
+    setSavingName(true);
+    setNameError('');
+    setNameSuccess('');
+    try {
+      const res = await fetch(`${API_BASE}/clearance-office/profile/`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Token ${token}` },
+        body: JSON.stringify({ display_name: editName.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setNameError(data.error ?? 'Failed to save.'); return; }
+      setDisplayName(editName.trim());
+      sessionStorage.setItem('co_display_name', editName.trim());
+      setEditingName(false);
+      setNameSuccess('Display name updated.');
+      setTimeout(() => setNameSuccess(''), 3000);
+    } catch { setNameError('Could not connect to server.'); }
+    finally { setSavingName(false); }
+  }
+
+  async function handleChangePassword() {
+    if (!oldPw || !newPw || !confirmPw) { setPwError('All fields are required.'); return; }
+    if (newPw.length < 8) { setPwError('New password must be at least 8 characters.'); return; }
+    if (newPw !== confirmPw) { setPwError('Passwords do not match.'); return; }
+    setPwLoading(true);
+    setPwError('');
+    setPwSuccess('');
+    try {
+      const res = await fetch(`${API_BASE}/clearance-office/change-password/`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Token ${token}` },
+        body: JSON.stringify({ old_password: oldPw, new_password: newPw }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setPwError(data.error ?? 'Failed to change password.'); return; }
+      setPwSuccess('Password changed successfully.');
+      setOldPw(''); setNewPw(''); setConfirmPw('');
+      setShowPwForm(false);
+      setTimeout(() => setPwSuccess(''), 3000);
+    } catch { setPwError('Could not connect to server.'); }
+    finally { setPwLoading(false); }
+  }
+
+  function handleSigChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSigFile(file);
+    setSigPreview(URL.createObjectURL(file));
+    setSigError('');
+    setSigSuccess('');
+  }
+
+  async function handleUploadSig() {
+    if (!sigFile) { setSigError('Please select a signature image.'); return; }
+    setUploadingSig(true);
+    setSigError('');
+    setSigSuccess('');
+    try {
+      const ext      = sigFile.name.split('.').pop();
+      const fileName = `sig_${Date.now()}.${ext}`;
+      const { error: uploadErr } = await supabase.storage
+        .from('office-signatures')
+        .upload(fileName, sigFile, { upsert: true });
+
+      if (uploadErr) throw new Error(uploadErr.message);
+
+      const { data: urlData } = supabase.storage
+        .from('office-signatures')
+        .getPublicUrl(fileName);
+
+      const newSigUrl = urlData.publicUrl;
+
+      const res = await fetch(`${API_BASE}/clearance-office/profile/`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Token ${token}` },
+        body: JSON.stringify({ signature_image_url: newSigUrl }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setSigError(data.error ?? 'Failed to save signature.'); return; }
+
+      setSigUrl(newSigUrl);
+      sessionStorage.setItem('co_signature', newSigUrl);
+      setSigFile(null);
+      setSigPreview('');
+      setSigSuccess('E-signature updated successfully.');
+      setTimeout(() => setSigSuccess(''), 3000);
+    } catch (e: any) {
+      setSigError(e.message ?? 'Upload failed.');
+    } finally {
+      setUploadingSig(false);
+    }
+  }
+
+  const inp: React.CSSProperties = {
+    width: '100%', padding: '10px 12px', fontSize: 13,
+    border: '1.5px solid #dde3ed', borderRadius: 8,
+    fontFamily: "'Montserrat', sans-serif", outline: 'none',
+    boxSizing: 'border-box', background: 'white', color: '#001C43',
+  };
+
+  return (
+    <div style={{ minHeight: '100vh', background: '#f4f6fb', fontFamily: "'Montserrat', sans-serif" }}>
+
+      {/* Top nav */}
+      <div style={{ background: '#001C43', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 56 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <img src="/mmcm-logo.png" alt="MMCM" style={{ height: 32 }} />
+          <div>
+            <div style={{ color: 'white', fontSize: 13, fontWeight: 700 }}>{officeName}</div>
+            <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Clearance Office Portal</div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button
+            onClick={() => router.push('/clearance-office/dashboard')}
+            style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', padding: '6px 12px', borderRadius: 6, fontSize: 12, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif" }}
+          >
+            ← Back to Dashboard
+          </button>
+        </div>
+      </div>
+
+      <div style={{ padding: '32px 24px', maxWidth: 640, margin: '0 auto' }}>
+        <div style={{ fontSize: 20, fontWeight: 800, color: '#001C43', marginBottom: 4 }}>My Profile</div>
+        <div style={{ fontSize: 13, color: '#888', marginBottom: 28 }}>{officeName} — {role}</div>
+
+        {/* Display Name */}
+        <div style={{ background: 'white', borderRadius: 12, padding: 24, marginBottom: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#001C43', marginBottom: 16 }}>Display Name</div>
+          <div style={{ fontSize: 12, color: '#888', marginBottom: 12 }}>
+            This name appears on all clearance records you confirm.
+          </div>
+          {editingName ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <input style={inp} value={editName} onChange={e => setEditName(e.target.value)} placeholder="Your display name" autoFocus />
+              {nameError && <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600 }}>{nameError}</div>}
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={handleSaveName} disabled={savingName} style={{ flex: 1, padding: '9px', background: '#001C43', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif" }}>
+                  {savingName ? 'Saving...' : 'Save'}
+                </button>
+                <button onClick={() => { setEditingName(false); setEditName(displayName); setNameError(''); }} style={{ flex: 1, padding: '9px', background: 'none', border: '1.5px solid #dde3ed', borderRadius: 8, fontSize: 13, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif", color: '#001C43' }}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#001C43' }}>{displayName || '—'}</div>
+              <button onClick={() => setEditingName(true)} style={{ fontSize: 12, fontWeight: 600, color: '#114B9F', background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Montserrat', sans-serif" }}>Edit</button>
+            </div>
+          )}
+          {nameSuccess && <div style={{ fontSize: 12, color: '#198754', fontWeight: 600, marginTop: 8 }}>✓ {nameSuccess}</div>}
+        </div>
+
+        {/* Email */}
+        <div style={{ background: 'white', borderRadius: 12, padding: 24, marginBottom: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#001C43', marginBottom: 8 }}>Email</div>
+          <div style={{ fontSize: 15, fontWeight: 600, color: '#001C43' }}>{email || '—'}</div>
+          <div style={{ fontSize: 12, color: '#888', marginTop: 4 }}>Contact the Registrar's Office to change your email address.</div>
+        </div>
+
+        {/* E-Signature */}
+        <div style={{ background: 'white', borderRadius: 12, padding: 24, marginBottom: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#001C43', marginBottom: 8 }}>E-Signature</div>
+          <div style={{ fontSize: 12, color: '#888', marginBottom: 16 }}>Your e-signature is auto-populated when you confirm clearances.</div>
+
+          {/* Current signature */}
+          {sigUrl && (
+            <div style={{ marginBottom: 16, padding: '12px 14px', background: '#f8f9fa', borderRadius: 8 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Current Signature</div>
+              <img src={sigUrl} alt="Current signature" style={{ maxHeight: 80, maxWidth: 200, objectFit: 'contain', border: '1px solid #eee', borderRadius: 4, padding: 4, background: 'white' }} />
+            </div>
+          )}
+
+          {/* Upload new */}
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#888', marginBottom: 8 }}>
+            {sigUrl ? 'Replace Signature' : 'Upload Signature'}
+          </div>
+          <div
+            onClick={() => document.getElementById('sig-upload-profile')?.click()}
+            style={{ border: '2px dashed #dde3ed', borderRadius: 10, padding: 20, textAlign: 'center', cursor: 'pointer', background: '#fafbfd', marginBottom: 12 }}
+            onMouseEnter={e => (e.currentTarget.style.borderColor = '#114B9F')}
+            onMouseLeave={e => (e.currentTarget.style.borderColor = '#dde3ed')}
+          >
+            {sigPreview ? (
+              <img src={sigPreview} alt="New signature preview" style={{ maxHeight: 70, maxWidth: '100%', objectFit: 'contain' }} />
+            ) : (
+              <>
+                <svg viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" style={{ width: 28, height: 28, margin: '0 auto 8px' }}><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <div style={{ fontSize: 12, color: '#aaa' }}>Click to select a signature image</div>
+                <div style={{ fontSize: 11, color: '#ccc', marginTop: 2 }}>JPG or PNG recommended</div>
+              </>
+            )}
+          </div>
+          <input id="sig-upload-profile" type="file" accept="image/*" style={{ display: 'none' }} onChange={handleSigChange} />
+
+          {sigPreview && (
+            <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+              <button onClick={handleUploadSig} disabled={uploadingSig} style={{ flex: 1, padding: '9px', background: '#001C43', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif" }}>
+                {uploadingSig ? 'Uploading...' : 'Save New Signature'}
+              </button>
+              <button onClick={() => { setSigFile(null); setSigPreview(''); }} style={{ flex: 1, padding: '9px', background: 'none', border: '1.5px solid #dde3ed', borderRadius: 8, fontSize: 13, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif", color: '#001C43' }}>
+                Cancel
+              </button>
+            </div>
+          )}
+          {sigError   && <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600 }}>{sigError}</div>}
+          {sigSuccess && <div style={{ fontSize: 12, color: '#198754', fontWeight: 600 }}>✓ {sigSuccess}</div>}
+        </div>
+
+        {/* Change Password */}
+        <div style={{ background: 'white', borderRadius: 12, padding: 24, marginBottom: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: showPwForm ? 16 : 0 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#001C43' }}>Password</div>
+            <button onClick={() => { setShowPwForm(!showPwForm); setPwError(''); setPwSuccess(''); setOldPw(''); setNewPw(''); setConfirmPw(''); }} style={{ fontSize: 12, fontWeight: 600, color: '#114B9F', background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Montserrat', sans-serif" }}>
+              {showPwForm ? 'Cancel' : 'Change Password'}
+            </button>
+          </div>
+          {showPwForm && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 700, color: '#888', display: 'block', marginBottom: 4 }}>CURRENT PASSWORD</label>
+                <input style={inp} type="password" value={oldPw} onChange={e => { setOldPw(e.target.value); setPwError(''); }} placeholder="Enter current password" />
+              </div>
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 700, color: '#888', display: 'block', marginBottom: 4 }}>NEW PASSWORD</label>
+                <input style={inp} type="password" value={newPw} onChange={e => { setNewPw(e.target.value); setPwError(''); }} placeholder="At least 8 characters" />
+              </div>
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 700, color: '#888', display: 'block', marginBottom: 4 }}>CONFIRM NEW PASSWORD</label>
+                <input style={inp} type="password" value={confirmPw} onChange={e => { setConfirmPw(e.target.value); setPwError(''); }} placeholder="Repeat new password" />
+              </div>
+              {pwError   && <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600 }}>{pwError}</div>}
+              {pwSuccess && <div style={{ fontSize: 12, color: '#198754', fontWeight: 600 }}>✓ {pwSuccess}</div>}
+              <button onClick={handleChangePassword} disabled={pwLoading} style={{ padding: '10px', background: '#001C43', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif" }}>
+                {pwLoading ? 'Changing...' : 'Change Password'}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
