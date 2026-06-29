@@ -91,6 +91,8 @@ export default function ClearanceOfficeDashboard() {
 
   const userSelectedRef = useRef(false);
   
+  const [isDark, setIsDark] = useState(false);
+
   function showToast(msg: string) {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
@@ -183,8 +185,9 @@ export default function ClearanceOfficeDashboard() {
   }, [token, fetchClearances]);
 
   useEffect(() => {
-    const savedTheme = sessionStorage.getItem('co_theme');
-    if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
+    const savedTheme = sessionStorage.getItem('co_theme') ?? 'light';
+    setIsDark(savedTheme === 'dark');
+    document.documentElement.setAttribute('data-theme', savedTheme);
   }, []);
 
   async function handleConfirm() {
@@ -237,6 +240,13 @@ export default function ClearanceOfficeDashboard() {
     cursor: 'pointer', fontFamily: "'Montserrat', sans-serif", transition: 'all .15s',
   });
 
+  function toggleDark() {
+    const next = isDark ? 'light' : 'dark';
+    setIsDark(!isDark);
+    document.documentElement.setAttribute('data-theme', next);
+    sessionStorage.setItem('co_theme', next);
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: '#f4f6fb', fontFamily: "'Montserrat', sans-serif" }}>
 
@@ -255,28 +265,25 @@ export default function ClearanceOfficeDashboard() {
             <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>{role}</div>
           </div>
           <button
-            onClick={() => {
-              const root = document.documentElement;
-              const isDark = root.getAttribute('data-theme') === 'dark';
-              root.setAttribute('data-theme', isDark ? 'light' : 'dark');
-              sessionStorage.setItem('co_theme', isDark ? 'light' : 'dark');
-            }}
-            style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', padding: '6px 10px', borderRadius: 6, fontSize: 16, cursor: 'pointer' }}
+            onClick={toggleDark}
+            style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', padding: '6px 10px', borderRadius: 6, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             title="Toggle dark mode"
           >
-            {typeof window !== 'undefined' && document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙'}
-          </button>
-          <button onClick={() => router.push('/clearance-office/profile')} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', padding: '6px 12px', borderRadius: 6, fontSize: 12, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif" }}>
-            My Profile
+            {isDark ? (
+              <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}>
+                <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}>
+                <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+              </svg>
+            )}
           </button>
           <button onClick={signOut} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', padding: '6px 12px', borderRadius: 6, fontSize: 12, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif" }}>
             Sign Out
-          </button>
-          <button
-            onClick={() => router.push('/clearance-office/profile')}
-            style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', padding: '6px 12px', borderRadius: 6, fontSize: 12, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif" }}
-          >
-            My Profile
           </button>
         </div>
       </div>

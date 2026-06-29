@@ -17,6 +17,8 @@ export default function ClearanceOfficeProfilePage() {
   const [officeName, setOfficeName] = useState('');
   const [role, setRole]             = useState('');
 
+  const [isDark, setIsDark] = useState(false);
+
   // Profile fields
   const [displayName, setDisplayName]   = useState('');
   const [email, setEmail]               = useState('');
@@ -57,6 +59,7 @@ export default function ClearanceOfficeProfilePage() {
     const r  = sessionStorage.getItem('co_role') ?? '';
     const sig = sessionStorage.getItem('co_signature') ?? '';
     const em = sessionStorage.getItem('co_email') ?? '';
+    const savedTheme = sessionStorage.getItem('co_theme') ?? 'light';
 
     if (!t) { router.push('/clearance-office/login'); return; }
 
@@ -67,7 +70,17 @@ export default function ClearanceOfficeProfilePage() {
     setRole(r);
     setSigUrl(sig);
     setEmail(em);
+    setIsDark(savedTheme === 'dark');
+
+    document.documentElement.setAttribute('data-theme', savedTheme);
   }, []);
+
+  function toggleDark() {
+    const next = isDark ? 'light' : 'dark';
+    setIsDark(!isDark);
+    document.documentElement.setAttribute('data-theme', next);
+    sessionStorage.setItem('co_theme', next);
+  }
 
   async function handleSaveName() {
     if (!editName.trim()) { setNameError('Display name is required.'); return; }
@@ -211,6 +224,24 @@ export default function ClearanceOfficeProfilePage() {
             style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', padding: '6px 12px', borderRadius: 6, fontSize: 12, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif" }}
           >
             ← Back to Dashboard
+          </button>
+          <button
+            onClick={toggleDark}
+            style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', padding: '6px 10px', borderRadius: 6, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            title="Toggle dark mode"
+          >
+            {isDark ? (
+              <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}>
+                <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}>
+                <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+              </svg>
+            )}
           </button>
         </div>
       </div>

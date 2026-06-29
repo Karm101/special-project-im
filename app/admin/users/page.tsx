@@ -601,6 +601,33 @@ export default function AdminUsersPage() {
                       <div style={{ flex: 1 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
                           <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{s.office_name}</span>
+                          {s.staff_id && (
+                            editNickname === s.staff_id ? (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                <input
+                                  value={nicknameVal}
+                                  onChange={e => setNicknameVal(e.target.value)}
+                                  onKeyDown={e => {
+                                    if (e.key === 'Enter') saveNickname(s.staff_id);
+                                    if (e.key === 'Escape') setEditNickname(null);
+                                  }}
+                                  autoFocus
+                                  placeholder="e.g. Director"
+                                  style={{ fontSize: 12, padding: '2px 6px', border: '1px solid #114B9F', borderRadius: 4, fontFamily: 'var(--drms-font)', outline: 'none', width: 120, fontWeight: 400 }}
+                                />
+                                <button onClick={() => saveNickname(s.staff_id)} disabled={savingNickname} style={{ fontSize: 10, color: '#198754', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700 }}>✓</button>
+                                <button onClick={() => setEditNickname(null)} style={{ fontSize: 10, color: '#888', background: 'none', border: 'none', cursor: 'pointer' }}>✕</button>
+                              </div>
+                            ) : (
+                              <span
+                                onClick={() => { setEditNickname(s.staff_id); setNicknameVal(s.nickname ?? ''); }}
+                                style={{ fontSize: 12, color: s.nickname ? 'var(--text-primary)' : 'var(--mid-gray)', cursor: 'pointer', fontStyle: s.nickname ? 'normal' : 'italic', borderBottom: '1px dashed var(--mid-gray)', paddingBottom: 1 }}
+                                title="Click to edit label"
+                              >
+                                {s.nickname ? `— ${s.nickname}` : '+ label'}
+                              </span>
+                            )
+                          )}
                           <span style={{
                             fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 50,
                             background: s.status === 'active' ? 'rgba(25,135,84,0.1)' : s.status === 'activated' ? 'rgba(17,75,159,0.1)' : s.status === 'placeholder' ? 'rgba(255,163,35,0.1)' : 'rgba(0,0,0,0.06)',
