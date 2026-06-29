@@ -106,11 +106,10 @@ export default function AdminUsersPage() {
 
   async function fetchConfigOffices() {
     try {
-      const res = await fetch(`${API_BASE}/clearance-office-config/?active_only=true`);
+      const res = await fetch(`${API_BASE}/clearance-office/office-names/`);
       if (res.ok) {
         const data = await res.json();
-        const names = Array.from(new Set(data.map((c: any) => c.office_name as string))).sort() as string[];
-        setConfigOffices(names);
+        setConfigOffices(data);
       }
     } catch {}
   }

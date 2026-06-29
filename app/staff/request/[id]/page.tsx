@@ -9,17 +9,14 @@ import { API_BASE } from '@/lib/lib_api';
 // ── API types ─────────────────────────────────────────────────────────────────
 
 type Clearance = {
-  clearance_id: number;
-  office_name: string;
+  clearance_id:     number;
+  office_name:      string;
   clearance_status: string;
-  clearance_token: string;
-  is_active: boolean;
-  cleared_at: string | null;
-  cleared_by_name: string | null;
-  date_processed: string | null;
-  processed_by: string | null;
-  remarks: string | null;
-  token_version: number;
+  cleared_at:       string | null;
+  cleared_by_name:  string | null;
+  date_processed:   string | null;
+  processed_by:     string | null;
+  remarks:          string | null;
   signature_image_url: string | null;
 };
 
@@ -664,9 +661,6 @@ function FormTab({ data }: { data: RequestDetail }) {
 
 // ── Clearance Tab ─────────────────────────────────────────────────────────────
 function ClearanceTab({ data, onRefresh }: { data: RequestDetail; onRefresh: () => void }) {
-  const [toggling, setToggling]         = useState<number | null>(null);
-  const [regenerating, setRegenerating] = useState<number | null>(null);
-  const [copied, setCopied]             = useState<number | null>(null);
   const [detailModal, setDetailModal]   = useState<Clearance | null>(null);
   const [addingBoardExam, setAddingBoardExam] = useState(false);
   const [removeModal, setRemoveModal]   = useState<Clearance | null>(null);
@@ -729,12 +723,10 @@ function ClearanceTab({ data, onRefresh }: { data: RequestDetail; onRefresh: () 
   }
 
   async function openAddOfficeModal() {
-    // Fetch configured offices for this form type
     try {
-      const res = await fetch(`${API_BASE}/clearance-office-config/?form_type=${data.form_type}&active_only=true`);
+      const res = await fetch(`${API_BASE}/clearance-office/office-names/`);
       if (res.ok) {
-        const configs = await res.json();
-        const names: string[] = Array.from(new Set(configs.map((c: any) => c.office_name as string))).sort() as string[];
+        const names: string[] = await res.json();
         setConfigOffices(names);
       }
     } catch {}
@@ -782,46 +774,6 @@ function ClearanceTab({ data, onRefresh }: { data: RequestDetail; onRefresh: () 
   const clearances = data.clearances ?? [];
   const allCleared = clearances.length > 0 && clearances.every(c => c.clearance_status === 'Cleared');
   const pendingCount = clearances.filter(c => c.clearance_status !== 'Cleared').length;
-
-  function getClearanceLink(token: string): string {
-    return `${window.location.origin}/clearance/${token}`;
-  }
-
-  async function copyLink(clearanceId: number, token: string) {
-    try {
-      await navigator.clipboard.writeText(getClearanceLink(token));
-      setCopied(clearanceId);
-      setTimeout(() => setCopied(null), 2000);
-    } catch {
-      alert('Could not copy link. Please copy it manually.');
-    }
-  }
-
-  async function toggleActive(clearanceId: number, currentActive: boolean) {
-    setToggling(clearanceId);
-    try {
-      await fetch(`${API_BASE}/clearance/${clearanceId}/toggle/`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ is_active: !currentActive }),
-      });
-      onRefresh();
-    } catch { alert('Failed to toggle link.'); }
-    finally { setToggling(null); }
-  }
-
-  async function regenerateToken(clearanceId: number) {
-    if (!confirm('This will invalidate the current link and generate a new one. Continue?')) return;
-    setRegenerating(clearanceId);
-    try {
-      await fetch(`${API_BASE}/clearance/${clearanceId}/regenerate/`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      onRefresh();
-    } catch { alert('Failed to regenerate token.'); }
-    finally { setRegenerating(null); }
-  }
 
   return (
     <div className="modal-form-pane">
@@ -909,90 +861,40 @@ function ClearanceTab({ data, onRefresh }: { data: RequestDetail; onRefresh: () 
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {clearances.map(c => {
-              const isCleared  = c.clearance_status === 'Cleared';
-              const isDisabled = !c.is_active && !isCleared;
+              const isCleared = c.clearance_status === 'Cleared';
               return (
                 <div key={c.clearance_id} style={{
-                  border: `1px solid ${isCleared ? 'rgba(25,135,84,0.3)' : isDisabled ? 'rgba(0,0,0,0.08)' : 'rgba(0,0,0,0.08)'}`,
+                  border: `1px solid ${isCleared ? 'rgba(25,135,84,0.3)' : 'rgba(0,0,0,0.08)'}`,
                   borderRadius: 10, padding: '12px 16px',
-                  background: isCleared ? 'rgba(25,135,84,0.04)' : isDisabled ? 'rgba(0,0,0,0.02)' : 'var(--surface)',
+                  background: isCleared ? 'rgba(25,135,84,0.04)' : 'var(--surface)',
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: isCleared ? 6 : 10 }}>
-                    {/* Status icon */}
-                    <div style={{ width: 28, height: 28, borderRadius: '50%', flexShrink: 0, background: isCleared ? '#198754' : isDisabled ? '#B1B1B1' : '#FFA323', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                    <div style={{ width: 28, height: 28, borderRadius: '50%', flexShrink: 0, background: isCleared ? '#198754' : '#FFA323', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
                       {isCleared ? (
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}><polyline points="20 6 9 17 4 12"/></svg>
-                      ) : isDisabled ? (
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
                       ) : (
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                       )}
                     </div>
-
-                    {/* Office name */}
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
-                        {c.office_name}
-                        {!isCleared && (
-                          <span style={{ fontSize: 11, fontWeight: 500, color: '#B1B1B1', marginLeft: 6 }}>
-                            — Link #{`v${c.token_version ?? 1}`}
-                          </span>
-                        )}
-                      </div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>{c.office_name}</div>
                       {isCleared && (
-                          <div style={{ fontSize: 11, color: '#198754', marginTop: 2 }}>
-                            Cleared by {c.cleared_by_name} · {formatDate(c.cleared_at)}
-                          </div>
-                        )}
+                        <div style={{ fontSize: 11, color: '#198754', marginTop: 2 }}>
+                          Cleared by {c.cleared_by_name} · {formatDate(c.cleared_at)}
+                        </div>
+                      )}
                       {isCleared && (
-                        <button
-                          onClick={() => setDetailModal(c)}
-                          style={{ marginTop: 6, background: 'none', border: 'none', padding: 0, fontSize: 11, fontWeight: 600, color: '#114B9F', cursor: 'pointer', textDecoration: 'underline' }}
-                        >
+                        <button onClick={() => setDetailModal(c)} style={{ marginTop: 6, background: 'none', border: 'none', padding: 0, fontSize: 11, fontWeight: 600, color: '#114B9F', cursor: 'pointer', textDecoration: 'underline' }}>
                           View Clearance Details
                         </button>
                       )}
-                      {isDisabled && (
-                        <div style={{ fontSize: 11, color: '#B1B1B1', marginTop: 2 }}>
-                          Link disabled
-                        </div>
-                      )}
                     </div>
-
-                    {/* Status badge */}
-                    <span className={`badge ${isCleared ? 'b-done' : isDisabled ? 'b-sub' : 'b-rev'}`} style={{ fontSize: 11 }}>
-                      {isCleared ? 'Cleared' : isDisabled ? 'Disabled' : 'Pending'}
+                    <span className={`badge ${isCleared ? 'b-done' : 'b-rev'}`} style={{ fontSize: 11 }}>
+                      {isCleared ? 'Cleared' : 'Pending'}
                     </span>
                   </div>
-
-                  {/* Actions — only show for non-cleared */}
                   {!isCleared && (
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      {/* Copy link */}
-                      {c.is_active && (
-                        <button className="btn-outline btn-sm" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }} onClick={() => copyLink(c.clearance_id, c.clearance_token)}>
-                          {copied === c.clearance_id ? (
-                            <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 12, height: 12 }}><polyline points="20 6 9 17 4 12"/></svg> Copied!</>
-                          ) : (
-                            <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 12, height: 12 }}><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy Link</>
-                          )}
-                        </button>
-                      )}
-                      {/* Toggle enable/disable */}
-                      <button className="btn-outline btn-sm" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }} disabled={toggling === c.clearance_id} onClick={() => toggleActive(c.clearance_id, c.is_active)}>
-                        {toggling === c.clearance_id ? '...' : c.is_active ? (
-                          <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 12, height: 12 }}><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> Disable Link</>
-                        ) : (
-                          <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 12, height: 12 }}><path d="M12 2l8 4v6c0 4.4-3.3 8.5-8 10-4.7-1.5-8-5.6-8-10V6l8-4z"/><polyline points="9 12 11 14 15 10"/></svg> Enable Link</>
-                        )}
-                      </button>
-                      {/* Regenerate */}
-                      <button className="btn-outline btn-sm" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }} disabled={regenerating === c.clearance_id} onClick={() => regenerateToken(c.clearance_id)}>
-                        {regenerating === c.clearance_id ? '...' : (
-                          <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 12, height: 12 }}><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> New Link</>
-                        )}
-                      </button>
-                      {/* Remove office — foolproof undo */}
                       <button
                         className="btn-outline btn-sm"
                         style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 5, color: '#E50019', borderColor: '#E50019' }}
@@ -1026,11 +928,9 @@ function ClearanceTab({ data, onRefresh }: { data: RequestDetail; onRefresh: () 
       <div className="form-section">
         <div className="form-section-title">How Clearance Works</div>
         <div style={{ fontSize: 12, color: 'var(--mid-gray)', lineHeight: 1.8 }}>
-          <div>1. Click <strong>Copy Link</strong> next to each office that needs to clear the student.</div>
-          <div>2. Send the link via your existing email or Teams channel to the respective office.</div>
-          <div>3. The office staff clicks the link, enters their name, and confirms clearance — no login required.</div>
-          <div>4. Once all offices have cleared, resume the request using <strong>Resume — Mark as For Billing</strong> in the side panel.</div>
-          <div style={{ marginTop: 8, color: '#856404' }}>⚠️ If you sent a link to the wrong person, click <strong>Disable Link</strong> to immediately invalidate it, then click <strong>New Link</strong> to generate a fresh one.</div>
+          <div>1. Each clearance office listed here has access to their own dashboard where they can confirm clearances.</div>
+          <div>2. Once all offices have confirmed, resume the request using <strong>Resume — Mark as For Billing</strong> in the side panel.</div>
+          <div>3. You can manually add or remove offices from this list at any time using the buttons above.</div>
         </div>
       </div>
 
