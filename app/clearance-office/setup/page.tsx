@@ -94,11 +94,11 @@ export default function ClearanceOfficeSetupPage() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f4f6fb', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+    <div style={{ minHeight: '100vh', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{ width: '100%', maxWidth: 440 }}>
 
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <img src="/mmcm-logo-with-name.png" alt="MMCM" style={{ height: 48, marginBottom: 14 }} />
+          <img src="/mmcm-logo-with-name.png" alt="MMCM" style={{ height: 56, marginBottom: 16, display: 'block', margin: '0 auto 16px' }} />
           <div style={{ fontSize: 18, fontWeight: 800, color: '#001C43', fontFamily: "'Montserrat', sans-serif" }}>Complete Your Setup</div>
           <div style={{ fontSize: 12, color: '#888', marginTop: 4, fontFamily: "'Montserrat', sans-serif" }}>
             {officeName} — required before confirming clearances

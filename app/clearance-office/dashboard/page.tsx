@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { API_BASE } from '@/lib/lib_api';
 
@@ -89,24 +89,35 @@ export default function ClearanceOfficeDashboard() {
   // Toast
   const [toast, setToast] = useState<string | null>(null);
 
+  const userSelectedRef = useRef(false);
+  
   function showToast(msg: string) {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
   }
 
   useEffect(() => {
-    const t  = sessionStorage.getItem('co_token') ?? '';
-    const on = sessionStorage.getItem('co_office_name') ?? '';
-    const dn = sessionStorage.getItem('co_display_name') ?? '';
-    const r  = sessionStorage.getItem('co_role') ?? '';
-    const s  = sessionStorage.getItem('co_setup') === 'true';
+    const t   = sessionStorage.getItem('co_token') ?? '';
+    const r   = sessionStorage.getItem('co_role') ?? '';
+    const s   = sessionStorage.getItem('co_setup') === 'true';
+    const dn  = sessionStorage.getItem('co_display_name') ?? '';
     const sig = sessionStorage.getItem('co_signature') ?? '';
 
     if (!t) { router.push('/clearance-office/login'); return; }
     if (!s && r !== 'Super Admin') { router.push('/clearance-office/setup'); return; }
 
+    // Super Admin can view any office via ?office= query param
+    const params = new URLSearchParams(window.location.search);
+    const officeParam = params.get('office');
+    const storedOffice = sessionStorage.getItem('co_office_name') ?? '';
+
+    // If Super Admin and office param provided → use that office
+    const resolvedOffice = (r === 'Super Admin' && officeParam)
+      ? officeParam
+      : storedOffice;
+
     setToken(t);
-    setOfficeName(on);
+    setOfficeName(resolvedOffice);
     setDisplayName(dn);
     setRole(r);
     setIsSetup(s);
@@ -129,7 +140,9 @@ export default function ClearanceOfficeDashboard() {
       setClearances(data);
       // Auto-select first pending
       const firstPending = data.find(c => c.clearance_status === 'Pending');
-      if (firstPending && !selectedId) setSelectedId(firstPending.clearance_id);
+      if (firstPending && !userSelectedRef.current) {
+        setSelectedId(firstPending.clearance_id);
+      }
     } catch {
       setError('Could not load clearances.');
     } finally {
@@ -353,7 +366,7 @@ export default function ClearanceOfficeDashboard() {
                   return (
                     <div
                       key={c.clearance_id}
-                      onClick={() => setSelectedId(c.clearance_id)}
+                      onClick={() => { setSelectedId(c.clearance_id); userSelectedRef.current = true; }}
                       style={{ padding: '14px 16px', borderBottom: '1px solid #f0f0f0', cursor: 'pointer', background: isSelected ? 'rgba(17,75,159,0.06)' : 'white', borderLeft: isSelected ? '3px solid #114B9F' : '3px solid transparent', transition: 'all .12s' }}
                     >
                       <div style={{ fontSize: 12, fontWeight: 700, color: '#001C43' }}>

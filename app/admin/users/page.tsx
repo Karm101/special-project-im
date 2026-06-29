@@ -360,7 +360,9 @@ export default function AdminUsersPage() {
           <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-primary)' }}>User Management</div>
           <div style={{ fontSize: 13, color: 'var(--mid-gray)', marginTop: 2 }}>Manage staff accounts and access levels</div>
         </div>
-        <button className="btn-primary" onClick={() => setCreateModal(true)}>+ New Staff Account</button>
+        {coTab === 'staff' && (
+          <button className="btn-primary" onClick={() => setCreateModal(true)}>+ New Staff Account</button>
+        )}
       </div>
 
       {/* Tab switcher */}

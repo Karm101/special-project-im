@@ -56,12 +56,12 @@ export default function ClearanceOfficeLoginPage() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f4f6fb', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+    <div style={{ minHeight: '100vh', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{ width: '100%', maxWidth: 400 }}>
 
         {/* Logo + header */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <img src="/mmcm-logo-with-name.png" alt="MMCM" style={{ height: 56, marginBottom: 16 }} />
+          <img src="/mmcm-logo-with-name.png" alt="MMCM" style={{ height: 56, marginBottom: 16, display: 'block', margin: '0 auto 16px' }} />
           <div style={{ fontSize: 20, fontWeight: 800, color: '#001C43', fontFamily: "'Montserrat', sans-serif" }}>
             Clearance Office Portal
           </div>
