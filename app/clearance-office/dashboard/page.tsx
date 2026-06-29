@@ -182,6 +182,11 @@ export default function ClearanceOfficeDashboard() {
     return () => clearInterval(interval);
   }, [token, fetchClearances]);
 
+  useEffect(() => {
+    const savedTheme = sessionStorage.getItem('co_theme');
+    if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
+  }, []);
+
   async function handleConfirm() {
     if (!confirmModal) return;
     setConfirming(true);
@@ -249,9 +254,21 @@ export default function ClearanceOfficeDashboard() {
             <div style={{ color: 'white', fontSize: 12, fontWeight: 600 }}>{displayName}</div>
             <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>{role}</div>
           </div>
-          {sigUrl && (
-            <img src={sigUrl} alt="Your signature" style={{ height: 28, maxWidth: 60, objectFit: 'contain', background: 'white', borderRadius: 4, padding: '2px 4px' }} />
-          )}
+          <button
+            onClick={() => {
+              const root = document.documentElement;
+              const isDark = root.getAttribute('data-theme') === 'dark';
+              root.setAttribute('data-theme', isDark ? 'light' : 'dark');
+              sessionStorage.setItem('co_theme', isDark ? 'light' : 'dark');
+            }}
+            style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', padding: '6px 10px', borderRadius: 6, fontSize: 16, cursor: 'pointer' }}
+            title="Toggle dark mode"
+          >
+            {typeof window !== 'undefined' && document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙'}
+          </button>
+          <button onClick={() => router.push('/clearance-office/profile')} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', padding: '6px 12px', borderRadius: 6, fontSize: 12, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif" }}>
+            My Profile
+          </button>
           <button onClick={signOut} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', padding: '6px 12px', borderRadius: 6, fontSize: 12, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif" }}>
             Sign Out
           </button>

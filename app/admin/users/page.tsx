@@ -41,6 +41,10 @@ export default function AdminUsersPage() {
 
   const [copiedCredentials, setCopiedCredentials] = useState<number | null>(null);
 
+  const [editNickname, setEditNickname]   = useState<number | null>(null);
+  const [nicknameVal, setNicknameVal]     = useState('');
+  const [savingNickname, setSavingNickname] = useState(false);
+
   // ── Edit modal state ────────────────────────────────────────────────────
   const [editModal, setEditModal]     = useState<AdminUser | null>(null);
   const [editLoading, setEditLoading] = useState(false);
@@ -81,6 +85,23 @@ export default function AdminUsersPage() {
       });
       if (res.ok) setInvites(await res.json());
     } catch {} finally { setInviteLoading(false); }
+  }
+
+  async function saveNickname(staffId: number) {
+    setSavingNickname(true);
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch(`${API_BASE}/clearance-office/accounts/${staffId}/nickname/`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Token ${token}` },
+        body: JSON.stringify({ nickname: nicknameVal.trim() }),
+      });
+      if (res.ok) {
+        setEditNickname(null);
+        fetchCOStaff();
+      }
+    } catch { alert('Failed to save nickname.'); }
+    finally { setSavingNickname(false); }
   }
 
   async function fetchConfigOffices() {
@@ -505,14 +526,26 @@ export default function AdminUsersPage() {
               Creates a placeholder account for the office. Super Admin can access the dashboard immediately. Send the invite link for the office to activate their account.
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
-              <select
-                value={newInviteOffice}
-                onChange={e => setNewInviteOffice(e.target.value)}
-                style={{ flex: 1, padding: '9px 12px', fontSize: 13, border: '1.5px solid var(--border-col)', borderRadius: 8, fontFamily: 'var(--drms-font)', background: 'var(--surface)', color: 'var(--text-primary)', outline: 'none', cursor: 'pointer' }}
-              >
-                <option value="">Select office...</option>
-                {configOffices.map(o => <option key={o} value={o}>{o}</option>)}
-              </select>
+              <div style={{ display: 'flex', gap: 8, flex: 1 }}>
+                <select
+                  value={configOffices.includes(newInviteOffice) ? newInviteOffice : ''}
+                  onChange={e => setNewInviteOffice(e.target.value)}
+                  style={{ flex: 1, padding: '9px 12px', fontSize: 13, border: '1.5px solid var(--border-col)', borderRadius: 8, fontFamily: 'var(--drms-font)', background: 'var(--surface)', color: 'var(--text-primary)', outline: 'none', cursor: 'pointer' }}
+                >
+                  <option value="">Select office...</option>
+                  {configOffices.map(o => <option key={o} value={o}>{o}</option>)}
+                  <option value="__custom__">+ Enter custom office name...</option>
+                </select>
+                {(newInviteOffice === '__custom__' || (!configOffices.includes(newInviteOffice) && newInviteOffice !== '')) && (
+                  <input
+                    style={{ flex: 1, padding: '9px 12px', fontSize: 13, border: '1.5px solid var(--border-col)', borderRadius: 8, fontFamily: 'var(--drms-font)', background: 'var(--surface)', color: 'var(--text-primary)', outline: 'none' }}
+                    placeholder="Enter office name..."
+                    value={newInviteOffice === '__custom__' ? '' : newInviteOffice}
+                    onChange={e => setNewInviteOffice(e.target.value)}
+                    autoFocus
+                  />
+                )}
+              </div>
               <button
                 className="btn-primary"
                 style={{ padding: '9px 18px', fontSize: 13, whiteSpace: 'nowrap' }}
@@ -555,20 +588,18 @@ export default function AdminUsersPage() {
                   return Object.entries(groups).map(([officeName, accounts]) => (
                     <div key={officeName}>
                       {/* Office group header — only show if multiple accounts */}
-                      {accounts.length > 1 && (
-                        <div style={{ padding: '8px 20px', background: 'rgba(17,75,159,0.04)', borderBottom: '1px solid var(--border-col)', borderTop: '1px solid var(--border-col)' }}>
-                          <span style={{ fontSize: 11, fontWeight: 800, color: '#114B9F', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                            {officeName} — {accounts.length} accounts
-                          </span>
-                        </div>
-                      )}
+                      <div style={{ padding: '8px 20px', background: 'rgba(17,75,159,0.04)', borderBottom: '1px solid var(--border-col)', borderTop: '1px solid var(--border-col)' }}>
+                        <span style={{ fontSize: 11, fontWeight: 800, color: '#114B9F', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                          {officeName}{accounts.length > 1 ? ` — ${accounts.length} accounts` : ''}
+                        </span>
+                      </div>
                       {accounts.map((s, idx) => (
-                        <div key={s.staff_id ?? `${s.office_name}-${idx}`} style={{ borderBottom: '1px solid var(--border-col)', padding: '14px 20px', paddingLeft: accounts.length > 1 ? 32 : 20 }}>
+                        <div key={s.staff_id ?? `${s.office_name}-${idx}`} style={{ borderBottom: '1px solid var(--border-col)', padding: '14px 20px 14px 28px' }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
 
                       {/* Office info */}
                       <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
                           <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{s.office_name}</span>
                           <span style={{
                             fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 50,
@@ -577,6 +608,41 @@ export default function AdminUsersPage() {
                           }}>
                             {s.status === 'active' ? 'Fully Active' : s.status === 'activated' ? 'Activated — Setup Pending' : s.status === 'placeholder' ? 'Placeholder' : 'No Account'}
                           </span>
+                          {/* Editable account label */}
+                          {s.staff_id && (
+                            editNickname === s.staff_id ? (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                <input
+                                  value={nicknameVal}
+                                  onChange={e => setNicknameVal(e.target.value)}
+                                  onKeyDown={e => {
+                                    if (e.key === 'Enter') saveNickname(s.staff_id);
+                                    if (e.key === 'Escape') setEditNickname(null);
+                                  }}
+                                  autoFocus
+                                  placeholder="e.g. Main Account"
+                                  style={{ fontSize: 11, padding: '2px 6px', border: '1px solid #114B9F', borderRadius: 4, fontFamily: 'var(--drms-font)', outline: 'none', width: 130 }}
+                                />
+                                <button
+                                  onClick={() => saveNickname(s.staff_id)}
+                                  disabled={savingNickname}
+                                  style={{ fontSize: 10, color: '#198754', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700 }}
+                                >✓</button>
+                                <button
+                                  onClick={() => setEditNickname(null)}
+                                  style={{ fontSize: 10, color: '#888', background: 'none', border: 'none', cursor: 'pointer' }}
+                                >✕</button>
+                              </div>
+                            ) : (
+                              <span
+                                onClick={() => { setEditNickname(s.staff_id); setNicknameVal(s.nickname ?? ''); }}
+                                style={{ fontSize: 11, color: s.nickname ? '#444' : '#ccc', cursor: 'pointer', fontStyle: s.nickname ? 'normal' : 'italic', border: '1px dashed #ddd', borderRadius: 4, padding: '1px 6px' }}
+                                title="Click to add a label for this account"
+                              >
+                                {s.nickname ?? '+ label'}
+                              </span>
+                            )
+                          )}
                         </div>
 
                         {/* Account details */}

@@ -28,6 +28,11 @@ export default function ClearanceOfficeProfilePage() {
   const [savingName, setSavingName]     = useState(false);
   const [nameError, setNameError]       = useState('');
   const [nameSuccess, setNameSuccess]   = useState('');
+  const [editingEmail, setEditingEmail] = useState(false);
+  const [editEmail, setEditEmail]       = useState('');
+  const [savingEmail, setSavingEmail]   = useState(false);
+  const [emailError, setEmailError]     = useState('');
+  const [emailSuccess, setEmailSuccess] = useState('');
 
   // Password reset
   const [showPwForm, setShowPwForm]     = useState(false);
@@ -159,6 +164,28 @@ export default function ClearanceOfficeProfilePage() {
     }
   }
 
+  async function handleSaveEmail() {
+    if (!editEmail.trim()) { setEmailError('Email is required.'); return; }
+    setSavingEmail(true);
+    setEmailError('');
+    setEmailSuccess('');
+    try {
+      const res = await fetch(`${API_BASE}/clearance-office/change-email/`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Token ${token}` },
+        body: JSON.stringify({ email: editEmail.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setEmailError(data.error ?? 'Failed to save.'); return; }
+      setEmail(editEmail.trim());
+      sessionStorage.setItem('co_email', editEmail.trim());
+      setEditingEmail(false);
+      setEmailSuccess('Email updated.');
+      setTimeout(() => setEmailSuccess(''), 3000);
+    } catch { setEmailError('Could not connect to server.'); }
+    finally { setSavingEmail(false); }
+  }
+
   const inp: React.CSSProperties = {
     width: '100%', padding: '10px 12px', fontSize: 13,
     border: '1.5px solid #dde3ed', borderRadius: 8,
@@ -222,9 +249,27 @@ export default function ClearanceOfficeProfilePage() {
 
         {/* Email */}
         <div style={{ background: 'white', borderRadius: 12, padding: 24, marginBottom: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#001C43', marginBottom: 8 }}>Email</div>
-          <div style={{ fontSize: 15, fontWeight: 600, color: '#001C43' }}>{email || '—'}</div>
-          <div style={{ fontSize: 12, color: '#888', marginTop: 4 }}>Contact the Registrar's Office to change your email address.</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#001C43', marginBottom: 16 }}>Email</div>
+          {editingEmail ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <input style={inp} type="email" value={editEmail} onChange={e => setEditEmail(e.target.value)} placeholder="Your email address" autoFocus />
+              {emailError && <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600 }}>{emailError}</div>}
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={handleSaveEmail} disabled={savingEmail} style={{ flex: 1, padding: '9px', background: '#001C43', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif" }}>
+                  {savingEmail ? 'Saving...' : 'Save'}
+                </button>
+                <button onClick={() => { setEditingEmail(false); setEditEmail(email); setEmailError(''); }} style={{ flex: 1, padding: '9px', background: 'none', border: '1.5px solid #dde3ed', borderRadius: 8, fontSize: 13, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif", color: '#001C43' }}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#001C43' }}>{email || '—'}</div>
+              <button onClick={() => { setEditingEmail(true); setEditEmail(email); }} style={{ fontSize: 12, fontWeight: 600, color: '#114B9F', background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Montserrat', sans-serif" }}>Edit</button>
+            </div>
+          )}
+          {emailSuccess && <div style={{ fontSize: 12, color: '#198754', fontWeight: 600, marginTop: 8 }}>✓ {emailSuccess}</div>}
         </div>
 
         {/* E-Signature */}
