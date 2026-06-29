@@ -600,33 +600,31 @@ export default function AdminUsersPage() {
                       {/* Office info */}
                       <div style={{ flex: 1 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{s.office_name}</span>
-                          {s.staff_id && (
-                            editNickname === s.staff_id ? (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                                <input
-                                  value={nicknameVal}
-                                  onChange={e => setNicknameVal(e.target.value)}
-                                  onKeyDown={e => {
-                                    if (e.key === 'Enter') saveNickname(s.staff_id);
-                                    if (e.key === 'Escape') setEditNickname(null);
-                                  }}
-                                  autoFocus
-                                  placeholder="e.g. Director"
-                                  style={{ fontSize: 12, padding: '2px 6px', border: '1px solid #114B9F', borderRadius: 4, fontFamily: 'var(--drms-font)', outline: 'none', width: 120, fontWeight: 400 }}
-                                />
-                                <button onClick={() => saveNickname(s.staff_id)} disabled={savingNickname} style={{ fontSize: 10, color: '#198754', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700 }}>✓</button>
-                                <button onClick={() => setEditNickname(null)} style={{ fontSize: 10, color: '#888', background: 'none', border: 'none', cursor: 'pointer' }}>✕</button>
-                              </div>
-                            ) : (
-                              <span
-                                onClick={() => { setEditNickname(s.staff_id); setNicknameVal(s.nickname ?? ''); }}
-                                style={{ fontSize: 12, color: s.nickname ? 'var(--text-primary)' : 'var(--mid-gray)', cursor: 'pointer', fontStyle: s.nickname ? 'normal' : 'italic', borderBottom: '1px dashed var(--mid-gray)', paddingBottom: 1 }}
-                                title="Click to edit label"
-                              >
-                                {s.nickname ? `— ${s.nickname}` : '+ label'}
-                              </span>
-                            )
+                          {/* Editable office name */}
+                          {s.staff_id && editNickname === s.staff_id ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                              <input
+                                value={nicknameVal}
+                                onChange={e => setNicknameVal(e.target.value)}
+                                onKeyDown={e => {
+                                  if (e.key === 'Enter') saveNickname(s.staff_id);
+                                  if (e.key === 'Escape') setEditNickname(null);
+                                }}
+                                autoFocus
+                                placeholder={s.office_name}
+                                style={{ fontSize: 14, fontWeight: 700, padding: '2px 6px', border: '1.5px solid #114B9F', borderRadius: 4, fontFamily: 'var(--drms-font)', outline: 'none', width: 200 }}
+                              />
+                              <button onClick={() => saveNickname(s.staff_id)} disabled={savingNickname} style={{ fontSize: 10, color: '#198754', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700 }}>✓</button>
+                              <button onClick={() => setEditNickname(null)} style={{ fontSize: 10, color: '#888', background: 'none', border: 'none', cursor: 'pointer' }}>✕</button>
+                            </div>
+                          ) : (
+                            <span
+                              onClick={() => s.staff_id && s.status !== 'no_account' ? (setEditNickname(s.staff_id), setNicknameVal(s.nickname ?? '')) : null}
+                              style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', cursor: s.staff_id ? 'pointer' : 'default', borderBottom: s.staff_id ? '1px dashed var(--mid-gray)' : 'none' }}
+                              title={s.staff_id ? 'Click to edit label' : undefined}
+                            >
+                              {s.nickname ? `${s.office_name} — ${s.nickname}` : s.office_name}
+                            </span>
                           )}
                           <span style={{
                             fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 50,
@@ -635,41 +633,6 @@ export default function AdminUsersPage() {
                           }}>
                             {s.status === 'active' ? 'Fully Active' : s.status === 'activated' ? 'Activated — Setup Pending' : s.status === 'placeholder' ? 'Placeholder' : 'No Account'}
                           </span>
-                          {/* Editable account label */}
-                          {s.staff_id && (
-                            editNickname === s.staff_id ? (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                                <input
-                                  value={nicknameVal}
-                                  onChange={e => setNicknameVal(e.target.value)}
-                                  onKeyDown={e => {
-                                    if (e.key === 'Enter') saveNickname(s.staff_id);
-                                    if (e.key === 'Escape') setEditNickname(null);
-                                  }}
-                                  autoFocus
-                                  placeholder="e.g. Main Account"
-                                  style={{ fontSize: 11, padding: '2px 6px', border: '1px solid #114B9F', borderRadius: 4, fontFamily: 'var(--drms-font)', outline: 'none', width: 130 }}
-                                />
-                                <button
-                                  onClick={() => saveNickname(s.staff_id)}
-                                  disabled={savingNickname}
-                                  style={{ fontSize: 10, color: '#198754', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700 }}
-                                >✓</button>
-                                <button
-                                  onClick={() => setEditNickname(null)}
-                                  style={{ fontSize: 10, color: '#888', background: 'none', border: 'none', cursor: 'pointer' }}
-                                >✕</button>
-                              </div>
-                            ) : (
-                              <span
-                                onClick={() => { setEditNickname(s.staff_id); setNicknameVal(s.nickname ?? ''); }}
-                                style={{ fontSize: 11, color: s.nickname ? '#444' : '#ccc', cursor: 'pointer', fontStyle: s.nickname ? 'normal' : 'italic', border: '1px dashed #ddd', borderRadius: 4, padding: '1px 6px' }}
-                                title="Click to add a label for this account"
-                              >
-                                {s.nickname ?? '+ label'}
-                              </span>
-                            )
-                          )}
                         </div>
 
                         {/* Account details */}

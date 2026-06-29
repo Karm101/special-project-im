@@ -265,6 +265,12 @@ export default function ClearanceOfficeDashboard() {
             <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>{role}</div>
           </div>
           <button
+            onClick={() => router.push('/clearance-office/profile')}
+            style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', padding: '6px 12px', borderRadius: 6, fontSize: 12, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif" }}
+          >
+            My Profile
+          </button>
+          <button
             onClick={toggleDark}
             style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', padding: '6px 10px', borderRadius: 6, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             title="Toggle dark mode"
