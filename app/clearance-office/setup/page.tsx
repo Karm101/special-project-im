@@ -97,11 +97,13 @@ export default function ClearanceOfficeSetupPage() {
     <div style={{ minHeight: '100vh', background: `url('/mmcm-bg.jpeg') center/cover no-repeat fixed`, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{ width: '100%', maxWidth: 440 }}>
 
-        <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <img src="/mmcm-logo-with-name.png" alt="MMCM" style={{ height: 56, marginBottom: 16, display: 'block', margin: '0 auto 16px' }} />
-          <div style={{ fontSize: 18, fontWeight: 800, color: '#001C43', fontFamily: "'Montserrat', sans-serif" }}>Complete Your Setup</div>
-          <div style={{ fontSize: 12, color: '#888', marginTop: 4, fontFamily: "'Montserrat', sans-serif" }}>
-            {officeName} — required before confirming clearances
+        <div style={{ textAlign: 'center', marginBottom: 24, background: 'rgba(255,255,255,0.92)', borderRadius: 14, padding: '20px 28px' }}>
+          <img src="/mmcm-logo-with-name.png" alt="MMCM" style={{ height: 56, marginBottom: 12, display: 'block', margin: '0 auto 12px' }} />
+          <div style={{ fontSize: 20, fontWeight: 800, color: '#001C43', fontFamily: "'Montserrat', sans-serif" }}>
+            Clearance Office Portal
+          </div>
+          <div style={{ fontSize: 12, color: '#555', marginTop: 4, fontFamily: "'Montserrat', sans-serif" }}>
+            Mapúa Malayan Colleges Mindanao — Registrar's Office
           </div>
         </div>
 

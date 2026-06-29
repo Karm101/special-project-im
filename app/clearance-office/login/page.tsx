@@ -61,12 +61,12 @@ export default function ClearanceOfficeLoginPage() {
       <div style={{ width: '100%', maxWidth: 400 }}>
 
         {/* Logo + header */}
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <img src="/mmcm-logo-with-name.png" alt="MMCM" style={{ height: 56, marginBottom: 16, display: 'block', margin: '0 auto 16px' }} />
+        <div style={{ textAlign: 'center', marginBottom: 24, background: 'rgba(255,255,255,0.92)', borderRadius: 14, padding: '20px 28px' }}>
+          <img src="/mmcm-logo-with-name.png" alt="MMCM" style={{ height: 56, marginBottom: 12, display: 'block', margin: '0 auto 12px' }} />
           <div style={{ fontSize: 20, fontWeight: 800, color: '#001C43', fontFamily: "'Montserrat', sans-serif" }}>
             Clearance Office Portal
           </div>
-          <div style={{ fontSize: 12, color: '#888', marginTop: 4, fontFamily: "'Montserrat', sans-serif" }}>
+          <div style={{ fontSize: 12, color: '#555', marginTop: 4, fontFamily: "'Montserrat', sans-serif" }}>
             Mapúa Malayan Colleges Mindanao — Registrar's Office
           </div>
         </div>
@@ -80,7 +80,23 @@ export default function ClearanceOfficeLoginPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div>
               <label style={{ fontSize: 11, fontWeight: 700, color: '#888', display: 'block', marginBottom: 5, fontFamily: "'Montserrat', sans-serif" }}>USERNAME</label>
-              <input style={inp} placeholder="Enter your username" value={username} onChange={e => setUsername(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLogin()} autoFocus />
+              <input
+                style={inp}
+                placeholder="Email or username"
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                onPaste={e => {
+                  const pasted = e.clipboardData.getData('text');
+                  if (pasted.includes('\t')) {
+                    e.preventDefault();
+                    const [pastedEmail, pastedPassword] = pasted.split('\t');
+                    setUsername(pastedEmail.trim());
+                    setPassword(pastedPassword.trim());
+                  }
+                }}
+                onKeyDown={e => e.key === 'Enter' && handleLogin()}
+                autoFocus
+              />
             </div>
             <div>
               <label style={{ fontSize: 11, fontWeight: 700, color: '#888', display: 'block', marginBottom: 5, fontFamily: "'Montserrat', sans-serif" }}>PASSWORD</label>

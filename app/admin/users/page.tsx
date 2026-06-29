@@ -39,6 +39,8 @@ export default function AdminUsersPage() {
   const [resetLoading2, setResetLoading2]           = useState(false);
   const [deleteAccountLoading, setDeleteAccountLoading] = useState(false);
 
+  const [copiedCredentials, setCopiedCredentials] = useState<number | null>(null);
+
   // ── Edit modal state ────────────────────────────────────────────────────
   const [editModal, setEditModal]     = useState<AdminUser | null>(null);
   const [editLoading, setEditLoading] = useState(false);
@@ -312,6 +314,14 @@ export default function AdminUsersPage() {
     }
   }
 
+  async function copyCredentials(s: any) {
+    // Format as email:password so pasting fills both fields
+    const text = `${s.email}\t${s.placeholder_password}`;
+    await navigator.clipboard.writeText(text);
+    setCopiedCredentials(s.staff_id);
+    setTimeout(() => setCopiedCredentials(null), 2000);
+  }
+
   // ── Pagination logic ──────────────────────────────────────────────────
   const filtered = users.filter(u =>
     `${u.first_name} ${u.last_name}`.toLowerCase().includes(search.toLowerCase()) ||
@@ -558,20 +568,33 @@ export default function AdminUsersPage() {
                           <div style={{ fontSize: 12, color: 'var(--mid-gray)', display: 'flex', flexDirection: 'column', gap: 2 }}>
                             <div>Display: {s.display_name ?? '—'}</div>
                             <div>Email: {s.email ?? '—'}</div>
-                            {/* Show placeholder password only for placeholder accounts */}
-                            {s.status === 'placeholder' && s.placeholder_password && (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                <span>Password:</span>
-                                <code style={{ fontSize: 11, background: 'var(--surface-2)', padding: '1px 6px', borderRadius: 4, border: '1px solid var(--border-col)' }}>
-                                  {showPasswordId === s.staff_id ? s.placeholder_password : '••••••••••••'}
-                                </code>
-                                <button
-                                  onClick={() => setShowPasswordId(showPasswordId === s.staff_id ? null : s.staff_id)}
-                                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#114B9F', fontSize: 11, fontFamily: 'var(--drms-font)', fontWeight: 600 }}
-                                >
-                                  {showPasswordId === s.staff_id ? 'Hide' : 'Show'}
-                                </button>
-                              </div>
+                            {/* Show username + password only for placeholder accounts */}
+                            {s.status === 'placeholder' && (
+                              <>
+                                <div>Username: <code style={{ fontSize: 11, background: 'var(--surface-2)', padding: '1px 6px', borderRadius: 4, border: '1px solid var(--border-col)' }}>{s.username ?? '—'}</code></div>
+                                {s.placeholder_password && (
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                    <span>Password:</span>
+                                    <code style={{ fontSize: 11, background: 'var(--surface-2)', padding: '1px 6px', borderRadius: 4, border: '1px solid var(--border-col)' }}>
+                                      {showPasswordId === s.staff_id ? s.placeholder_password : '••••••••••••'}
+                                    </code>
+                                    <button
+                                      onClick={() => setShowPasswordId(showPasswordId === s.staff_id ? null : s.staff_id)}
+                                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#114B9F', fontSize: 11, fontFamily: 'var(--drms-font)', fontWeight: 600 }}
+                                    >
+                                      {showPasswordId === s.staff_id ? 'Hide' : 'Show'}
+                                    </button>
+                                  </div>
+                                )}
+                                {s.placeholder_password && (
+                                  <button
+                                    onClick={() => copyCredentials(s)}
+                                    style={{ marginTop: 4, fontSize: 11, fontWeight: 600, color: copiedCredentials === s.staff_id ? '#198754' : '#114B9F', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--drms-font)', textAlign: 'left', padding: 0 }}
+                                  >
+                                    {copiedCredentials === s.staff_id ? '✓ Credentials copied!' : '⊕ Copy credentials for login'}
+                                  </button>
+                                )}
+                              </>
                             )}
                           </div>
                         )}
