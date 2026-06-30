@@ -400,7 +400,7 @@ export default function ReleaseClaimMonitorPage() {
                     <tr
                       key={r.request_id}
                       style={{ cursor: 'pointer' }}
-                      onClick={() => router.push(`/staff/request/${reqId}`)}
+                      onClick={() => router.push(`/staff/request/${r.request_id}`)}
                     >
                       {activeTab === 'shredded' && (
                         <td onClick={e => e.stopPropagation()} style={{ textAlign: 'center' }}>
@@ -461,7 +461,7 @@ export default function ReleaseClaimMonitorPage() {
                           </button>
                         )}
                         {activeTab !== 'release' && (
-                          <button className="btn-outline btn-sm" onClick={() => router.push(`/staff/request/${reqId}`)}>
+                          <button className="btn-outline btn-sm" onClick={() => router.push(`/staff/request/${r.request_id}`)}>
                             View
                           </button>
                         )}

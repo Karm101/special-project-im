@@ -1294,8 +1294,8 @@ export default function RequestPage() {
   }, []);
 
   const rawId     = params?.id as string ?? '';
-  const numericId = parseInt(rawId.replace(/[^0-9]/g, ''), 10);
-  const displayId = data ? formatRequestId(data.request_id, data.document_request_no) : `REQ-${String(numericId).padStart(3, '0')}`;
+  const numericId = parseInt(rawId, 10);
+  const displayId = data ? formatRequestId(data.request_id, data.document_request_no) : rawId;
 
   useEffect(() => {
     if (!numericId) return;

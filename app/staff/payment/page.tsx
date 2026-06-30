@@ -327,8 +327,8 @@ export default function PaymentMonitorPage() {
               </thead>
               <tbody>
                 {pagedRows.map(p => {
-                  const reqData   = requests[p.request];
-                  const reqId     = reqData?.document_request_no
+                  const reqData      = requests[p.request];
+                  const displayReqId = reqData?.document_request_no
                     ? reqData.document_request_no
                     : `REQ-${String(p.request).padStart(3, '0')}`;
                   const requester = reqData?.requester_info
@@ -342,9 +342,9 @@ export default function PaymentMonitorPage() {
                     <tr
                       key={p.payment_id}
                       style={{ background: rowBg, cursor: 'pointer' }}
-                      onClick={() => router.push(`/staff/request/${reqId}`)}
+                      onClick={() => router.push(`/staff/request/${p.request}`)}
                     >
-                      <td style={{ whiteSpace: 'nowrap' }}><span className="req-id">{reqId}</span></td>
+                      <td style={{ whiteSpace: 'nowrap' }}><span className="req-id">{displayReqId}</span></td>
                       <td>{requester}</td>
                       
                       <td style={{ color: 'var(--mid-gray)' }}>{formatDate(p.payment_date)}</td>
@@ -352,7 +352,7 @@ export default function PaymentMonitorPage() {
                       <td style={{ color: 'var(--mid-gray)' }}>{p.official_receipt_no ?? '—'}</td>
                       <td onClick={e => e.stopPropagation()}>
                         {p.payment_status === 'Paid' ? (
-                          <button className="btn-outline btn-sm" onClick={() => router.push(`/staff/request/${reqId}`)}>View</button>
+                          <button className="btn-outline btn-sm" onClick={() => router.push(`/staff/request/${p.request}`)}>View</button>
                         ) : (
                           <button
                             className={`${isOverdue ? 'btn-red btn-sm' : 'btn-primary btn-sm'}`}

@@ -195,8 +195,7 @@ export default function NotificationsPage() {
   function handleClick(n: ApiNotification) {
     if (!n.is_read) markRead(n.notification_id);
     if (n.request) {
-      const reqId = `REQ-${String(n.request).padStart(3, '0')}`;
-      router.push(`/staff/request/${reqId}`);
+      router.push(`/staff/request/${n.request}`);
     }
   }
 

@@ -472,12 +472,11 @@ export default function DashboardPage() {
                 <tbody>
                   {paginatedRows.map(r => {
                     const badge = statusToBadge(r.current_status);
-                    const reqId = `REQ-${String(r.request_id).padStart(3, '0')}`;
                     return (
                       <tr key={r.request_id} onClick={() => {
                         sessionStorage.setItem('dashboard_dept', dept);
                         sessionStorage.setItem('dashboard_tab', activeTab);
-                        router.push(`/staff/request/${reqId}`);
+                        router.push(`/staff/request/${r.request_id}`);
                       }}>
                         <td style={{ textAlign: 'center' }} onClick={e => e.stopPropagation()}>
                           <input type="checkbox" className="cb" />
@@ -492,7 +491,7 @@ export default function DashboardPage() {
                         <td><span className={`badge ${badge.cls}`}>{badge.label}</span></td>
                         <td onClick={e => e.stopPropagation()}>
                           <button className="btn-outline btn-sm"
-                            onClick={() => router.push(`/staff/request/${reqId}`)}>View</button>
+                            onClick={() => router.push(`/staff/request/${r.request_id}`)}>View</button>
                         </td>
                       </tr>
                     );
@@ -517,13 +516,12 @@ export default function DashboardPage() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: 14 }}>
               {paginatedRows.map(r => {
                 const badge = statusToBadge(r.current_status);
-                const reqId = `REQ-${String(r.request_id).padStart(3, '0')}`;
                 return (
                   <div key={r.request_id}
                     onClick={() => {
                       sessionStorage.setItem('dashboard_dept', dept);
                       sessionStorage.setItem('dashboard_tab', activeTab);
-                      router.push(`/staff/request/${reqId}`);
+                      router.push(`/staff/request/${r.request_id}`);
                     }}
                     style={{ background: 'var(--surface)', borderRadius: 10, border: '1px solid var(--border-col)', padding: 16, cursor: 'pointer', transition: 'all .18s', display: 'flex', flexDirection: 'column', gap: 10 }}
                     onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(0,28,67,.1)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; }}
@@ -544,7 +542,7 @@ export default function DashboardPage() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(0,0,0,.05)', paddingTop: 10, marginTop: 2 }}>
                       <span style={{ fontSize: 11, color: 'var(--mid-gray)' }}>Submitted {formatShortDate(r.date_submitted)}</span>
                       <button className="btn-outline btn-sm"
-                        onClick={e => { e.stopPropagation(); router.push(`/staff/request/${reqId}`); }}>View</button>
+                        onClick={e => { e.stopPropagation(); router.push(`/staff/request/${r.request_id}`); }}>View</button>
                     </div>
                   </div>
                 );

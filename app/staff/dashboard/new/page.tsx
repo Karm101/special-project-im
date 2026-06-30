@@ -378,7 +378,6 @@ export default function NewRequestPage() {
       }
 
       const created = await res.json();
-      const newId   = `REQ-${String(created.request_id).padStart(3, '0')}`;
 
       // Upload authorization files if any
       if (authFiles.length > 0) {
@@ -387,7 +386,7 @@ export default function NewRequestPage() {
         setUploadProgress('');
       }
 
-      router.push(`/staff/request/${newId}`);
+      router.push(`/staff/request/${created.request_id}`);
     } catch (err: any) {
       setSubmitError(`Submission failed: ${err.message}`);
     } finally {
