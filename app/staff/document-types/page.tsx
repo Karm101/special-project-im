@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { Topbar } from '../../components/drms/Topbar';
 import { API_BASE } from '@/lib/lib_api';
 
 type DocType = {
@@ -203,7 +204,9 @@ export default function StaffDocumentTypesPage() {
   const inactive = docs.filter(d => !d.is_active);
 
   return (
-    <div style={{ padding: '28px 32px' }}>
+    <>
+      <Topbar breadcrumbs={[{ label: 'Document Types' }]} showNotifDot />
+      <div className="page-body">
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
         <div>
@@ -546,5 +549,6 @@ export default function StaffDocumentTypesPage() {
         </div>
       )}
     </div>
+    </>
   );
 }
