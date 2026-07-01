@@ -1494,7 +1494,7 @@ export default function RequestPage() {
     </table>
 
     <!-- DOCUMENT REQUEST -->
-    <div class="section-header">DOCUMENT REQUEST</div>
+    <div style="background:#222;color:#fff;text-align:center;font-weight:700;font-size:11px;padding:4px;letter-spacing:0.5px;margin:8px 0 6px;">DOCUMENT REQUEST</div>
     <div class="doc-grid">
       <!-- Left column -->
       <div>
@@ -1663,7 +1663,7 @@ export default function RequestPage() {
     </table>
 
     <!-- DOCUMENT REQUEST -->
-    <div class="section-header">DOCUMENT REQUEST</div>
+    <div style="background:#222;color:#fff;text-align:center;font-weight:700;font-size:11px;padding:4px;letter-spacing:0.5px;margin:8px 0 6px;">DOCUMENT REQUEST</div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 16px;margin-bottom:8px;">
       <div>
         <div class="doc-item"><span class="doc-check">${checked('transcript')}</span> Transcript of Records ${specFor('transcript') ? `— ${specFor('transcript')}` : '____________________'}</div>
@@ -1709,14 +1709,14 @@ export default function RequestPage() {
     </div>
 
     <!-- CLEARANCE TABLE -->
-    <div class="section-header">CLEARANCE</div>
+    <div style="background:#222;color:#fff;text-align:center;font-weight:700;font-size:11px;padding:4px;letter-spacing:0.5px;margin:8px 0 6px;">CLEARANCE</div>
     <table class="clearance-table">
       <thead>
-        <tr>
-          <th style="width:30%">Department / Office</th>
-          <th style="width:35%">PROCESSED BY: (name &amp; signature)</th>
-          <th style="width:18%">Date</th>
-          <th style="width:17%">Remarks</th>
+        <tr style="background:#222;color:#fff;">
+          <th style="width:30%;padding:4px 6px;text-align:left;border:1px solid #222;font-weight:700;">Department / Office</th>
+          <th style="width:35%;padding:4px 6px;text-align:left;border:1px solid #222;font-weight:700;">PROCESSED BY: (name &amp; signature)</th>
+          <th style="width:18%;padding:4px 6px;text-align:left;border:1px solid #222;font-weight:700;">Date</th>
+          <th style="width:17%;padding:4px 6px;text-align:left;border:1px solid #222;font-weight:700;">Remarks</th>
         </tr>
       </thead>
       <tbody>${clearanceRows}</tbody>
