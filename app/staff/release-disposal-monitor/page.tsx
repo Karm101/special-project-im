@@ -9,6 +9,13 @@ import { FilterPanel } from '../../components/drms/FilterPanel';
 import { API_BASE } from '@/lib/lib_api';
 
 // ── API types ─────────────────────────────────────────────────────────────────
+type StatusLog = {
+  status: string;
+  timestamp: string;
+  remarks: string | null;
+  staff_name: string | null;
+};
+
 type ApiRequest = {
   request_id: number;
   document_request_no: string | null;
@@ -23,7 +30,7 @@ type ApiRequest = {
     program_strand: string;
   } | null;
   requested_documents?: { document_name: string }[];
-  status_logs?: { status: string; timestamp: string; remarks: string | null; staff_name: string | null }[];
+  status_logs?: StatusLog[];
 };
 
 function getToken() {
@@ -46,6 +53,27 @@ function formatRequestId(requestId: number, documentRequestNo?: string | null): 
   return documentRequestNo ?? `REQ-${String(requestId).padStart(3, '0')}`;
 }
 
+/** Gets the transition log entry for a given status */
+function getTransitionLog(r: ApiRequest, status: string): StatusLog | undefined {
+  return r.status_logs?.find(l => l.status === status);
+}
+
+/** Gets the transition timestamp for Claimed or Shredded — used for year/month bucketing */
+function getTransitionDate(r: ApiRequest): string | null {
+  const relevantStatus = r.current_status === 'Claimed' ? 'Claimed'
+    : r.current_status === 'Shredded' ? 'Shredded'
+    : r.current_status === 'Pending Shredding' ? 'Pending Shredding'
+    : null;
+  if (!relevantStatus) return null;
+  const log = getTransitionLog(r, relevantStatus);
+  return log?.timestamp ?? null;
+}
+
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+
 function StatCard({ num, label, color, bg, icon, loading }: {
   num: string | number; label: string; color: string; bg: string; icon: React.ReactNode; loading: boolean;
 }) {
@@ -64,9 +92,11 @@ function StatCard({ num, label, color, bg, icon, loading }: {
   );
 }
 
-export default function ReleaseClaimMonitorPage() {
+export default function ReleaseDisposalMonitorPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab]   = useState<'release' | 'claimed' | 'shredded'>('release');
+  const currentYear = new Date().getFullYear();
+
+  const [activeTab, setActiveTab] = useState<'release' | 'claimed' | 'shredded' | 'archive'>('release');
   const [filterOpen, setFilterOpen] = useState(false);
   const [search, setSearch]         = useState('');
   const [selStatus, setSelStatus]   = useState<Set<string>>(new Set());
@@ -76,11 +106,17 @@ export default function ReleaseClaimMonitorPage() {
   const [sortMode, setSortMode]     = useState<'newest' | 'oldest'>('newest');
   const [page, setPage]             = useState(1);
 
+  // ── Month filters (Claimed, Shredded, Archive tabs) ───────────────────────
+  const [claimedMonth, setClaimedMonth]   = useState<number | null>(null); // 0-indexed
+  const [shreddedMonth, setShreddedMonth] = useState<number | null>(null);
+  const [archiveYear, setArchiveYear]     = useState<number | null>(null);
+  const [archiveMonth, setArchiveMonth]   = useState<number | null>(null);
+
   // ── API state ─────────────────────────────────────────────────────────────
-  const [releaseRows, setReleaseRows]   = useState<ApiRequest[]>([]);
-  const [claimedRows, setClaimedRows]   = useState<ApiRequest[]>([]);
+  const [releaseRows, setReleaseRows]         = useState<ApiRequest[]>([]);
+  const [claimedRows, setClaimedRows]         = useState<ApiRequest[]>([]);
   const [pendingShredRows, setPendingShredRows] = useState<ApiRequest[]>([]);
-  const [shreddedRows, setShreddedRows] = useState<ApiRequest[]>([]);
+  const [shreddedRows, setShreddedRows]       = useState<ApiRequest[]>([]);
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState<string | null>(null);
   const [updating, setUpdating] = useState<number | null>(null);
@@ -99,20 +135,17 @@ export default function ReleaseClaimMonitorPage() {
     setLoading(true);
     setError(null);
     try {
-      const [relRes, clmRes, shrRes] = await Promise.all([
+      const [relRes, clmRes, shrRes, pndRes] = await Promise.all([
         fetch(`${API_BASE}/requests/?current_status=For Release&page_size=500`),
         fetch(`${API_BASE}/requests/?current_status=Claimed&page_size=500`),
         fetch(`${API_BASE}/requests/?current_status=Shredded&page_size=500`),
+        fetch(`${API_BASE}/requests/?current_status=Pending Shredding&page_size=500`),
       ]);
-      const pndRes = await fetch(`${API_BASE}/requests/?current_status=Pending Shredding&page_size=500`);
-
       if (!relRes.ok || !clmRes.ok || !shrRes.ok || !pndRes.ok) throw new Error('API error');
-
       const relData = await relRes.json();
       const clmData = await clmRes.json();
       const shrData = await shrRes.json();
       const pndData = await pndRes.json();
-
       setReleaseRows(relData.results ?? relData);
       setClaimedRows(clmData.results ?? clmData);
       setShreddedRows(shrData.results ?? shrData);
@@ -193,25 +226,103 @@ export default function ReleaseClaimMonitorPage() {
     });
   }
 
+  // ── Archive: split claimed+shredded by current year vs prior years ────────
+  const claimedCurrentYear = useMemo(() =>
+    claimedRows.filter(r => {
+      const log = getTransitionLog(r, 'Claimed');
+      if (!log) return true; // fallback: show in current year if no log
+      return new Date(log.timestamp).getFullYear() === currentYear;
+    }), [claimedRows, currentYear]);
+
+  const shreddedCurrentYear = useMemo(() =>
+    shreddedRows.filter(r => {
+      const log = getTransitionLog(r, 'Shredded');
+      if (!log) return true;
+      return new Date(log.timestamp).getFullYear() === currentYear;
+    }), [shreddedRows, currentYear]);
+
+  const archiveRows = useMemo(() => {
+    const priorClaimed = claimedRows.filter(r => {
+      const log = getTransitionLog(r, 'Claimed');
+      if (!log) return false;
+      return new Date(log.timestamp).getFullYear() < currentYear;
+    });
+    const priorShredded = shreddedRows.filter(r => {
+      const log = getTransitionLog(r, 'Shredded');
+      if (!log) return false;
+      return new Date(log.timestamp).getFullYear() < currentYear;
+    });
+    return [...priorClaimed, ...priorShredded];
+  }, [claimedRows, shreddedRows, currentYear]);
+
+  // ── Dynamic year list for archive dropdown ────────────────────────────────
+  const availableArchiveYears = useMemo(() => {
+    const years = new Set<number>();
+    archiveRows.forEach(r => {
+      const log = getTransitionLog(r, r.current_status === 'Claimed' ? 'Claimed' : 'Shredded');
+      if (log) years.add(new Date(log.timestamp).getFullYear());
+    });
+    return Array.from(years).sort((a, b) => b - a); // newest first
+  }, [archiveRows]);
+
   // ── Stat counts ───────────────────────────────────────────────────────────
   const stats = useMemo(() => ({
-    release:        releaseRows.length,
-    claimed:        claimedRows.length,
-    pendingShred:   pendingShredRows.length,
-    shredded:       shreddedRows.length,
-  }), [releaseRows, claimedRows, pendingShredRows, shreddedRows]);
+    release:      releaseRows.length,
+    claimed:      claimedCurrentYear.length,
+    pendingShred: pendingShredRows.length,
+    shredded:     shreddedCurrentYear.length,
+    archive:      archiveRows.length,
+  }), [releaseRows, claimedCurrentYear, pendingShredRows, shreddedCurrentYear, archiveRows]);
 
   const TABS = [
     { label: 'For Release', filter: 'release',  count: stats.release,  color: '#114B9F' },
     { label: 'Claimed',     filter: 'claimed',  count: stats.claimed,  color: '#198754' },
     { label: 'Shredded',    filter: 'shredded', count: stats.pendingShred + stats.shredded, color: '#ff7a7a' },
+    { label: 'Archive',     filter: 'archive',  count: stats.archive,  color: '#856404' },
   ] as const;
 
-  // ── Filter + sort rows for active tab ────────────────────────────────────
-  const baseRows: ApiRequest[] = activeTab === 'release' ? releaseRows
-    : activeTab === 'claimed' ? claimedRows
-    : [...pendingShredRows, ...shreddedRows];
+  // ── Apply month filter helper ─────────────────────────────────────────────
+  function applyMonthFilter(rows: ApiRequest[], status: string, month: number | null): ApiRequest[] {
+    if (month === null) return rows;
+    return rows.filter(r => {
+      const log = getTransitionLog(r, status);
+      if (!log) return false;
+      return new Date(log.timestamp).getMonth() === month;
+    });
+  }
 
+  // ── Base rows per tab ─────────────────────────────────────────────────────
+  const baseRows: ApiRequest[] = useMemo(() => {
+    if (activeTab === 'release') return releaseRows;
+    if (activeTab === 'claimed') {
+      return applyMonthFilter(claimedCurrentYear, 'Claimed', claimedMonth);
+    }
+    if (activeTab === 'shredded') {
+      const pendingRows = pendingShredRows;
+      const confirmedRows = applyMonthFilter(shreddedCurrentYear, 'Shredded', shreddedMonth);
+      return [...pendingRows, ...confirmedRows];
+    }
+    // Archive tab
+    let rows = archiveRows;
+    if (archiveYear !== null) {
+      rows = rows.filter(r => {
+        const log = getTransitionLog(r, r.current_status === 'Claimed' ? 'Claimed' : 'Shredded');
+        if (!log) return false;
+        return new Date(log.timestamp).getFullYear() === archiveYear;
+      });
+    }
+    if (archiveMonth !== null) {
+      rows = rows.filter(r => {
+        const log = getTransitionLog(r, r.current_status === 'Claimed' ? 'Claimed' : 'Shredded');
+        if (!log) return false;
+        return new Date(log.timestamp).getMonth() === archiveMonth;
+      });
+    }
+    return rows;
+  }, [activeTab, releaseRows, claimedCurrentYear, claimedMonth, pendingShredRows,
+      shreddedCurrentYear, shreddedMonth, archiveRows, archiveYear, archiveMonth]);
+
+  // ── Search + sort ────────────────────────────────────────────────────────
   const visibleRows = useMemo(() => {
     let rows = [...baseRows];
 
@@ -225,7 +336,8 @@ export default function ReleaseClaimMonitorPage() {
         const requester = r.requester_info
           ? `${r.requester_info.last_name}, ${r.requester_info.first_name}`.toLowerCase()
           : '';
-        return id.includes(q) || requester.includes(q);
+        const docs = r.requested_documents?.map(d => d.document_name.toLowerCase()).join(' ') ?? '';
+        return id.includes(q) || requester.includes(q) || docs.includes(q);
       });
     }
 
@@ -239,20 +351,33 @@ export default function ReleaseClaimMonitorPage() {
   }, [baseRows, search, activeFilters, sortMode]);
 
   const totalRows = visibleRows.length;
-  const pagedRows  = visibleRows.slice((page - 1) * 10, page * 10);
+  const pagedRows = visibleRows.slice((page - 1) * 10, page * 10);
 
   const toggleChip = (set: Set<string>, val: string, setter: (s: Set<string>) => void) => {
     const next = new Set(set); next.has(val) ? next.delete(val) : next.add(val); setter(next);
   };
+
+  // ── Month filter UI component ─────────────────────────────────────────────
+  function MonthFilter({ value, onChange }: { value: number | null; onChange: (v: number | null) => void }) {
+    return (
+      <select
+        value={value ?? ''}
+        onChange={e => { onChange(e.target.value === '' ? null : parseInt(e.target.value)); setPage(1); }}
+        style={{ fontSize: 12, height: 32, border: '1px solid var(--border-col)', borderRadius: 6, padding: '0 8px', background: 'var(--surface)', color: 'var(--text-primary)', cursor: 'pointer' }}
+      >
+        <option value=''>All Months</option>
+        {MONTHS.map((m, i) => <option key={m} value={i}>{m}</option>)}
+      </select>
+    );
+  }
 
   return (
     <>
       <Topbar breadcrumbs={[{ label: 'Release & Disposal Monitor' }]} showNotifDot />
       <div className="page-body">
 
-        {/* Subtitle clarifying scope */}
         <div style={{ fontSize: 13, color: 'var(--mid-gray)', marginBottom: 18 }}>
-          Track documents awaiting release, confirm claims, and manage disposal of unclaimed documents past the 90-day policy. Claimed and Shredded tabs also serve as the document archive.
+          Track documents awaiting release, confirm claims, and manage disposal of unclaimed documents past the 90-day policy. Claimed and Shredded tabs show the current year. Archive contains prior-year records.
         </div>
 
         {error && (
@@ -264,7 +389,6 @@ export default function ReleaseClaimMonitorPage() {
           </div>
         )}
 
-        {/* 90-day policy note */}
         <div className="info-box warn" style={{ marginBottom: 18 }}>
           <span className="info-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
@@ -277,9 +401,9 @@ export default function ReleaseClaimMonitorPage() {
         {/* Stat cards */}
         <div className="stat-grid stat-grid-4">
           <StatCard loading={loading} num={stats.release}      label="For Release"        color="#114B9F" bg="rgba(17,75,159,0.12)"  icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><path d="M4 3l1.5 1.5L7 3l1.5 1.5L10 3l1.5 1.5L13 3l1.5 1.5L16 3l1.5 1.5L19 3v16l-1.5-1.5L16 19l-1.5 1.5L13 19l-1.5 1.5L10 19l-1.5 1.5L7 19l-1.5 1.5L4 19V3z"/></svg>} />
-          <StatCard loading={loading} num={stats.claimed}      label="Claimed"            color="#198754" bg="rgba(25,135,84,0.12)"  icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>} />
-          <StatCard loading={loading} num={stats.pendingShred} label="Pending Shredding"  color="#FFA323" bg="rgba(255,163,35,0.12)" icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>} />
-          <StatCard loading={loading} num={stats.shredded}     label="Shredded"           color="#646363" bg="rgba(100,99,99,0.12)"  icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>} />
+          <StatCard loading={loading} num={stats.claimed}      label={`Claimed (${currentYear})`}     color="#198754" bg="rgba(25,135,84,0.12)"  icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>} />
+          <StatCard loading={loading} num={stats.pendingShred} label="Pending Shredding"   color="#FFA323" bg="rgba(255,163,35,0.12)" icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>} />
+          <StatCard loading={loading} num={stats.archive}      label="Archived Records"    color="#856404" bg="rgba(133,100,4,0.12)"  icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>} />
         </div>
 
         {/* Tabs */}
@@ -301,6 +425,42 @@ export default function ReleaseClaimMonitorPage() {
 
         {/* Toolbar */}
         <div className="toolbar">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
+
+            {/* Claimed tab — month filter */}
+            {activeTab === 'claimed' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: 12, color: 'var(--mid-gray)', fontWeight: 600 }}>Month:</span>
+                <MonthFilter value={claimedMonth} onChange={v => { setClaimedMonth(v); setPage(1); }} />
+              </div>
+            )}
+
+            {/* Shredded tab — month filter (applies to confirmed Shredded only) */}
+            {activeTab === 'shredded' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: 12, color: 'var(--mid-gray)', fontWeight: 600 }}>Shredded Month:</span>
+                <MonthFilter value={shreddedMonth} onChange={v => { setShreddedMonth(v); setPage(1); }} />
+              </div>
+            )}
+
+            {/* Archive tab — year + month filter */}
+            {activeTab === 'archive' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 12, color: 'var(--mid-gray)', fontWeight: 600 }}>Year:</span>
+                <select
+                  value={archiveYear ?? ''}
+                  onChange={e => { setArchiveYear(e.target.value === '' ? null : parseInt(e.target.value)); setArchiveMonth(null); setPage(1); }}
+                  style={{ fontSize: 12, height: 32, border: '1px solid var(--border-col)', borderRadius: 6, padding: '0 8px', background: 'var(--surface)', color: 'var(--text-primary)', cursor: 'pointer' }}
+                >
+                  <option value=''>All Years</option>
+                  {availableArchiveYears.map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+                <span style={{ fontSize: 12, color: 'var(--mid-gray)', fontWeight: 600 }}>Month:</span>
+                <MonthFilter value={archiveMonth} onChange={v => { setArchiveMonth(v); setPage(1); }} />
+              </div>
+            )}
+          </div>
+
           <div className="toolbar-right">
             <button
               className="btn-outline btn-sm"
@@ -330,23 +490,20 @@ export default function ReleaseClaimMonitorPage() {
                 dateTo={dateTo} onDateToChange={setDateTo}
               />
             </div>
-            <div className="search-box" style={{ minWidth: 320 }}>
-              <input type="text" placeholder="Search by name or request ID..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
+            <div className="search-box" style={{ minWidth: 300 }}>
+              <input type="text" placeholder="Search by name, request ID, or document..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
               <Search size={13} color="var(--mid-gray)" />
             </div>
           </div>
         </div>
 
-        {/* Bulk shred action bar — only on Shredded tab when items selected */}
+        {/* Bulk shred action bar */}
         {activeTab === 'shredded' && selectedShredIds.size > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', background: 'rgba(255,163,35,0.08)', border: '1px solid rgba(255,163,35,0.25)', borderRadius: 8, marginBottom: 12 }}>
             <span style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 600 }}>
               {selectedShredIds.size} selected
             </span>
-            <button
-              className="btn-primary btn-sm"
-              onClick={() => setShredConfirmModal(true)}
-            >
+            <button className="btn-primary btn-sm" onClick={() => setShredConfirmModal(true)}>
               Confirm Shredded
             </button>
             <button className="btn-outline btn-sm" onClick={() => setSelectedShredIds(new Set())}>
@@ -363,123 +520,161 @@ export default function ReleaseClaimMonitorPage() {
 
         {!loading && (
           <>
-          <div className="table-wrap">
-            <table className="drms-table">
-              <thead>
-                <tr>
-                  {activeTab === 'shredded' && <th style={{ width: 40, textAlign: 'center' }}>
-                    <input
-                      type="checkbox"
-                      className="cb"
-                      checked={pagedRows.filter(r => r.current_status === 'Pending Shredding').length > 0 &&
-                        pagedRows.filter(r => r.current_status === 'Pending Shredding').every(r => selectedShredIds.has(r.request_id))}
-                      onChange={() => toggleSelectAllShred(pagedRows.filter(r => r.current_status === 'Pending Shredding'))}
-                    />
-                  </th>}
-                  <th>Request ID</th>
-                  <th>Requester</th>
-                  <th>Document(s)</th>
-                  <th>Submitted</th>
-                  {activeTab === 'release'  && <th>Expected Claim</th>}
-                  {activeTab === 'claimed'  && <th>Claimed On</th>}
-                  {activeTab === 'shredded' && <th>Status</th>}
-                  {activeTab === 'shredded' && <th>Flagged / Shredded</th>}
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pagedRows.map(r => {
-                  const reqId = formatRequestId(r.request_id, r.document_request_no);
-                  const requester = r.requester_info
-                    ? `${r.requester_info.last_name}, ${r.requester_info.first_name}`
-                    : '—';
-                  const docNames = r.requested_documents?.map(d => d.document_name).join(', ') ?? '—';
-                  const isPendingShred = r.current_status === 'Pending Shredding';
+            <div className="table-wrap">
+              <table className="drms-table">
+                <thead>
+                  <tr>
+                    {activeTab === 'shredded' && (
+                      <th style={{ width: 40, textAlign: 'center' }}>
+                        <input
+                          type="checkbox"
+                          className="cb"
+                          checked={
+                            pagedRows.filter(r => r.current_status === 'Pending Shredding').length > 0 &&
+                            pagedRows.filter(r => r.current_status === 'Pending Shredding').every(r => selectedShredIds.has(r.request_id))
+                          }
+                          onChange={() => toggleSelectAllShred(pagedRows.filter(r => r.current_status === 'Pending Shredding'))}
+                        />
+                      </th>
+                    )}
+                    <th>Request ID</th>
+                    <th>Requester</th>
+                    <th>Document(s)</th>
+                    <th>Submitted</th>
+                    {activeTab === 'release'  && <th>Expected Claim</th>}
+                    {activeTab === 'claimed'  && <th>Claimed On</th>}
+                    {activeTab === 'shredded' && <th>Status</th>}
+                    {activeTab === 'shredded' && <th>Flagged / Shredded</th>}
+                    {activeTab === 'archive'  && <th>Status</th>}
+                    {activeTab === 'archive'  && <th>Completed On</th>}
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pagedRows.map(r => {
+                    const reqId = formatRequestId(r.request_id, r.document_request_no);
+                    const requester = r.requester_info
+                      ? `${r.requester_info.last_name}, ${r.requester_info.first_name}`
+                      : '—';
+                    const docNames = r.requested_documents?.map(d => d.document_name).join(', ') ?? '—';
+                    const isPendingShred = r.current_status === 'Pending Shredding';
 
-                  return (
-                    <tr
-                      key={r.request_id}
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => router.push(`/staff/request/${r.request_id}`)}
-                    >
-                      {activeTab === 'shredded' && (
-                        <td onClick={e => e.stopPropagation()} style={{ textAlign: 'center' }}>
-                          {isPendingShred && (
-                            <input
-                              type="checkbox"
-                              className="cb"
-                              checked={selectedShredIds.has(r.request_id)}
-                              onChange={() => toggleShredSelect(r.request_id)}
-                            />
+                    return (
+                      <tr
+                        key={r.request_id}
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => router.push(`/staff/request/${r.request_id}`)}
+                      >
+                        {/* Shredded tab checkbox */}
+                        {activeTab === 'shredded' && (
+                          <td onClick={e => e.stopPropagation()} style={{ textAlign: 'center' }}>
+                            {isPendingShred && (
+                              <input
+                                type="checkbox"
+                                className="cb"
+                                checked={selectedShredIds.has(r.request_id)}
+                                onChange={() => toggleShredSelect(r.request_id)}
+                              />
+                            )}
+                          </td>
+                        )}
+
+                        <td><span className="req-id">{reqId}</span></td>
+                        <td>{requester}</td>
+                        <td style={{ color: 'var(--mid-gray)', fontSize: 12 }}>{docNames}</td>
+                        <td style={{ color: 'var(--mid-gray)' }}>{formatDate(r.date_submitted)}</td>
+
+                        {/* For Release — expected claim date */}
+                        {activeTab === 'release' && (
+                          <td style={{ color: 'var(--mid-gray)' }}>{formatDate(r.expected_claim_date)}</td>
+                        )}
+
+                        {/* Claimed — actual claim date from transition log */}
+                        {activeTab === 'claimed' && (
+                          <td style={{ color: '#198754', fontWeight: 600 }}>
+                            {formatDate(getTransitionLog(r, 'Claimed')?.timestamp ?? r.actual_claim_date)}
+                          </td>
+                        )}
+
+                        {/* Shredded — status badge + flagged/shredded date */}
+                        {activeTab === 'shredded' && (
+                          <>
+                            <td>
+                              <span className={`badge ${isPendingShred ? 'b-rev' : 'b-sub'}`}>
+                                {isPendingShred ? 'Pending Shredding' : 'Shredded'}
+                              </span>
+                            </td>
+                            <td style={{ color: 'var(--mid-gray)', fontSize: 12 }}>
+                              {(() => {
+                                const log = getTransitionLog(r, isPendingShred ? 'Pending Shredding' : 'Shredded');
+                                if (!log) return '—';
+                                const ago = daysAgo(log.timestamp);
+                                return (
+                                  <>
+                                    {formatDate(log.timestamp)}
+                                    {isPendingShred && ago !== null && (
+                                      <div style={{ fontSize: 11, color: 'var(--mid-gray)' }}>
+                                        Flagged {ago} day{ago !== 1 ? 's' : ''} ago
+                                      </div>
+                                    )}
+                                  </>
+                                );
+                              })()}
+                            </td>
+                          </>
+                        )}
+
+                        {/* Archive — status + completed date */}
+                        {activeTab === 'archive' && (
+                          <>
+                            <td>
+                              <span className={`badge ${r.current_status === 'Claimed' ? 'b-done' : 'b-sub'}`}>
+                                {r.current_status}
+                              </span>
+                            </td>
+                            <td style={{ color: 'var(--mid-gray)', fontSize: 12 }}>
+                              {(() => {
+                                const log = getTransitionLog(r, r.current_status === 'Claimed' ? 'Claimed' : 'Shredded');
+                                return formatDate(log?.timestamp ?? null);
+                              })()}
+                            </td>
+                          </>
+                        )}
+
+                        <td onClick={e => e.stopPropagation()}>
+                          {activeTab === 'release' ? (
+                            <button
+                              className="btn-outline btn-sm"
+                              disabled={updating === r.request_id}
+                              onClick={() => openMarkClaimed(r.request_id)}
+                            >
+                              {updating === r.request_id ? 'Updating...' : 'Mark Claimed'}
+                            </button>
+                          ) : (
+                            <button
+                              className="btn-outline btn-sm"
+                              onClick={() => router.push(`/staff/request/${r.request_id}`)}
+                            >
+                              View
+                            </button>
                           )}
                         </td>
-                      )}
-                      <td><span className="req-id">{reqId}</span></td>
-                      <td>{requester}</td>
-                      <td style={{ color: 'var(--mid-gray)', fontSize: 12 }}>{docNames}</td>
-                      <td style={{ color: 'var(--mid-gray)' }}>{formatDate(r.date_submitted)}</td>
-
-                      {activeTab === 'release' && (
-                        <td style={{ color: 'var(--mid-gray)' }}>{formatDate(r.expected_claim_date)}</td>
-                      )}
-                      {activeTab === 'claimed' && (
-                        <td style={{ color: '#198754', fontWeight: 600 }}>{formatDate(r.actual_claim_date)}</td>
-                      )}
-                      {activeTab === 'shredded' && (
-                        <td>
-                          <span className={`badge ${isPendingShred ? 'b-rev' : 'b-sub'}`}>
-                            {isPendingShred ? 'Pending Shredding' : 'Shredded'}
-                          </span>
-                        </td>
-                      )}
-                      {activeTab === 'shredded' && (
-                        <td style={{ color: 'var(--mid-gray)', fontSize: 12 }}>
-                          {(() => {
-                            const log = r.status_logs?.find(l => l.status === (isPendingShred ? 'Pending Shredding' : 'Shredded'));
-                            if (!log) return '—';
-                            const ago = daysAgo(log.timestamp);
-                            return (
-                              <>
-                                {formatDate(log.timestamp)}
-                                {isPendingShred && ago !== null && (
-                                  <div style={{ fontSize: 11, color: 'var(--mid-gray)' }}>Flagged {ago} day{ago !== 1 ? 's' : ''} ago</div>
-                                )}
-                              </>
-                            );
-                          })()}
-                        </td>
-                      )}
-
-                      <td onClick={e => e.stopPropagation()}>
-                        {activeTab === 'release' && (
-                          <button
-                            className="btn-outline btn-sm"
-                            disabled={updating === r.request_id}
-                            onClick={() => openMarkClaimed(r.request_id)}
-                          >
-                            {updating === r.request_id ? 'Updating...' : 'Mark Claimed'}
-                          </button>
-                        )}
-                        {activeTab !== 'release' && (
-                          <button className="btn-outline btn-sm" onClick={() => router.push(`/staff/request/${r.request_id}`)}>
-                            View
-                          </button>
-                        )}
+                      </tr>
+                    );
+                  })}
+                  {pagedRows.length === 0 && (
+                    <tr>
+                      <td colSpan={8} style={{ textAlign: 'center', padding: 24, color: 'var(--mid-gray)', fontSize: 13 }}>
+                        {activeTab === 'archive' && archiveRows.length === 0
+                          ? 'No archived records yet. Records from prior years will appear here automatically.'
+                          : 'No requests found.'}
                       </td>
                     </tr>
-                  );
-                })}
-                {pagedRows.length === 0 && (
-                  <tr>
-                    <td colSpan={8} style={{ textAlign: 'center', padding: 24, color: 'var(--mid-gray)', fontSize: 13 }}>
-                      No requests found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-          <Pagination currentPage={page} totalItems={totalRows} itemsPerPage={10} onPageChange={p => setPage(p)} />
+                  )}
+                </tbody>
+              </table>
+            </div>
+            <Pagination currentPage={page} totalItems={totalRows} itemsPerPage={10} onPageChange={p => setPage(p)} />
           </>
         )}
       </div>
@@ -535,7 +730,7 @@ export default function ReleaseClaimMonitorPage() {
               Confirm physical destruction of <strong>{selectedShredIds.size}</strong> document{selectedShredIds.size !== 1 ? 's' : ''}? Today's date will be recorded as the shred date.
             </div>
             <div style={{ background: 'rgba(255,163,35,0.08)', border: '1px solid rgba(255,163,35,0.25)', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#7a4f00', marginBottom: 20, lineHeight: 1.6 }}>
-              This action confirms the documents have actually been physically shredded, not just flagged. This cannot be undone.
+              This action confirms the documents have been physically shredded. This cannot be undone.
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
               <button
