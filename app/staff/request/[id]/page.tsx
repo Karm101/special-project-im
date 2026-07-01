@@ -1365,85 +1365,420 @@ export default function RequestPage() {
 
   function handleDownload() {
     if (!data) return;
-    const r     = data.requester_info;
-    const name  = r ? `${r.last_name}, ${r.first_name}` : '—';
-    const isTC  = data.form_type === 'RO-0004';
-    const reqId = formatRequestId(data.request_id, data.document_request_no);
 
+    const r      = data.requester_info;
+    const isTC   = data.form_type === 'RO-0004';
+    const reqId  = formatRequestId(data.request_id, data.document_request_no);
+    const name   = r ? `${r.last_name}, ${r.first_name}` : '';
+
+    // ── Document checklist helpers ──────────────────────────────────────────
     const docNames = data.requested_documents.map(d => d.document_name.toLowerCase());
-    const checked  = (keyword: string) => docNames.some(n => n.includes(keyword)) ? '✓' : '___';
 
-    const clearanceOffices = [
-      'Academic Coordinator (SHS)', "Principal / Dean's Office",
-      'Office of Student Services', 'Center for Student Activities and Discipline',
-      'Center for Guidance and Counseling', 'Laboratory Management Office',
-      'Center for Learning and Information Resources', 'Center for Health Services',
-      'Bookstore', 'Treasury Office', "Registrar's Office",
+    function checked(keyword: string): string {
+      return docNames.some(n => n.includes(keyword)) ? '✓' : '___';
+    }
+
+    function specFor(keyword: string): string {
+      const match = data.requested_documents.find(d =>
+        d.document_name.toLowerCase().includes(keyword)
+      );
+      return match?.specification ?? '';
+    }
+
+    // ── Shared CSS ──────────────────────────────────────────────────────────
+    const sharedCss = `
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body { font-family: Arial, sans-serif; font-size: 11px; color: #000; }
+      .page { max-width: 720px; margin: 0 auto; padding: 18px 24px; }
+      .header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
+      .logo { height: 54px; object-fit: contain; }
+      .rev-box { border: 1px solid #000; padding: 3px 10px; font-size: 10px; line-height: 1.6; text-align: right; }
+      .form-title { text-align: center; font-size: 16px; font-weight: 900; letter-spacing: 0.5px; margin-bottom: 6px; }
+      .instruction { font-size: 10.5px; margin-bottom: 6px; }
+      .instruction strong { font-weight: 700; }
+      table.info { width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 11px; }
+      table.info td { border: 1px solid #000; padding: 3px 6px; }
+      table.info td.label { font-weight: 400; white-space: nowrap; min-width: 110px; }
+      .section-header { background: #222; color: #fff; text-align: center; font-weight: 700;
+        font-size: 11px; padding: 4px; letter-spacing: 0.5px; margin: 8px 0 6px; }
+      .doc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; margin-bottom: 8px; }
+      .doc-item { display: flex; align-items: baseline; gap: 5px; font-size: 11px; padding: 2px 0; }
+      .doc-check { font-size: 12px; min-width: 16px; }
+      .purpose-label { font-size: 11px; font-weight: 700; margin-bottom: 4px; margin-top: 8px; }
+      .purpose-box { border: 1px solid #000; min-height: 60px; padding: 6px; margin-bottom: 10px; font-size: 11px; }
+      .purpose-lines { margin-bottom: 4px; }
+      .purpose-line { border-bottom: 1px solid #000; min-height: 18px; margin-bottom: 4px; padding-bottom: 2px; font-size: 11px; }
+      .sig-section { text-align: center; margin: 16px 0 10px; }
+      .sig-line { border-bottom: 1px solid #000; width: 55%; margin: 0 auto 3px; }
+      .sig-label { font-size: 10.5px; color: #333; }
+      .cut-line { border-top: 2px dashed #555; margin: 10px 0; text-align: center;
+        font-size: 10px; color: #444; padding-top: 3px; }
+      .claim-slip-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+      .claim-slip-title { font-size: 14px; font-weight: 900; }
+      .claim-slip-type { font-size: 10.5px; color: #444; }
+      table.claim { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 8px; }
+      table.claim td { border: 1px solid #000; padding: 3px 6px; }
+      table.claim td.label { font-weight: 400; min-width: 120px; white-space: nowrap; }
+      .note-section { font-size: 10px; margin-bottom: 8px; line-height: 1.5; }
+      .note-section strong { font-weight: 700; }
+      .note-section ul { margin-left: 20px; }
+      .footer { font-size: 10px; text-align: right; margin-top: 8px; }
+      .clearance-table { width: 100%; border-collapse: collapse; font-size: 10.5px; margin: 8px 0; }
+      .clearance-table th { background: #222; color: #fff; padding: 4px 6px; text-align: left; font-weight: 700; border: 1px solid #222; }
+      .clearance-table td { border: 1px solid #888; padding: 5px 6px; min-height: 20px; }
+      .clearance-table td.office { font-size: 10.5px; white-space: nowrap; }
+      .clearance-table td.sig-cell { min-width: 180px; }
+      .clearance-table td.date-cell { min-width: 80px; }
+      .clearance-table td.remarks-cell { min-width: 90px; }
+      .conforme-row { display: flex; justify-content: space-between; align-items: flex-start; margin: 10px 0; gap: 20px; }
+      .conforme-left { flex: 1; font-size: 11px; }
+      .conforme-sig-line { border-bottom: 1px solid #000; min-width: 220px; display: inline-block; margin-top: 14px; }
+      .conforme-sig-label { font-size: 10px; text-align: center; color: #444; margin-top: 2px; }
+      .contact-line { font-size: 11px; margin-top: 6px; }
+      .cav-box { border: 1px solid #000; padding: 8px 12px; min-width: 160px; min-height: 70px; font-size: 10.5px; }
+      .conditions { font-size: 10px; margin-top: 10px; }
+      .conditions ol { margin-left: 16px; line-height: 1.6; }
+      .conditions li { margin-bottom: 2px; }
+      .conditions strong { font-weight: 700; }
+      @media print { body { padding: 0; } @page { margin: 8mm; } }
+    `;
+
+    // ── RO-0005 — CREDENTIAL REQUEST ────────────────────────────────────────
+    if (!isTC) {
+      const html = `<!DOCTYPE html>
+  <html><head>
+  <title>Credential Request — ${reqId}</title>
+  <style>${sharedCss}</style>
+  </head><body>
+  <div class="page">
+
+    <!-- HEADER -->
+    <div class="header">
+      <img src="/mmcm-logo-with-name.png" class="logo" alt="MMCM" />
+      <div class="rev-box">
+        REVISION NO. &nbsp;&nbsp;<br>
+        REVISION DATE
+      </div>
+    </div>
+
+    <!-- TITLE -->
+    <div class="form-title">CREDENTIAL REQUEST</div>
+    <div class="instruction">Please print legibly. Use <strong>BLACK</strong> ink only.</div>
+
+    <!-- INFO TABLE -->
+    <table class="info">
+      <tr>
+        <td class="label">Student Name</td>
+        <td colspan="3">${name}</td>
+      </tr>
+      <tr>
+        <td class="label">Student Number</td>
+        <td>${r?.student_number ?? ''}</td>
+        <td class="label">Date of Request</td>
+        <td>${formatDate(data.date_submitted)}</td>
+      </tr>
+      <tr>
+        <td class="label">Program/Strand</td>
+        <td>${r?.program_strand ?? ''}</td>
+        <td class="label">Claim Date</td>
+        <td>${formatDate(data.expected_claim_date)}</td>
+      </tr>
+      <tr>
+        <td class="label">Acad/School Year</td>
+        <td>${r?.academic_year ?? ''}</td>
+        <td class="label">Term/Sem</td>
+        <td>${r?.term_semester ?? ''}</td>
+      </tr>
+    </table>
+
+    <!-- DOCUMENT REQUEST -->
+    <div class="section-header">DOCUMENT REQUEST</div>
+    <div class="doc-grid">
+      <!-- Left column -->
+      <div>
+        <div class="doc-item"><span class="doc-check">${checked('transcript')}</span> Transcript of Records ${specFor('transcript') ? `— ${specFor('transcript')}` : ''}</div>
+        <div class="doc-item"><span class="doc-check">${checked('honorable') || checked('transfer')}</span> Honorable Dismissal / Transfer of Credentials</div>
+        <div class="doc-item"><span class="doc-check">${checked('certified true')}</span> Certified True Copy ${specFor('certified true') ? `— ${specFor('certified true')}` : '___________________'}</div>
+        <div class="doc-item"><span class="doc-check">${checked('certification') || checked('certificate')}</span> Certification ${specFor('certification') || specFor('certificate') ? `— ${specFor('certification') || specFor('certificate')}` : '_________________________'}</div>
+        <div class="doc-item"><span class="doc-check">___</span> Others ________________________________</div>
+      </div>
+      <!-- Right column -->
+      <div>
+        <div class="doc-item"><span class="doc-check">${checked('diploma')}</span> Diploma</div>
+        <div class="doc-item"><span class="doc-check">${checked('special order')}</span> Special Order</div>
+        <div class="doc-item"><span class="doc-check">${checked('sf9') || checked('report card')}</span> SF9 (Report Card)</div>
+        <div class="doc-item"><span class="doc-check">${checked('sf10') || checked('permanent copy')}</span> SF10 (Permanent Copy) ${specFor('sf10') || specFor('permanent') ? `— ${specFor('sf10') || specFor('permanent')}` : '_________'}</div>
+      </div>
+    </div>
+
+    <!-- PURPOSE -->
+    <div class="purpose-label">Purpose of Request</div>
+    <div class="purpose-box">${data.purpose}</div>
+
+    <!-- SIGNATURE -->
+    <div class="sig-section">
+      <div class="sig-line"></div>
+      <div class="sig-label">Student's Signature over printed name</div>
+    </div>
+
+    <!-- CUT LINE -->
+    <div class="cut-line">✂ &nbsp;&nbsp; cut here &nbsp;&nbsp; ✂</div>
+
+    <!-- CLAIM SLIP -->
+    <div class="claim-slip-header">
+      <img src="/mmcm-logo-with-name.png" style="height:36px;object-fit:contain;" alt="MMCM" />
+      <div style="text-align:center;">
+        <div class="claim-slip-title">CLAIM SLIP</div>
+      </div>
+      <div class="claim-slip-type">Credential Request</div>
+    </div>
+
+    <table class="claim">
+      <tr>
+        <td class="label">Student Name</td>
+        <td>${name}</td>
+        <td class="label">Date of Request</td>
+        <td>${formatDate(data.date_submitted)}</td>
+      </tr>
+      <tr>
+        <td class="label">Documents Requested</td>
+        <td>${data.requested_documents.map(d => d.document_name).join(', ')}</td>
+        <td class="label">Claim Date</td>
+        <td>${formatDate(data.expected_claim_date)}</td>
+      </tr>
+    </table>
+
+    <div class="note-section">
+      Note: When claiming for request, kindly bring 1 (one) valid/gov't ID.<br>
+      If request will be claimed by another person, please present the following:
+      <ul>
+        <li>Photocopy of a valid/ gov't ID of the requestor with three (3) specimen signatures.</li>
+        <li>Photocopy of a valid/ gov't ID of the authorized person</li>
+        <li>An authorization letter signed by the requestor</li>
+      </ul>
+    </div>
+
+    <div class="note-section">
+      <strong>Kindly return this form to the Registrar's Office after payment at the Treasury. Without this form, the
+      request cannot be processed.</strong> Documents will be processed within <strong>7 days</strong> after payment has been made.
+    </div>
+
+    <div class="footer">RO-0005-FORM<br>THIS FORM IS AVAILABLE AT THE REGISTRAR'S OFFICE.</div>
+
+  </div>
+  </body></html>`;
+
+      const win = window.open('', '_blank');
+      if (win) { win.document.write(html); win.document.close(); setTimeout(() => win.print(), 500); }
+      return;
+    }
+
+    // ── RO-0004 — TRANSFER CREDENTIAL REQUEST ───────────────────────────────
+
+    // Build clearance rows from all 11 official offices.
+    // Pre-fill digital clearance data where available.
+    const OFFICIAL_OFFICES = [
+      'Academic Coordinator (SHS)',
+      "Principal/Dean's Office",
+      'Office of the Student Services',
+      'Center for Student Activities and Discipline',
+      'Center for Guidance and Counseling',
+      'Laboratory Management Office',
+      'Center for Learning and Information Resources',
+      'Center for Health Services and Wellness',
+      'Bookstore',
+      'Treasury Office',
+      "Registrar's Office",
     ];
-    const clearanceRows = clearanceOffices.map(office => {
-      const clr = (data as any).clearances?.find((c: any) => c.office_name === office);
-      const sigCell = clr?.signature_image_url
-        ? `<div style="font-size:11px;margin-bottom:4px;">${clr.processed_by ?? ''}</div>
-           <img src="${clr.signature_image_url}" style="height:36px;max-width:120px;object-fit:contain;" />`
-        : (clr?.processed_by ?? '');
+
+    const clearanceRows = OFFICIAL_OFFICES.map(office => {
+      const clr = data.clearances?.find(c =>
+        c.office_name.toLowerCase().includes(office.toLowerCase().slice(0, 12))
+      );
+      const processedBy = clr?.cleared_by_name ?? '';
+      const sigImg = clr?.signature_image_url
+        ? `<div style="font-size:10px;margin-bottom:3px;">${processedBy}</div>
+          <img src="${clr.signature_image_url}" style="height:32px;max-width:120px;object-fit:contain;" />`
+        : processedBy;
       const dateStr = clr?.cleared_at
-        ? new Date(clr.cleared_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Manila' })
+        ? new Date(clr.cleared_at).toLocaleDateString('en-US', {
+            month: '2-digit', day: '2-digit', year: 'numeric', timeZone: 'Asia/Manila'
+          })
         : '';
+      const remarks = clr?.remarks ?? '';
       return `<tr>
-        <td style="padding:6px 8px;border-bottom:1px solid #ddd;font-size:12px;">${office}</td>
-        <td style="padding:6px 8px;border-bottom:1px solid #ddd;font-size:12px;">${sigCell}</td>
-        <td style="padding:6px 8px;border-bottom:1px solid #ddd;font-size:12px;">${dateStr}</td>
-        <td style="padding:6px 8px;border-bottom:1px solid #ddd;font-size:12px;">${clr?.remarks ?? ''}</td>
+        <td class="office">${office}</td>
+        <td class="sig-cell">${sigImg}</td>
+        <td class="date-cell">${dateStr}</td>
+        <td class="remarks-cell">${remarks}</td>
       </tr>`;
     }).join('');
 
-    const css = `*{box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:12px;margin:0;padding:20px;color:#000}.page{max-width:750px;margin:0 auto}.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}.logo-area{display:flex;align-items:center;gap:10px}.logo-box{width:60px;height:60px}.school-name{font-size:14px;font-weight:900;color:#001C43}.form-title{font-size:18px;font-weight:900;text-align:center;margin:8px 0 4px;text-transform:uppercase;letter-spacing:1px}.rev-box{border:1px solid #000;padding:4px 8px;font-size:10px;text-align:right}.note{font-size:11px;margin-bottom:8px;font-style:italic}table.info{width:100%;border-collapse:collapse;margin-bottom:8px}table.info td{border:1px solid #000;padding:4px 6px;font-size:12px}table.info td.label{background:#f0f0f0;font-weight:700;width:30%}.section-header{background:#001C43;color:white;text-align:center;font-weight:700;font-size:12px;padding:4px;margin:6px 0 4px;letter-spacing:1px}.doc-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px 16px;margin:6px 0}.doc-item{font-size:12px;display:flex;align-items:center;gap:6px;padding:2px 0}.purpose-box{border:1px solid #000;min-height:60px;padding:6px;margin:6px 0;font-size:12px}.sig-line{border-top:1px solid #000;width:60%;margin:24px auto 2px}.sig-label{text-align:center;font-size:11px}.cut-line{border-top:2px dashed #000;margin:16px 0;text-align:center;font-size:10px;color:#666}.claim-slip{margin-top:4px}table.clearance{width:100%;border-collapse:collapse;margin:6px 0;font-size:11px}table.clearance th{background:#001C43;color:white;padding:4px 6px;text-align:left}table.clearance td{border:1px solid #ccc;padding:6px}.conditions{font-size:10px;margin-top:8px}.conditions li{margin-bottom:3px}@media print{body{padding:10px}@page{margin:10mm}}`;
+    const html = `<!DOCTYPE html>
+  <html><head>
+  <title>Transfer Credential Request — ${reqId}</title>
+  <style>${sharedCss}</style>
+  </head><body>
+  <div class="page">
 
-    const html = `<!DOCTYPE html><html><head><title>${isTC ? 'Transfer Credential' : 'Credential Request'} — ${reqId}</title><style>${css}</style></head><body><div class="page">
-<div class="header"><div class="logo-area"><img src="/mmcm-logo-with-name.png" style="height:60px;object-fit:contain;" /><div style="font-size:10px;color:#666;margin-left:4px;">Registrar's Office</div></div><div class="rev-box">REVISION NO. &nbsp; 00<br>REVISION DATE &nbsp;&nbsp;</div></div>
-<div class="form-title">${isTC ? 'Transfer Credential Request' : 'Credential Request'}</div>
-<div style="text-align:right;font-size:10px;color:#666;margin-bottom:4px;">${isTC ? 'RO-0004-FORM' : 'RO-0005-FORM'} &nbsp;|&nbsp; ${reqId}</div>
-<div class="note">Please print legibly. Use BLACK ink only.</div>
-<table class="info">
-  <tr><td class="label">Student Name</td><td colspan="3">${name}</td><td class="label">Date of Request</td><td>${formatDate(data.date_submitted)}</td></tr>
-  <tr><td class="label">Student Number</td><td colspan="3">${r?.student_number ?? ''}</td><td class="label">Claim Date</td><td>${formatDate(data.expected_claim_date)}</td></tr>
-  <tr><td class="label">Program / Strand</td><td colspan="3">${r?.program_strand ?? ''}</td><td class="label">${isTC ? 'Date of Graduation' : 'Term/Sem'}</td><td>${r ? (isTC ? '' : r.term_semester ?? '') : ''}</td></tr>
-</table>
-<div class="section-header">DOCUMENT REQUEST</div>
-<div class="doc-grid">
-  <div class="doc-item"><span style="font-size:14px;">${checked('transcript')}</span> Transcript of Records</div>
-  <div class="doc-item"><span style="font-size:14px;">${checked('sf10')}</span> SF10 (Permanent Copy)</div>
-  <div class="doc-item"><span style="font-size:14px;">${checked('sf9')}</span> SF9 (Report Card)</div>
-  <div class="doc-item"><span style="font-size:14px;">${checked('honorable') || checked('transfer')}</span> Honorable Dismissal / TC</div>
-  <div class="doc-item"><span style="font-size:14px;">${checked('certified true')}</span> Certified True Copy</div>
-  <div class="doc-item"><span style="font-size:14px;">${checked('diploma')}</span> Diploma</div>
-  <div class="doc-item"><span style="font-size:14px;">${checked('certification') || checked('certificate')}</span> Certification _______________</div>
-  <div class="doc-item"><span style="font-size:14px;">___</span> Special Order</div>
-</div>
-<div style="font-weight:700;margin-top:6px;">Purpose of Request</div>
-<div class="purpose-box">${data.purpose}</div>
-${isTC ? `
-<div style="display:flex;gap:20px;margin:8px 0;"><div style="flex:1;"><div style="font-size:11px;margin-bottom:20px;">By affixing your signature below, it is understood that you have read the instructions and terms and conditions.</div><div>CONFORME: <span style="border-bottom:1px solid #000;display:inline-block;width:200px;"></span></div><div style="font-size:10px;margin-left:80px;">Student's Signature over printed name</div><div style="margin-top:6px;">Contact #: <span style="border-bottom:1px solid #000;display:inline-block;width:180px;">${r?.contact_number ?? ''}</span></div></div></div>
-<div class="section-header">CLEARANCE</div>
-<table class="clearance"><thead><tr><th>Department / Office</th><th>PROCESSED BY: (name & signature)</th><th>Date</th><th>Remarks</th></tr></thead><tbody>${clearanceRows}</tbody></table>
-` : `<div style="text-align:center;margin:12px 0 4px;"><div class="sig-line"></div><div class="sig-label">Student's Signature over printed name</div></div>`}
-<div class="cut-line">✂ &nbsp; cut here &nbsp; ✂</div>
-<div class="claim-slip">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;"><div style="display:flex;align-items:center;gap:8px;"><img src="/mmcm-logo-with-name.png" style="height:36px;object-fit:contain;" /><div style="font-size:13px;font-weight:900;">CLAIM SLIP</div></div><div style="font-size:11px;color:#666;">${isTC ? 'Transfer Credential Request' : 'Credential Request'}</div></div>
-  <table class="info">
-    <tr><td class="label">Student Name</td><td>${name}</td><td class="label">Date of Request</td><td>${formatDate(data.date_submitted)}</td></tr>
-    <tr><td class="label">Documents Requested</td><td>${data.requested_documents.map(d => d.document_name).join(', ')}</td><td class="label">Claim Date</td><td>${formatDate(data.expected_claim_date)}</td></tr>
-  </table>
-</div>
-<div class="conditions"><strong>CONDITIONS AND REMINDERS:</strong><ol>
-  <li>Under existing laws, only the student is allowed to request and claim documents. For authorized representatives: (a) written authorization letter addressed to the Registrar, (b) copy of student's school ID with 3 specimen signatures, and (c) valid ID of representative.</li>
-  <li>Kindly return this form to the Registrar's Office after payment at the Treasury. Without this form, the request cannot be processed.</li>
-  <li>Documents will be processed within <strong>7 working days</strong> after payment has been made.</li>
-  <li>Documents not claimed after <strong>ninety (90) days</strong> will be shredded. Payment made is forfeited.</li>
-  <li>The Institution reserves the right to withhold, deny or cancel any request due to pending accountabilities.</li>
-</ol></div>
-<div style="margin-top:12px;font-size:10px;color:#666;text-align:right;">${isTC ? 'RO-0004-FORM' : 'RO-0005-FORM'} &nbsp;|&nbsp; THIS FORM IS AVAILABLE AT THE REGISTRAR'S OFFICE.</div>
-</div></body></html>`;
+    <!-- HEADER -->
+    <div class="header">
+      <img src="/mmcm-logo-with-name.png" class="logo" alt="MMCM" />
+      <div class="rev-box">
+        REVISION NO. &nbsp; 00<br>
+        REVISION DATE
+      </div>
+    </div>
+
+    <!-- TITLE -->
+    <div class="form-title">TRANSFER CREDENTIAL REQUEST</div>
+    <div class="instruction">Please print legibly. Use <strong>BLACK</strong> ink only.</div>
+
+    <!-- INFO TABLE -->
+    <table class="info">
+      <tr>
+        <td class="label">Student Name</td>
+        <td colspan="3">${name}</td>
+        <td class="label">Date of Request</td>
+        <td>${formatDate(data.date_submitted)}</td>
+      </tr>
+      <tr>
+        <td class="label">Student Number</td>
+        <td>${r?.student_number ?? ''}</td>
+        <td class="label">Acad/School Year</td>
+        <td>${r?.academic_year ?? ''}</td>
+        <td class="label">Claim Date</td>
+        <td>${formatDate(data.expected_claim_date)}</td>
+      </tr>
+      <tr>
+        <td class="label">Program/Strand</td>
+        <td>${r?.program_strand ?? ''}</td>
+        <td class="label">Term/Sem</td>
+        <td>${r?.term_semester ?? ''}</td>
+        <td class="label">Date of Graduation</td>
+        <td></td>
+      </tr>
+    </table>
+
+    <!-- DOCUMENT REQUEST -->
+    <div class="section-header">DOCUMENT REQUEST</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 16px;margin-bottom:8px;">
+      <div>
+        <div class="doc-item"><span class="doc-check">${checked('transcript')}</span> Transcript of Records ${specFor('transcript') ? `— ${specFor('transcript')}` : '____________________'}</div>
+        <div class="doc-item"><span class="doc-check">${checked('honorable') || checked('transfer')}</span> Honorable Dismissal / Transfer of Credentials</div>
+        <div class="doc-item"><span class="doc-check">___</span> Others ________________________________</div>
+      </div>
+      <div>
+        <div class="doc-item"><span class="doc-check">${checked('sf10') || checked('permanent')}</span> SF10 (Permanent Copy) ${specFor('sf10') || specFor('permanent') ? `— ${specFor('sf10') || specFor('permanent')}` : '_________________'}</div>
+        <div class="doc-item"><span class="doc-check">${checked('certified true')}</span> Certified True Copy ${specFor('certified true') ? `— ${specFor('certified true')}` : '_____________________'}</div>
+        <div class="doc-item"><span class="doc-check">${checked('certification') || checked('certificate')}</span> Certification ${specFor('certification') || specFor('certificate') ? `— ${specFor('certification') || specFor('certificate')}` : '___________________________'}</div>
+      </div>
+      <div>
+        <div class="doc-item"><span class="doc-check">${checked('sf9') || checked('report card')}</span> SF9 (Report Card)</div>
+        <div class="doc-item"><span class="doc-check">${checked('diploma')}</span> Diploma</div>
+        <div class="doc-item"><span class="doc-check">${checked('special order')}</span> Special Order</div>
+      </div>
+    </div>
+
+    <!-- PURPOSE -->
+    <div class="purpose-label">Purpose of Request</div>
+    <div class="purpose-lines">
+      <div class="purpose-line">${data.purpose}</div>
+      <div class="purpose-line"></div>
+      <div class="purpose-line"></div>
+    </div>
+
+    <!-- CONFORME + CAV BOX -->
+    <div style="font-size:10.5px;margin:10px 0 6px;line-height:1.5;">
+      By affixing your signature below, it is understood that you have read the instructions as well as the terms
+      and conditions of the request and shall be held liable for any outstanding charges that may incur.
+    </div>
+    <div class="conforme-row">
+      <div class="conforme-left">
+        <div>CONFORME: <span class="conforme-sig-line"></span></div>
+        <div class="conforme-sig-label" style="margin-left:80px;">Student's Signature over printed name</div>
+        <div class="contact-line">Contact #: ______________________________</div>
+      </div>
+      <div class="cav-box">
+        <div style="font-size:10.5px;font-weight:700;margin-bottom:4px;">Signature of</div>
+        <div style="font-size:10.5px;">Requestor for</div>
+        <div style="font-size:10.5px;">CAV request</div>
+      </div>
+    </div>
+
+    <!-- CLEARANCE TABLE -->
+    <div class="section-header">CLEARANCE</div>
+    <table class="clearance-table">
+      <thead>
+        <tr>
+          <th style="width:30%">Department / Office</th>
+          <th style="width:35%">PROCESSED BY: (name &amp; signature)</th>
+          <th style="width:18%">Date</th>
+          <th style="width:17%">Remarks</th>
+        </tr>
+      </thead>
+      <tbody>${clearanceRows}</tbody>
+    </table>
+
+    <!-- CUT LINE -->
+    <div class="cut-line">✂ &nbsp;&nbsp; cut here &nbsp;&nbsp; ✂</div>
+
+    <!-- CLAIM SLIP -->
+    <div class="claim-slip-header">
+      <img src="/mmcm-logo-with-name.png" style="height:36px;object-fit:contain;" alt="MMCM" />
+      <div style="text-align:center;">
+        <div class="claim-slip-title">CLAIM SLIP</div>
+      </div>
+      <div class="claim-slip-type">Transfer Credential Request</div>
+    </div>
+
+    <table class="claim" style="margin-bottom:6px;">
+      <tr>
+        <td class="label">Student Name</td>
+        <td>${name}</td>
+        <td class="label">For the Authorized Representative:</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td class="label">Claim Date</td>
+        <td>${formatDate(data.expected_claim_date)}</td>
+        <td class="label">Name of Representative</td>
+        <td>${data.is_authorized_rep ? (data.representative_name ?? '') : ''}</td>
+      </tr>
+      <tr>
+        <td class="label">Documents Requested</td>
+        <td>${data.requested_documents.map(d => d.document_name).join(', ')}</td>
+        <td class="label">Relation to the Student</td>
+        <td>${data.is_authorized_rep ? (data.rep_relation ?? '') : ''}</td>
+      </tr>
+      <tr>
+        <td class="label">Lacking Docs (if any)</td>
+        <td></td>
+        <td class="label">Released by:</td>
+        <td></td>
+      </tr>
+    </table>
+
+    <!-- CONDITIONS AND REMINDERS -->
+    <div class="conditions">
+      <strong>CONDITIONS AND REMINDERS:</strong>
+      <ol>
+        <li>Under existing laws, only the student is allowed to request and claim documents in connection with his/her school records. In case that the student is not available, the student can authorize somebody to process and claim his/her credentials on his/her behalf provided that:
+          <br>&nbsp;&nbsp;&nbsp;&nbsp;a. The student shall write an authorization letter addressed to the registrar.
+          <br>&nbsp;&nbsp;&nbsp;&nbsp;b. Attach a copy of his/her school ID with three (3) specimen signatures.
+        </li>
+        <li>To verify the identity of the requesting/claiming party, a valid Identification Card of the representative shall be required upon request and claiming of the documents.</li>
+        <li><strong>Kindly return this form to the Registrar's Office after payment at the Treasury. Without this form, the request cannot be processed.</strong></li>
+        <li>Documents will be processed within 7 days after payment has been made.</li>
+        <li>Documents not claimed after ninety (90) days will be shredded. Payment made is forfeited.</li>
+        <li>The Institution reserves the right to withhold, deny or cancel any request for document due to pending accountabilities.</li>
+      </ol>
+    </div>
+
+    <div class="footer">RO-0004-FORM<br>THIS FORM IS AVAILABLE AT THE REGISTRAR'S OFFICE.</div>
+
+  </div>
+  </body></html>`;
 
     const win = window.open('', '_blank');
     if (win) { win.document.write(html); win.document.close(); setTimeout(() => win.print(), 500); }
