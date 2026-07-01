@@ -214,11 +214,31 @@ export default function ReportsPage() {
   }, [filteredRequests]);
 
   // ── Form type breakdown ───────────────────────────────────────────────────
-  const formBreakdown = useMemo(() => ([
-    { label: 'RO-0005 · College', count: filteredRequests.filter(r => r.form_type === 'RO-0005' && r.academic_level === 'College').length, color: '#114B9F' },
-    { label: 'RO-0005 · SHS',     count: filteredRequests.filter(r => r.form_type === 'RO-0005' && r.academic_level === 'SHS').length,     color: '#6D4DF5' },
-    { label: 'RO-0004 · Transfer',count: filteredRequests.filter(r => r.form_type === 'RO-0004').length,                                   color: '#E50019' },
-  ]), [filteredRequests]);
+  const formBreakdown = useMemo(() => {
+    const counts: Record<string, number> = {};
+    filteredRequests.forEach(r => {
+      const key = `${r.form_type} · ${r.academic_level}`;
+      counts[key] = (counts[key] || 0) + 1;
+    });
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .map(([label, count], i) => ({ label, count, color: COLORS[i % COLORS.length] }));
+  }, [filteredRequests]);
+
+  const levelBreakdown = useMemo(() => {
+    const counts: Record<string, number> = {};
+    filteredRequests.forEach(r => {
+      counts[r.academic_level] = (counts[r.academic_level] || 0) + 1;
+    });
+    const levelColors: Record<string, string> = { 'College': '#114B9F', 'SHS': '#6D4DF5' };
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .map(([label, count]) => ({
+        label: label === 'SHS' ? 'Senior High School' : label,
+        count,
+        color: levelColors[label] ?? '#808EA1',
+      }));
+  }, [filteredRequests]);
 
   // ── Submission mode breakdown ─────────────────────────────────────────────
   const modeBreakdown = useMemo(() => ([
@@ -546,10 +566,7 @@ export default function ReportsPage() {
                 <div style={{ color: 'var(--mid-gray)', fontSize: 13, padding: '20px 0' }}>No data for this period.</div>
               ) : (
                 <>
-                  {[
-                    { label: 'College', count: stats.college, color: '#114B9F' },
-                    { label: 'Senior High School', count: stats.shs, color: '#6D4DF5' },
-                  ].map(d => (
+                  {levelBreakdown.map(d => (
                     <div key={d.label} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
                       <div style={{ flex: 1, fontSize: 13, color: 'var(--text-primary)' }}>{d.label}</div>
                       <div style={{ fontSize: 13, fontWeight: 700, color: d.color, minWidth: 30, textAlign: 'right' }}>{d.count}</div>
