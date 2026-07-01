@@ -1374,9 +1374,11 @@ export default function RequestPage() {
     // ── Document checklist helpers ──────────────────────────────────────────
     const docNames = data.requested_documents.map(d => d.document_name.toLowerCase());
 
-    function checked(keyword: string): string {
-      return docNames.some(n => n.includes(keyword)) ? '✓' : '___';
-    }
+    const svgCheck = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+
+  function checked(keyword: string): string {
+    return docNames.some(n => n.includes(keyword)) ? svgCheck : '___';
+  }
 
     function specFor(keyword: string): string {
       const match = data.requested_documents.find(d =>
@@ -1456,9 +1458,9 @@ export default function RequestPage() {
     <div class="header">
       <img src="/mmcm-logo-with-name.png" class="logo" alt="MMCM" />
       <div class="rev-box">
-        REVISION NO. &nbsp;&nbsp;<br>
-        REVISION DATE
-      </div>
+      REVISION NO. &nbsp;<span style="display:inline-block;width:80px;border-bottom:1px solid #000;">&nbsp;</span><br>
+      REVISION DATE &nbsp;<span style="display:inline-block;width:80px;border-bottom:1px solid #000;">&nbsp;</span>
+    </div>
     </div>
 
     <!-- TITLE -->
@@ -1625,8 +1627,8 @@ export default function RequestPage() {
     <div class="header">
       <img src="/mmcm-logo-with-name.png" class="logo" alt="MMCM" />
       <div class="rev-box">
-        REVISION NO. &nbsp; 00<br>
-        REVISION DATE
+        REVISION NO. &nbsp;<span style="display:inline-block;width:60px;border-bottom:1px solid #000;">00</span><br>
+        REVISION DATE &nbsp;<span style="display:inline-block;width:60px;border-bottom:1px solid #000;">&nbsp;</span>
       </div>
     </div>
 
