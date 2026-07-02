@@ -32,7 +32,7 @@ type DocType = {
   document_type_id: number;
   document_name: string;
   processing_days: number;
-  academic_level: string;
+  academic_level: string | null;
 };
 
 type SelectedDoc = {
@@ -94,6 +94,7 @@ export default function StudentSubmitPage() {
   // ── Doc types from API ─────────────────────────────────────────────────────
   const [docTypes, setDocTypes]     = useState<DocType[]>([]);
   const [docsLoading, setDocsLoading] = useState(true);
+  const [docsError, setDocsError]   = useState<string | null>(null);
 
   // ── Auto-populate from session ─────────────────────────────────────────────
   useEffect(() => {
@@ -131,20 +132,12 @@ export default function StudentSubmitPage() {
   useEffect(() => {
     async function fetchDocs() {
       try {
-        const res = await fetch(`${API_BASE}/document-types/`);
+        const res = await fetch(`${API_BASE}/document-types/?page_size=200`);
         if (!res.ok) throw new Error();
         const data = await res.json();
         setDocTypes(data.results ?? data);
       } catch {
-        setDocTypes([
-          { document_type_id: 3,  document_name: 'Certificate of Enrollment', processing_days: 7,  academic_level: 'All'     },
-          { document_type_id: 5,  document_name: 'SF9 — Report Card',          processing_days: 7,  academic_level: 'SHS'     },
-          { document_type_id: 6,  document_name: 'SF10 — Permanent Record',    processing_days: 7,  academic_level: 'SHS'     },
-          { document_type_id: 7,  document_name: 'Certified True Copy',        processing_days: 7,  academic_level: 'All'     },
-          { document_type_id: 1,  document_name: 'Transcript of Records (TOR)', processing_days: 7, academic_level: 'College' },
-          { document_type_id: 2,  document_name: 'Honorable Dismissal',        processing_days: 7,  academic_level: 'College' },
-          { document_type_id: 8,  document_name: 'CAV (via CHED)',             processing_days: 21, academic_level: 'All'     },
-        ]);
+        setDocsError('Could not load the list of available documents. Please refresh the page or try again in a few minutes.');
       } finally {
         setDocsLoading(false);
       }
@@ -155,7 +148,10 @@ export default function StudentSubmitPage() {
   // Filter by academic level
   const filteredDocs = useMemo(() => {
     const level = academicLevel === 'Senior High School' ? 'SHS' : 'College';
-    return docTypes.filter(d => d.academic_level === 'All' || d.academic_level === level);
+    // null, 'All', and legacy 'Both' all mean "available to any academic level"
+    return docTypes.filter(d =>
+      !d.academic_level || d.academic_level === 'All' || d.academic_level === 'Both' || d.academic_level === level
+    );
   }, [docTypes, academicLevel]);
 
   function toggleDoc(dt: DocType) {
@@ -425,6 +421,8 @@ export default function StudentSubmitPage() {
               {errors.docs && <div className="field-error" style={{ marginBottom: 8 }}>{errors.docs}</div>}
               {docsLoading ? (
                 <div style={{ color: '#B1B1B1', padding: 12 }}>Loading document types...</div>
+              ) : docsError ? (
+                <div className="info-box warn" style={{ marginBottom: 8 }}>{docsError}</div>
               ) : (
                 <div className="check-group">
                   {filteredDocs.map(dt => {

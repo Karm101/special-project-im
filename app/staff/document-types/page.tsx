@@ -141,7 +141,7 @@ export default function StaffDocumentTypesPage() {
         body: JSON.stringify({
           document_name:   createForm.document_name.trim(),
           doc_code:        createForm.doc_code.trim().toUpperCase() || null,
-          academic_level:  createForm.academic_level === 'All' ? null : createForm.academic_level,
+          academic_level:  createForm.academic_level,
           processing_days: createForm.processing_days,
           description:     createForm.description.trim() || null,
           is_active:       createForm.is_active,

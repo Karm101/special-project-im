@@ -11,7 +11,7 @@ type DocType = {
   document_type_id: number;
   document_name: string;
   processing_days: number;
-  academic_level: string;
+  academic_level: string | null;
 };
 
 type RequesterResult = {
@@ -120,24 +120,17 @@ export default function NewRequestPage() {
   // ── Document types ────────────────────────────────────────────────────────
   const [docTypes, setDocTypes]         = useState<DocType[]>([]);
   const [docsLoading, setDocsLoading]   = useState(true);
+  const [docsError, setDocsError]       = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchDocTypes() {
       try {
-        const res = await fetch(`${API_BASE}/document-types/`);
+        const res = await fetch(`${API_BASE}/document-types/?page_size=200`);
         if (!res.ok) throw new Error();
         const data = await res.json();
         setDocTypes(data.results ?? data);
       } catch {
-        setDocTypes([
-          { document_type_id: 1, document_name: 'Transcript of Records (TOR)',  processing_days: 7,  academic_level: 'College' },
-          { document_type_id: 2, document_name: 'Honorable Dismissal',           processing_days: 7,  academic_level: 'College' },
-          { document_type_id: 3, document_name: 'Certificate of Enrollment',     processing_days: 7,  academic_level: 'All'     },
-          { document_type_id: 4, document_name: 'Certificate of Grades',         processing_days: 7,  academic_level: 'College' },
-          { document_type_id: 5, document_name: 'SF9 — Report Card',             processing_days: 7,  academic_level: 'SHS'     },
-          { document_type_id: 6, document_name: 'SF10 — Permanent Record',       processing_days: 7,  academic_level: 'SHS'     },
-          { document_type_id: 7, document_name: 'Certified True Copy',           processing_days: 7,  academic_level: 'All'     },
-        ]);
+        setDocsError('Could not load document types. Please refresh the page — if the problem persists, contact the system administrator.');
       } finally {
         setDocsLoading(false);
       }
@@ -294,7 +287,10 @@ export default function NewRequestPage() {
 
   const filteredDocTypes = useMemo(() => {
     const level = form.academicLevel === 'Senior High School' ? 'SHS' : 'College';
-    return docTypes.filter(dt => dt.academic_level === 'All' || dt.academic_level === level);
+    // null, 'All', and legacy 'Both' all mean "available to any academic level"
+    return docTypes.filter(dt =>
+      !dt.academic_level || dt.academic_level === 'All' || dt.academic_level === 'Both' || dt.academic_level === level
+    );
   }, [docTypes, form.academicLevel]);
 
   // ── Validation ────────────────────────────────────────────────────────────
@@ -641,6 +637,8 @@ export default function NewRequestPage() {
               <div ref={docsRef}>{errors.docs && <div className="field-error" style={{ marginBottom: 8 }}>{errors.docs}</div>}</div>
               {docsLoading ? (
                 <div style={{ color: '#B1B1B1', padding: 20 }}>Loading document types...</div>
+              ) : docsError ? (
+                <div className="info-box warn" style={{ marginBottom: 8 }}>{docsError}</div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {filteredDocTypes.map(dt => {
