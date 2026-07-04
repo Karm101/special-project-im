@@ -84,7 +84,7 @@ export default function PaymentMonitorPage() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${API_BASE}/payments/`);
+        const res = await fetch(`${API_BASE}/payments/?page_size=500`);
         if (!res.ok) throw new Error('API error');
         const data = await res.json();
         const rows: ApiPayment[] = data.results ?? data;
@@ -137,7 +137,7 @@ export default function PaymentMonitorPage() {
         }),
       });
       if (!res.ok) throw new Error();
-      const refreshed = await fetch(`${API_BASE}/payments/`);
+      const refreshed = await fetch(`${API_BASE}/payments/?page_size=500`);
       const data = await refreshed.json();
       setPayments(data.results ?? data);
       setModal(null);

@@ -66,7 +66,7 @@ export default function ShsDeptPage() {
     async function fetchData() {
       setLoading(true);
       try {
-        const res = await fetch(`${API_BASE}/requests/?academic_level=SHS`);
+        const res = await fetch(`${API_BASE}/requests/?academic_level=SHS&page_size=500`);
         if (!res.ok) throw new Error();
         const data = await res.json();
         setRequests(data.results ?? data);

@@ -72,8 +72,14 @@ export function Sidebar() {
         const res = await fetch(`${API_BASE}/notifications/${params}`);
         if (!res.ok) return;
         const data = await res.json();
-        const notifs = data.results ?? data;
-        setUnreadCount(notifs.filter((n: any) => !n.is_read).length);
+        // Paginated responses carry the exact total in `count` — no need to
+        // fetch every row just to count unread
+        if (typeof data.count === 'number') {
+          setUnreadCount(data.count);
+        } else {
+          const notifs = data.results ?? data;
+          setUnreadCount(notifs.filter((n: any) => !n.is_read).length);
+        }
       } catch {}
     }
     fetchUnread();

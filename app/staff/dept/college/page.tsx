@@ -67,7 +67,7 @@ export default function CollegeDeptPage() {
     async function fetchData() {
       setLoading(true);
       try {
-        const res = await fetch(`${API_BASE}/requests/?academic_level=College`);
+        const res = await fetch(`${API_BASE}/requests/?academic_level=College&page_size=500`);
         if (!res.ok) throw new Error();
         const data = await res.json();
         setRequests(data.results ?? data);
