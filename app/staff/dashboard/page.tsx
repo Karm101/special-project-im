@@ -22,6 +22,13 @@ type ApiRow = {
   current_status: string;
 };
 
+type StaffOption = {
+  staff_id: number;
+  first_name: string;
+  last_name: string;
+  role: string;
+};
+
 // ── Status groups ─────────────────────────────────────────────────────────
 const PENDING_STATUSES    = ['Pending', 'For Validation', 'For Clearance', 'Invalid Request'];
 const PROCESSING_STATUSES = ['For Billing', 'For Payment', 'Paid', 'For Processing', 'For Printing'];
@@ -103,7 +110,9 @@ export default function DashboardPage() {
     const savedDept = sessionStorage.getItem('dashboard_dept') as 'college' | 'shs' | null;
     const savedTab  = sessionStorage.getItem('dashboard_tab');
     if (savedDept) { setDept(savedDept); sessionStorage.removeItem('dashboard_dept'); }
-    if (savedTab) {
+    // Only restore tabs that still exist (doc-type tabs were removed)
+    const VALID_TABS = ['all', 'pending', 'processing', 'forrelease', 'claimed', 'rejected'];
+    if (savedTab && VALID_TABS.includes(savedTab)) {
       if (savedDept === 'shs') setShsTab(savedTab);
       else setCollegeTab(savedTab);
       sessionStorage.removeItem('dashboard_tab');
@@ -115,8 +124,15 @@ export default function DashboardPage() {
     return localStorage.getItem('drms_view') !== 'card';
   });
   const [filterOpen, setFilterOpen]   = useState(false);
-  const [bulkVisible, setBulkVisible] = useState(false);
   const [search, setSearch]           = useState('');
+
+  // ── Row selection / bulk actions ──────────────────────────────────────
+  const [selectedIds, setSelectedIds]   = useState<Set<number>>(new Set());
+  const [assignOpen, setAssignOpen]     = useState(false);
+  const [staffOptions, setStaffOptions] = useState<StaffOption[]>([]);
+  const [assignStaffId, setAssignStaffId] = useState<number | ''>('');
+  const [assignBusy, setAssignBusy]     = useState(false);
+  const [assignError, setAssignError]   = useState('');
   const [selStatus, setSelStatus]     = useState<Set<string>>(new Set());
   const [selForm, setSelForm]         = useState<Set<string>>(new Set());
   const [selMode, setSelMode]         = useState<Set<string>>(new Set());
@@ -166,10 +182,8 @@ export default function DashboardPage() {
   const stats = useMemo(() => {
     const rows = isCollege ? collegeRows : shsRows;
     return {
-      tor:      collegeRows.filter(r => r.form_type === 'RO-0005').length,
-      hd:       collegeRows.filter(r => r.form_type === 'RO-0004').length,
-      sf9:      shsRows.filter(r => r.form_type === 'RO-0005').length,
-      sf10:     shsRows.filter(r => r.form_type === 'RO-0005').length,
+      credential: rows.filter(r => r.form_type === 'RO-0005').length,
+      transfer:   rows.filter(r => r.form_type === 'RO-0004').length,
       pending:  rows.filter(r => PENDING_STATUSES.includes(r.current_status)).length,
       processing: rows.filter(r => PROCESSING_STATUSES.includes(r.current_status)).length,
       forrelease: rows.filter(r => r.current_status === 'For Release').length,
@@ -177,30 +191,16 @@ export default function DashboardPage() {
     };
   }, [isCollege, collegeRows, shsRows]);
 
-  // ── Tab definitions ───────────────────────────────────────────────────
-  const COLLEGE_TABS = [
-    { label: 'All',                filter: 'all',         count: collegeRows.length },
-    { label: 'TOR',                filter: 'tor',         count: collegeRows.filter(r => r.form_type === 'RO-0005').length },
-    { label: 'Honorable Dismissal',filter: 'hd',          count: collegeRows.filter(r => r.form_type === 'RO-0004').length },
-    { label: 'Pending',            filter: 'pending',     count: collegeRows.filter(r => PENDING_STATUSES.includes(r.current_status)).length },
-    { label: 'Processing',         filter: 'processing',  count: collegeRows.filter(r => PROCESSING_STATUSES.includes(r.current_status)).length },
-    { label: 'For Release',        filter: 'forrelease',  count: collegeRows.filter(r => r.current_status === 'For Release').length },
-    { label: 'Claimed',            filter: 'claimed',     count: collegeRows.filter(r => CLAIMED_STATUSES.includes(r.current_status)).length },
-    { label: 'Rejected',           filter: 'rejected',    count: collegeRows.filter(r => REJECTED_STATUSES.includes(r.current_status)).length },
+  // ── Tab definitions — status tabs only; document/form filtering lives in
+  //    the FilterPanel ─────────────────────────────────────────────────────
+  const tabs = [
+    { label: 'All',         filter: 'all',        count: allRows.length },
+    { label: 'Pending',     filter: 'pending',    count: allRows.filter(r => PENDING_STATUSES.includes(r.current_status)).length },
+    { label: 'Processing',  filter: 'processing', count: allRows.filter(r => PROCESSING_STATUSES.includes(r.current_status)).length },
+    { label: 'For Release', filter: 'forrelease', count: allRows.filter(r => r.current_status === 'For Release').length },
+    { label: 'Claimed',     filter: 'claimed',    count: allRows.filter(r => CLAIMED_STATUSES.includes(r.current_status)).length },
+    { label: 'Rejected',    filter: 'rejected',   count: allRows.filter(r => REJECTED_STATUSES.includes(r.current_status)).length },
   ];
-
-  const SHS_TABS = [
-    { label: 'All',         filter: 'all',        count: shsRows.length },
-    { label: 'SF9',         filter: 'sf9',        count: shsRows.filter(r => r.form_type === 'RO-0005').length },
-    { label: 'SF10',        filter: 'sf10',       count: shsRows.filter(r => r.form_type === 'RO-0005').length },
-    { label: 'Pending',     filter: 'pending',    count: shsRows.filter(r => PENDING_STATUSES.includes(r.current_status)).length },
-    { label: 'Processing',  filter: 'processing', count: shsRows.filter(r => PROCESSING_STATUSES.includes(r.current_status)).length },
-    { label: 'For Release', filter: 'forrelease', count: shsRows.filter(r => r.current_status === 'For Release').length },
-    { label: 'Claimed',     filter: 'claimed',    count: shsRows.filter(r => CLAIMED_STATUSES.includes(r.current_status)).length },
-    { label: 'Rejected',    filter: 'rejected',   count: shsRows.filter(r => REJECTED_STATUSES.includes(r.current_status)).length },
-  ];
-
-  const tabs = isCollege ? COLLEGE_TABS : SHS_TABS;
 
   // ── Filter rows by active tab + search + filter panel ────────────────
   const filteredRows = useMemo(() => {
@@ -208,10 +208,6 @@ export default function DashboardPage() {
 
     // Tab filter
     switch (activeTab) {
-      case 'tor':        rows = rows.filter(r => r.form_type === 'RO-0005' && r.academic_level === 'College'); break;
-      case 'hd':         rows = rows.filter(r => r.form_type === 'RO-0004'); break;
-      case 'sf9':        rows = rows.filter(r => r.form_type === 'RO-0005' && r.academic_level === 'SHS'); break;
-      case 'sf10':       rows = rows.filter(r => r.form_type === 'RO-0005' && r.academic_level === 'SHS'); break;
       case 'pending':    rows = rows.filter(r => PENDING_STATUSES.includes(r.current_status)); break;
       case 'processing': rows = rows.filter(r => PROCESSING_STATUSES.includes(r.current_status)); break;
       case 'forrelease': rows = rows.filter(r => r.current_status === 'For Release'); break;
@@ -272,6 +268,103 @@ export default function DashboardPage() {
     setter(next);
   };
 
+  // ── Selection helpers ─────────────────────────────────────────────────
+  // Selection resets when the visible dataset changes meaning
+  useEffect(() => { setSelectedIds(new Set()); }, [dept, activeTab]);
+
+  const allFilteredSelected = filteredRows.length > 0 && filteredRows.every(r => selectedIds.has(r.request_id));
+
+  function toggleSelect(id: number) {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    // Header checkbox selects/deselects every row matching the current
+    // tab + filters + search, across all pages
+    setSelectedIds(allFilteredSelected ? new Set() : new Set(filteredRows.map(r => r.request_id)));
+  }
+
+  // ── Bulk: export selected rows as CSV ─────────────────────────────────
+  function exportSelectedCsv() {
+    const rows = allRows.filter(r => selectedIds.has(r.request_id));
+    if (rows.length === 0) return;
+    const esc = (v: string | null) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const header = ['Request No', 'Requester', 'Form Type', 'Level', 'Mode', 'Date Submitted', 'Expected Claim', 'Assigned Staff', 'Status'];
+    const lines = rows.map(r => [
+      esc(formatRequestId(r.request_id, r.document_request_no)),
+      esc(r.requester_name), esc(r.form_type), esc(r.academic_level),
+      esc(r.submission_mode), esc(r.date_submitted), esc(r.expected_claim_date),
+      esc(r.assigned_staff_name), esc(r.current_status),
+    ].join(','));
+    const blob = new Blob([[header.join(','), ...lines].join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `requests-export-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ── Bulk: assign selected requests to a staff member ──────────────────
+  async function openAssignModal() {
+    setAssignError('');
+    setAssignStaffId('');
+    setAssignOpen(true);
+    if (staffOptions.length === 0) {
+      try {
+        const res = await fetch(`${API_BASE}/staff/?page_size=200`);
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        const list: StaffOption[] = (data.results ?? data).filter(
+          (s: StaffOption) => s.role !== 'Clearance Office'
+        );
+        setStaffOptions(list);
+      } catch {
+        setAssignError('Could not load the staff list. Please try again.');
+      }
+    }
+  }
+
+  async function confirmBulkAssign() {
+    if (!assignStaffId) { setAssignError('Please choose a staff member.'); return; }
+    setAssignBusy(true);
+    setAssignError('');
+    try {
+      const ids = [...selectedIds];
+      const results = await Promise.allSettled(ids.map(id =>
+        fetch(`${API_BASE}/requests/${id}/assign_staff/`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ staff_id: assignStaffId }),
+        }).then(r => { if (!r.ok) throw new Error(); })
+      ));
+      const failed = results.filter(r => r.status === 'rejected').length;
+      if (failed > 0) {
+        setAssignError(`${failed} of ${ids.length} assignments failed. Please refresh and retry.`);
+      } else {
+        setAssignOpen(false);
+        setSelectedIds(new Set());
+      }
+      // Refresh rows so Assigned Staff column updates
+      const [collegeRes, shsRes] = await Promise.all([
+        fetch(`${API_BASE}/requests/?academic_level=College&page_size=500`),
+        fetch(`${API_BASE}/requests/?academic_level=SHS&page_size=500`),
+      ]);
+      if (collegeRes.ok && shsRes.ok) {
+        const collegeData = await collegeRes.json();
+        const shsData     = await shsRes.json();
+        setCollegeRows(collegeData.results ?? collegeData);
+        setShsRows(shsData.results ?? shsData);
+      }
+    } finally {
+      setAssignBusy(false);
+    }
+  }
+
   // ── Stat card ─────────────────────────────────────────────────────────
   const StatCard = ({ borderColor, num, numColor, label, bg, icon }: {
     borderColor: string; num: number; numColor: string; label: string; bg: string; icon: React.ReactNode;
@@ -322,7 +415,9 @@ export default function DashboardPage() {
         {/* Error banner */}
         {error && (
           <div className="info-box warn" style={{ marginBottom: 14 }}>
-            <span className="info-icon">⚠️</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16, flexShrink: 0 }}>
+              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
             <div className="info-text">{error}</div>
           </div>
         )}
@@ -340,29 +435,22 @@ export default function DashboardPage() {
         </div>
 
         {/* Stat cards */}
-        {isCollege ? (
-          <div className="stat-grid stat-grid-4">
-            <StatCard borderColor="#114B9F" num={stats.tor}        numColor="#114B9F" label="TOR Requests"        bg="rgba(17,75,159,0.12)"   icon={<DocIcon stroke="#114B9F" />} />
-            <StatCard borderColor="#E50019" num={stats.hd}         numColor="#E50019" label="Honorable Dismissal" bg="rgba(229,0,25,0.12)"    icon={<DocIcon stroke="#E50019" />} />
-            <StatCard borderColor="#FFA323" num={stats.pending}    numColor="#FFA323" label="Pending / Validation" bg="rgba(255,163,35,0.12)" icon={<ClockIcon stroke="#FFA323" />} />
-            <StatCard borderColor="#198754" num={stats.processing} numColor="#198754" label="In Processing"       bg="rgba(25,135,84,0.12)"   icon={<GearIcon stroke="#198754" />} />
-          </div>
-        ) : (
-          <div className="stat-grid stat-grid-4">
-            <StatCard borderColor="#114B9F" num={stats.sf9}        numColor="#114B9F" label="SF9 Requests"        bg="rgba(17,75,159,0.12)"   icon={<DocIcon stroke="#114B9F" />} />
-            <StatCard borderColor="#E50019" num={stats.sf10}       numColor="#E50019" label="SF10 Requests"       bg="rgba(229,0,25,0.12)"    icon={<DocIcon stroke="#E50019" />} />
-            <StatCard borderColor="#FFA323" num={stats.pending}    numColor="#FFA323" label="Pending / Validation" bg="rgba(255,163,35,0.12)" icon={<ClockIcon stroke="#FFA323" />} />
-            <StatCard borderColor="#198754" num={stats.processing} numColor="#198754" label="In Processing"       bg="rgba(25,135,84,0.12)"   icon={<GearIcon stroke="#198754" />} />
-          </div>
-        )}
+        <div className="stat-grid stat-grid-4">
+          <StatCard borderColor="#114B9F" num={stats.credential} numColor="#114B9F" label="Credential Requests (RO-0005)" bg="rgba(17,75,159,0.12)"  icon={<DocIcon stroke="#114B9F" />} />
+          <StatCard borderColor="#E50019" num={stats.transfer}   numColor="#E50019" label="Transfer Credential (RO-0004)" bg="rgba(229,0,25,0.12)"   icon={<DocIcon stroke="#E50019" />} />
+          <StatCard borderColor="#FFA323" num={stats.pending}    numColor="#FFA323" label="Pending / Validation"          bg="rgba(255,163,35,0.12)" icon={<ClockIcon stroke="#FFA323" />} />
+          <StatCard borderColor="#198754" num={stats.processing} numColor="#198754" label="In Processing"                 bg="rgba(25,135,84,0.12)"  icon={<GearIcon stroke="#198754" />} />
+        </div>
 
         {/* Info box */}
         <div className="info-box" style={{ marginBottom: 14 }}>
-          <span style={{ fontSize: 15, flexShrink: 0 }}>ℹ️</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 15, height: 15, flexShrink: 0 }}>
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
           <div className="info-text">
             {isCollege
-              ? <><strong>College-level</strong> requests: Transcript of Records and Honorable Dismissal.</>
-              : <><strong>SHS-level</strong> requests: SF9 (Report Card) and SF10 (Permanent Record).</>}
+              ? <><strong>College</strong> requests, all document types — RO-0005 (Credential Request) and RO-0004 (Transfer Credential).</>
+              : <><strong>Senior High School</strong> requests, all document types — RO-0005 (Credential Request) and RO-0004 (Transfer Credential).</>}
           </div>
         </div>
 
@@ -376,12 +464,16 @@ export default function DashboardPage() {
           ))}
         </div>
 
-        {/* Bulk select bar */}
-        <div className={`bulk-bar${bulkVisible ? ' visible' : ''}`}>
-          <button className="bulk-close" onClick={() => setBulkVisible(false)}>✕</button>
-          <span style={{ fontSize: 13, fontWeight: 700, color: '#001C43' }}>Selected</span>
-          <button className="btn-primary btn-sm" style={{ marginLeft: 8 }}>✓ Mark as Processing</button>
-          <button className="btn-outline btn-sm">Export Selected</button>
+        {/* Bulk select bar — appears when rows are selected */}
+        <div className={`bulk-bar${selectedIds.size > 0 ? ' visible' : ''}`}>
+          <button className="bulk-close" onClick={() => setSelectedIds(new Set())} title="Clear selection">✕</button>
+          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
+            {selectedIds.size} selected
+          </span>
+          <button className="btn-primary btn-sm" style={{ marginLeft: 8 }} onClick={openAssignModal}>
+            Assign to Staff
+          </button>
+          <button className="btn-outline btn-sm" onClick={exportSelectedCsv}>Export Selected (CSV)</button>
         </div>
 
         {/* Toolbar */}
@@ -463,7 +555,13 @@ export default function DashboardPage() {
               <table className="drms-table">
                 <thead>
                   <tr>
-                    <th><input type="checkbox" className="cb" onChange={e => setBulkVisible(e.target.checked)} /></th>
+                    <th>
+                      <input type="checkbox" className="cb"
+                        checked={allFilteredSelected}
+                        ref={el => { if (el) el.indeterminate = selectedIds.size > 0 && !allFilteredSelected; }}
+                        onChange={toggleSelectAll}
+                        title="Select all filtered requests" />
+                    </th>
                     <th>Request ID</th><th>Requester Name</th><th>Form Type</th>
                     <th>Mode</th><th>Date Submitted</th><th>Expected Claim</th>
                     <th>Assigned Staff</th><th>Status</th><th>Action</th>
@@ -479,7 +577,9 @@ export default function DashboardPage() {
                         router.push(`/staff/request/${r.request_id}`);
                       }}>
                         <td style={{ textAlign: 'center' }} onClick={e => e.stopPropagation()}>
-                          <input type="checkbox" className="cb" />
+                          <input type="checkbox" className="cb"
+                            checked={selectedIds.has(r.request_id)}
+                            onChange={() => toggleSelect(r.request_id)} />
                         </td>
                         <td><span className="req-id">{formatRequestId(r.request_id, r.document_request_no)}</span></td>
                         <td>{r.requester_name}</td>
@@ -528,7 +628,14 @@ export default function DashboardPage() {
                     onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'none'; (e.currentTarget as HTMLElement).style.transform = 'none'; }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--blue)' }}>{formatRequestId(r.request_id, r.document_request_no)}</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span onClick={e => e.stopPropagation()} style={{ display: 'flex' }}>
+                          <input type="checkbox" className="cb"
+                            checked={selectedIds.has(r.request_id)}
+                            onChange={() => toggleSelect(r.request_id)} />
+                        </span>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--blue)' }}>{formatRequestId(r.request_id, r.document_request_no)}</span>
+                      </span>
                       <span className={`badge ${badge.cls}`}>{badge.label}</span>
                     </div>
                     <div>
@@ -555,6 +662,37 @@ export default function DashboardPage() {
             </div>
             <Pagination currentPage={page} totalItems={totalRows} itemsPerPage={10} onPageChange={p => setPage(p)} />
           </>
+        )}
+
+        {/* Bulk assign modal */}
+        {assignOpen && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}
+            onClick={() => !assignBusy && setAssignOpen(false)}>
+            <div style={{ background: 'var(--surface)', borderRadius: 12, padding: 24, width: 380, maxWidth: '90vw', border: '1px solid var(--border-col)' }}
+              onClick={e => e.stopPropagation()}>
+              <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 4 }}>
+                Assign to Staff
+              </div>
+              <div style={{ fontSize: 12.5, color: 'var(--mid-gray)', marginBottom: 14 }}>
+                Assign the {selectedIds.size} selected request{selectedIds.size === 1 ? '' : 's'} to:
+              </div>
+              <select className="drms-input" style={{ width: '100%', marginBottom: 12 }}
+                value={assignStaffId}
+                onChange={e => { setAssignStaffId(e.target.value ? Number(e.target.value) : ''); setAssignError(''); }}>
+                <option value="">— Choose staff member —</option>
+                {staffOptions.map(s => (
+                  <option key={s.staff_id} value={s.staff_id}>{s.last_name}, {s.first_name}</option>
+                ))}
+              </select>
+              {assignError && <div className="field-error" style={{ marginBottom: 10 }}>{assignError}</div>}
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                <button className="btn-outline btn-sm" disabled={assignBusy} onClick={() => setAssignOpen(false)}>Cancel</button>
+                <button className="btn-primary btn-sm" disabled={assignBusy} onClick={confirmBulkAssign}>
+                  {assignBusy ? 'Assigning…' : 'Confirm Assignment'}
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </>

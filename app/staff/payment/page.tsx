@@ -147,32 +147,35 @@ export default function PaymentMonitorPage() {
 
   // handleMarkPaid replaced by modal system above
 
+  // ── Billing-stage filter ─────────────────────────────────────────────────
+  // The monitor starts at For Billing: requests still in intake/validation/
+  // clearance have nothing to pay yet, so their payment rows are hidden.
+  const BILLING_ONWARD = [
+    'For Billing', 'For Payment', 'Paid', 'For Processing',
+    'For Printing', 'For Release', 'Claimed', 'Pending Shredding',
+  ];
+  function isBillingStage(p: ApiPayment): boolean {
+    const reqData = requests[p.request];
+    if (!reqData) return true; // keep until request detail loads
+    return BILLING_ONWARD.includes(reqData.current_status);
+  }
+
   // ── Stat counts ──────────────────────────────────────────────────────────
   const stats = useMemo(() => {
-    const EXCLUDED_STATUSES = ['Rejected', 'Invalid Request', 'Shredded'];
-    const activePayments = payments.filter(p => {
-      const reqData = requests[p.request];
-      if (!reqData) return true;
-      return !EXCLUDED_STATUSES.includes(reqData.current_status);
-    });
+    const activePayments = payments.filter(isBillingStage);
+    const thisMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
     return {
       pending:   activePayments.filter(p => p.payment_status === 'Pending').length,
       overdue:   activePayments.filter(p => p.payment_status === 'Overdue').length,
+      paidMonth: activePayments.filter(p => p.payment_status === 'Paid' && (p.payment_date ?? '').startsWith(thisMonth)).length,
       paid:      activePayments.filter(p => p.payment_status === 'Paid').length,
-      collected: activePayments
-        .filter(p => p.payment_status === 'Paid')
-        .reduce((sum, p) => sum + parseFloat(p.amount || '0'), 0),
     };
   }, [payments, requests]);
 
-  const totalActivePayments = useMemo(() => {
-    const EXCLUDED_STATUSES = ['Rejected', 'Invalid Request', 'Shredded'];
-    return payments.filter(p => {
-      const reqData = requests[p.request];
-      if (!reqData) return true;
-      return !EXCLUDED_STATUSES.includes(reqData.current_status);
-    }).length;
-  }, [payments, requests]);
+  const totalActivePayments = useMemo(
+    () => payments.filter(isBillingStage).length,
+    [payments, requests]
+  );
 
   // ── Tab definitions ──────────────────────────────────────────────────────
   const TABS = [
@@ -184,13 +187,7 @@ export default function PaymentMonitorPage() {
 
   // ── Filter rows ──────────────────────────────────────────────────────────
   const visibleRows = useMemo(() => {
-    // Exclude payments linked to rejected/invalid/shredded requests
-    const EXCLUDED_STATUSES = ['Rejected', 'Invalid Request', 'Shredded'];
-    let rows = payments.filter(p => {
-      const reqData = requests[p.request];
-      if (!reqData) return true; // keep if not loaded yet
-      return !EXCLUDED_STATUSES.includes(reqData.current_status);
-    });
+    let rows = payments.filter(isBillingStage);
 
     if (activeTab !== 'all') rows = rows.filter(p => p.payment_status === activeTab);
     if (activeFilters?.statuses?.size > 0) rows = rows.filter(p => activeFilters.statuses.has(p.payment_status));
@@ -237,7 +234,9 @@ export default function PaymentMonitorPage() {
 
         {error && (
           <div className="info-box warn" style={{ marginBottom: 16 }}>
-            <span className="info-icon">⚠️</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16, flexShrink: 0 }}>
+              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
             <div className="info-text">{error}</div>
           </div>
         )}
@@ -246,8 +245,8 @@ export default function PaymentMonitorPage() {
         <div className="stat-grid stat-grid-4">
           <StatCard loading={loading} num={stats.pending}                               label="Awaiting Payment" color="#FFA323" bg="rgba(255,163,35,0.12)" icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>} />
           <StatCard loading={loading} num={stats.overdue}                               label="Overdue"          color="#E50019" bg="rgba(240, 97, 116, 0.12)"   icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>} />
-          <StatCard loading={loading} num={stats.paid}                                  label="Paid This Month"  color="#198754" bg="rgba(25,135,84,0.12)"   icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><polyline points="20 6 9 17 4 12"/></svg>} />
-          <StatCard loading={loading} num={`₱${stats.collected.toLocaleString()}`}      label="Total Collected"  color="#114B9F" bg="rgba(59, 124, 216, 0.12)"   icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>} />
+          <StatCard loading={loading} num={stats.paidMonth}                             label="Paid This Month"  color="#198754" bg="rgba(25,135,84,0.12)"   icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><polyline points="20 6 9 17 4 12"/></svg>} />
+          <StatCard loading={loading} num={stats.paid}                                  label="Total Paid"       color="#114B9F" bg="rgba(59, 124, 216, 0.12)"   icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>} />
         </div>
 
         {/* Tabs */}

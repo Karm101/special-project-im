@@ -41,7 +41,7 @@ function getNotifStyle(notif: ApiNotification): {
     return { icon: '💳', bg: '#EAFAF1', cat: 'Payment' };
   }
   if (msg.includes('claim slip') || msg.includes('expir') || msg.includes('shred')) {
-    return { icon: '🎫', bg: '#FFF8E1', cat: 'Claim Slips' };
+    return { icon: '🗑️', bg: '#FFF8E1', cat: 'Disposal' };
   }
   if (msg.includes('overdue')) {
     return { icon: '🚨', bg: '#FEEAEA', cat: 'Document Requests' };
@@ -51,9 +51,6 @@ function getNotifStyle(notif: ApiNotification): {
   }
   if (msg.includes('released') || msg.includes('ready')) {
     return { icon: '📤', bg: '#F0EDFF', cat: 'Document Requests' };
-  }
-  if (msg.includes('system') || msg.includes('maintenance') || msg.includes('update')) {
-    return { icon: '⚙️', bg: '#F0F0F0', cat: 'System' };
   }
   return { icon: '🔔', bg: '#F5F5F5', cat: 'Document Requests' };
 }
@@ -160,8 +157,7 @@ export default function NotificationsPage() {
     const counts: Record<string, number> = {
       'Document Requests': 0,
       'Payment': 0,
-      'Claim Slips': 0,
-      'System': 0,
+      'Disposal': 0,
     };
     notifs.forEach(n => {
       const { cat } = getNotifStyle(n);
@@ -170,12 +166,14 @@ export default function NotificationsPage() {
     return counts;
   }, [notifs]);
 
+  // "Claim Slips" tab renamed to "Disposal" (claim slips are retired; shredding
+  // notifications live here). "System" tab removed — no backend message ever
+  // matched its keywords, so it was permanently empty.
   const TABS = [
     { label: 'All',               count: notifs.length,                          filter: null               },
     { label: 'Document Requests', count: categoryCounts['Document Requests'],    filter: 'Document Requests' },
     { label: 'Payment',           count: categoryCounts['Payment'],              filter: 'Payment'           },
-    { label: 'Claim Slips',       count: categoryCounts['Claim Slips'],          filter: 'Claim Slips'       },
-    { label: 'System',            count: categoryCounts['System'],               filter: 'System'            },
+    { label: 'Disposal',          count: categoryCounts['Disposal'],             filter: 'Disposal'          },
   ];
 
   // ── Filter by tab + read status ──────────────────────────────────────────
