@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { API_BASE } from '@/lib/lib_api';
+import { IcoSearch, IcoWarn, IcoInfo } from '@/app/components/drms/Icons';
 
 // ── Inline theme toggle ───────────────────────────────────────────────────────
 function PubThemeToggle() {
@@ -437,7 +438,7 @@ export default function StudentTrackPage() {
 
         {/* Search card */}
         <div className="track-card">
-          <div style={{ fontSize: 28, marginBottom: 12 }}>🔍</div>
+          <div style={{ marginBottom: 12, color: 'var(--mid-gray)' }}><IcoSearch size={30} /></div>
           <div className="track-title">Track Your Request</div>
           <div className="track-sub">
             {studentNumber
@@ -460,12 +461,12 @@ export default function StudentTrackPage() {
           </div>
           {error && (
             <div className="info-box warn" style={{ marginTop: 12 }}>
-              <span className="info-icon">⚠️</span>
+              <span className="info-icon"><IcoWarn /></span>
               <div className="info-text">{error}</div>
             </div>
           )}
           <div className="info-box" style={{ marginTop: 12 }}>
-            <span className="info-icon">ℹ️</span>
+            <span className="info-icon"><IcoInfo /></span>
             <div className="info-text">
               For concerns, contact the Registrar's Office at <strong>registrar@mcm.edu.ph</strong> or visit Room 101, Admin Building.
             </div>
@@ -546,7 +547,7 @@ export default function StudentTrackPage() {
               {/* Expected claim date */}
               <div style={{ marginTop: 14, padding: 12, background: 'rgba(125,179,255,0.08)', borderRadius: 'var(--drms-radius-sm)' }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}>
-                  📅 Expected Claim Date: {formatDate(data.expected_claim_date)}
+                  Expected Claim Date: {formatDate(data.expected_claim_date)}
                 </div>
                 <div style={{ fontSize: 11, color: 'var(--mid-gray)', marginTop: 4 }}>
                   {['Claimed', 'Shredded'].includes(data.current_status)

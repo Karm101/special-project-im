@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Topbar } from '../../components/drms/Topbar';
 import { API_BASE } from '@/lib/lib_api';
+import { IcoInfo } from '@/app/components/drms/Icons';
 
 // ── Setting row component ─────────────────────────────────────────────────────
 function SettingRow({ label, description, children }: {
@@ -167,7 +168,7 @@ export default function SettingsPage() {
           </SettingRow>
 
           <div className="info-box" style={{ marginTop: 12 }}>
-            <span className="info-icon">ℹ️</span>
+            <span className="info-icon"><IcoInfo /></span>
             <div className="info-text" style={{ fontSize: 12 }}>
               Shorter intervals keep counts more real-time but make slightly more API calls.
               The change takes effect after your next page load.
@@ -186,7 +187,7 @@ export default function SettingsPage() {
           </button>
           {saved && (
             <span style={{ fontSize: 13, color: '#4ade80', fontWeight: 600, animation: 'fadeIn .2s' }}>
-              ✅ Settings saved!
+              ✓ Settings saved!
             </span>
           )}
         </div>

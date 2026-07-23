@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Topbar } from '../../components/drms/Topbar';
 import { API_BASE } from '@/lib/lib_api';
+import { IcoInfo, IcoWarn, IcoSuccess } from '@/app/components/drms/Icons';
 
 export default function ProfilePage() {
   // ── Staff info from sessionStorage ────────────────────────────────────────
@@ -125,7 +126,7 @@ export default function ProfilePage() {
             </div>
           </div>
           <div className="info-box" style={{ marginTop: 16 }}>
-            <span className="info-icon">ℹ️</span>
+            <span className="info-icon"><IcoInfo /></span>
             <div className="info-text" style={{ fontSize: 12 }}>
               To update your name, role, or department, contact the system administrator via Django Admin.
             </div>
@@ -229,13 +230,13 @@ export default function ProfilePage() {
             {/* Feedback */}
             {pwError && (
               <div className="info-box warn">
-                <span className="info-icon">⚠️</span>
+                <span className="info-icon"><IcoWarn /></span>
                 <div className="info-text">{pwError}</div>
               </div>
             )}
             {pwSuccess && (
               <div className="info-box">
-                <span className="info-icon">✅</span>
+                <span className="info-icon"><IcoSuccess /></span>
                 <div className="info-text">{pwSuccess}</div>
               </div>
             )}
@@ -246,7 +247,7 @@ export default function ProfilePage() {
               onClick={handleChangePassword}
               disabled={pwLoading}
             >
-              {pwLoading ? 'Saving...' : '🔒 Update Password'}
+              {pwLoading ? 'Saving...' : 'Update Password'}
             </button>
           </div>
         </div>

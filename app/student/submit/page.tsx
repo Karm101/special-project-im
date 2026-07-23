@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { API_BASE } from '@/lib/lib_api';
 import { useRef } from 'react';
 import { supabase } from '@/lib/supabase';
+import { IcoList, IcoCard, IcoUser, IcoWarn, IcoInfo, IcoClip, IcoDoc, IcoImage, IcoCheckBig } from '@/app/components/drms/Icons';
 
 // ── Inline theme toggle ───────────────────────────────────────────────────────
 function PubThemeToggle() {
@@ -88,6 +89,7 @@ export default function StudentSubmitPage() {
   const [errors, setErrors]               = useState<Record<string, string>>({});
   const [authFiles, setAuthFiles]   = useState<File[]>([]);
   const [uploadProgress, setUploadProgress] = useState('');
+  const [uploadWarning, setUploadWarning]   = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isLoggedIn = typeof window !== 'undefined' && !!sessionStorage.getItem('student_token');
 
@@ -178,6 +180,9 @@ export default function StudentSubmitPage() {
     if (!programStrand.trim()) e.programStrand = 'Program / Strand is required.';
     if (selectedDocs.length === 0) e.docs    = 'Please select at least one document.';
     if (!purpose.trim())      e.purpose      = 'Purpose is required.';
+    if (hasRep && authFiles.length === 0) {
+      e.authDocs = 'Please upload the authorization letter and both IDs before continuing.';
+    }
     setErrors(e);
     return Object.keys(e).length === 0;
   }
@@ -227,8 +232,15 @@ export default function StudentSubmitPage() {
       // Upload authorization files if any
       if (authFiles.length > 0) {
         setUploadProgress('Uploading authorization documents...');
-        await uploadAuthFiles(created.request_id);
+        const failed = await uploadAuthFiles(created.request_id);
         setUploadProgress('');
+        if (failed > 0) {
+          setUploadWarning(
+            `${failed} of ${authFiles.length} authorization document(s) could not be uploaded. ` +
+            `Your request was still submitted — please email the documents to the Registrar's Office ` +
+            `or bring them when claiming, quoting your request number.`
+          );
+        }
       }
 
       setStep(3);
@@ -249,17 +261,27 @@ export default function StudentSubmitPage() {
     const valid = files.filter(f => f.size <= 10 * 1024 * 1024);
     if (valid.length < files.length) alert('Some files skipped — max 10MB each.');
     setAuthFiles(prev => [...prev, ...valid]);
+    setErrors(p => ({ ...p, authDocs: '' }));
   }
 
   function removeFile(index: number) {
     setAuthFiles(prev => prev.filter((_, i) => i !== index));
   }
 
-  async function uploadAuthFiles(requestId: number) {
+  async function uploadAuthFiles(requestId: number): Promise<number> {
+    let failed = 0;
     for (const file of authFiles) {
       const path = `request-${requestId}/${Date.now()}-${file.name}`;
-      await supabase.storage.from('authorization-letters').upload(path, file, { upsert: true });
+      try {
+        const { error } = await supabase.storage
+          .from('authorization-letters')
+          .upload(path, file, { upsert: true });
+        if (error) failed++;
+      } catch {
+        failed++;
+      }
     }
+    return failed;
   }
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -336,7 +358,7 @@ export default function StudentSubmitPage() {
               </div>
               {/* Show which form will be used */}
               <div className="info-box" style={{ marginTop: 12 }}>
-                <span className="info-icon">📋</span>
+                <span className="info-icon"><IcoList /></span>
                 <div className="info-text" style={{ fontSize: 12 }}>
                   {isEnrolled
                     ? <span>You will be filing a <strong>Credential Request</strong> — for currently enrolled students.</span>
@@ -493,17 +515,18 @@ export default function StudentSubmitPage() {
                     setAuthFiles(prev => [...prev, ...files]);
                   }}
                 >
-                  <div style={{ fontSize: 24, marginBottom: 6 }}>📎</div>
+                  <div style={{ marginBottom: 6, color: 'var(--mid-gray)' }}><IcoClip size={24} /></div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Click to upload or drag and drop</div>
                   <div style={{ fontSize: 11, color: 'var(--mid-gray)', marginTop: 2 }}>JPG, PNG, PDF up to 10MB</div>
                   <input ref={fileInputRef} type="file" multiple accept=".jpg,.jpeg,.png,.pdf"
                     style={{ display: 'none' }} onChange={handleFileChange} />
                 </div>
+                {errors.authDocs && <div className="field-error" style={{ marginTop: 8 }}>{errors.authDocs}</div>}
                 {authFiles.length > 0 && (
                   <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {authFiles.map((file, i) => (
                       <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: 'var(--surface)', border: '1px solid var(--border-col)', borderRadius: 8 }}>
-                        <span style={{ fontSize: 16 }}>{file.type.includes('pdf') ? '📄' : '🖼️'}</span>
+                        <span style={{ fontSize: 16 }}>{file.type.includes('pdf') ? <IcoDoc size={16} /> : <IcoImage size={16} />}</span>
                         <div style={{ flex: 1 }}>
                           <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>{file.name}</div>
                           <div style={{ fontSize: 11, color: 'var(--mid-gray)' }}>{(file.size / 1024).toFixed(0)} KB</div>
@@ -518,7 +541,7 @@ export default function StudentSubmitPage() {
             )}
 
             <div className="info-box warn" style={{ marginBottom: 20 }}>
-              <span className="info-icon">💳</span>
+              <span className="info-icon"><IcoCard /></span>
               <div className="info-text">Payment will be made at the <strong>Treasury Office</strong> after your request is verified. You will receive an email with billing instructions.</div>
             </div>
 
@@ -536,7 +559,7 @@ export default function StudentSubmitPage() {
             <div style={{ fontSize: 13, color: 'var(--mid-gray)', marginBottom: 20 }}>Please confirm all details before submitting.</div>
 
             <div className="info-box" style={{ marginBottom: 20 }}>
-              <span className="info-icon">👤</span>
+              <span className="info-icon"><IcoUser /></span>
               <div className="info-text">
                 Requesting as: <strong>{lastName}, {firstName}</strong>
                 {studentNumber ? ` · No. ${studentNumber}` : ''}
@@ -570,13 +593,13 @@ export default function StudentSubmitPage() {
             </div>
 
             <div className="info-box warn" style={{ marginBottom: 20 }}>
-              <span className="info-icon">💳</span>
+              <span className="info-icon"><IcoCard /></span>
               <div className="info-text">Amount will be billed by Treasury Office after verification. Fee is set per document type.</div>
             </div>
 
             {submitError && (
               <div className="info-box warn" style={{ marginBottom: 16 }}>
-                <span className="info-icon">⚠️</span>
+                <span className="info-icon"><IcoWarn /></span>
                 <div className="info-text">{submitError}</div>
               </div>
             )}
@@ -593,7 +616,7 @@ export default function StudentSubmitPage() {
         {/* ── STEP 3: Success ── */}
         {step === 3 && submittedId && (
           <div className="drms-card" style={{ padding: 40, textAlign: 'center' }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>🎉</div>
+            <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'center' }}><IcoCheckBig /></div>
             <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--navy)', marginBottom: 8 }}>Request Submitted!</div>
             <div style={{ fontSize: 14, color: 'var(--mid-gray)', marginBottom: 24, lineHeight: 1.6 }}>
               Your document request has been successfully submitted to the Registrar's Office.<br />
@@ -605,8 +628,13 @@ export default function StudentSubmitPage() {
             <div style={{ fontSize: 12, color: 'var(--mid-gray)', marginBottom: 32 }}>
               Save this ID — you'll need it to track your request.
             </div>
+            {uploadWarning && (
+              <div className="info-box warn" style={{ textAlign: 'left', marginBottom: 12 }}>
+                <div className="info-text">{uploadWarning}</div>
+              </div>
+            )}
             <div className="info-box" style={{ textAlign: 'left', marginBottom: 24 }}>
-              <span className="info-icon">ℹ️</span>
+              <span className="info-icon"><IcoInfo /></span>
               <div className="info-text">
                 A confirmation email will be sent to <strong>{email}</strong>. You will also receive payment instructions once your request is verified.
               </div>

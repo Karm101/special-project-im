@@ -96,7 +96,7 @@ export default function StaffLoginPage() {
               </div>
 
               {error && (
-                <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600, padding: '10px 12px', background: 'rgba(229,0,25,0.08)', borderRadius: 8, border: '1px solid #ffd0d0' }}>⚠️ {error}</div>
+                <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600, padding: '10px 12px', background: 'rgba(229,0,25,0.08)', borderRadius: 8, border: '1px solid #ffd0d0' }}>{error}</div>
               )}
 
               <button onClick={handleLogin} disabled={loading}

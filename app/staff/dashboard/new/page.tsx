@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Topbar } from '../../../components/drms/Topbar';
 import { API_BASE } from '@/lib/lib_api';
 import { supabase } from '@/lib/supabase';
+import { IcoSuccess, IcoWarn, IcoInfo, IcoCard, IcoClip, IcoDoc, IcoImage } from '@/app/components/drms/Icons';
 
 // ── API types ─────────────────────────────────────────────────────────────────
 type DocType = {
@@ -251,22 +252,25 @@ export default function NewRequestPage() {
     setAuthFiles(prev => prev.filter((_, i) => i !== index));
   }
 
-  async function uploadAuthFiles(requestId: number): Promise<string[]> {
+  async function uploadAuthFiles(requestId: number): Promise<{ urls: string[]; failed: number }> {
     const urls: string[] = [];
+    let failed = 0;
     for (const file of authFiles) {
-      const ext      = file.name.split('.').pop();
-      const path     = `request-${requestId}/${Date.now()}-${file.name}`;
-      const { error } = await supabase.storage
-        .from('authorization-letters')
-        .upload(path, file, { upsert: true });
-      if (!error) {
+      const path = `request-${requestId}/${Date.now()}-${file.name}`;
+      try {
+        const { error } = await supabase.storage
+          .from('authorization-letters')
+          .upload(path, file, { upsert: true });
+        if (error) { failed++; continue; }
         const { data } = supabase.storage
           .from('authorization-letters')
           .getPublicUrl(path);
         urls.push(data.publicUrl);
+      } catch {
+        failed++;
       }
     }
-    return urls;
+    return { urls, failed };
   }
 
   // ── Document selection ────────────────────────────────────────────────────
@@ -378,8 +382,11 @@ export default function NewRequestPage() {
       // Upload authorization files if any
       if (authFiles.length > 0) {
         setUploadProgress('Uploading authorization files...');
-        await uploadAuthFiles(created.request_id);
+        const { failed } = await uploadAuthFiles(created.request_id);
         setUploadProgress('');
+        if (failed > 0) {
+          alert(`${failed} of ${authFiles.length} authorization file(s) failed to upload. The request was created — please re-upload the documents from the request page or keep the physical copies on file.`);
+        }
       }
 
       router.push(`/staff/request/${created.request_id}`);
@@ -405,7 +412,7 @@ export default function NewRequestPage() {
         {/* ── Auto-populate banner ── */}
         {sessionStudent && step === 1 && (
           <div className="info-box" style={{ marginBottom: 16 }}>
-            <span className="info-icon">✅</span>
+            <span className="info-icon"><IcoSuccess /></span>
             <div className="info-text">
               Logged in as <strong>{sessionStudent.student_name}</strong> ({sessionStudent.student_number}) — your information has been auto-filled.
             </div>
@@ -446,7 +453,7 @@ export default function NewRequestPage() {
                     </div>
                     <div style={{ display: 'flex', alignItems: 'flex-end' }}>
                       <button className="btn-outline" style={{ height: 38, padding: '0 14px' }} onClick={handleLookup} disabled={lookupLoading}>
-                        {lookupLoading ? 'Searching...' : '🔍 Lookup'}
+                        {lookupLoading ? 'Searching...' : 'Lookup'}
                       </button>
                     </div>
                   </div>
@@ -454,13 +461,13 @@ export default function NewRequestPage() {
 
                 {lookupResult && !sessionStudent && (
                   <div className="info-box" style={{ marginBottom: 12 }}>
-                    <span className="info-icon">✅</span>
+                    <span className="info-icon"><IcoSuccess /></span>
                     <div className="info-text">Student found — fields auto-filled from database.</div>
                   </div>
                 )}
                 {lookupError && (
                   <div className="info-box warn" style={{ marginBottom: 12 }}>
-                    <span className="info-icon">⚠️</span>
+                    <span className="info-icon"><IcoWarn /></span>
                     <div className="info-text">{lookupError}</div>
                   </div>
                 )}
@@ -562,7 +569,7 @@ export default function NewRequestPage() {
                           setAuthFiles(prev => [...prev, ...valid]);
                         }}
                       >
-                        <div style={{ fontSize: 24, marginBottom: 6 }}>📎</div>
+                        <div style={{ marginBottom: 6, color: 'var(--mid-gray)' }}><IcoClip size={24} /></div>
                         <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Click to upload or drag and drop</div>
                         <div style={{ fontSize: 11, color: 'var(--mid-gray)', marginTop: 2 }}>JPG, PNG, PDF up to 10MB</div>
                         <input ref={fileInputRef} type="file" multiple accept=".jpg,.jpeg,.png,.pdf"
@@ -574,7 +581,7 @@ export default function NewRequestPage() {
                         <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
                           {authFiles.map((file, i) => (
                             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: 'var(--surface)', border: '1px solid var(--border-col)', borderRadius: 8 }}>
-                              <span style={{ fontSize: 16 }}>{file.type.includes('pdf') ? '📄' : '🖼️'}</span>
+                              <span style={{ fontSize: 16 }}>{file.type.includes('pdf') ? <IcoDoc size={16} /> : <IcoImage size={16} />}</span>
                               <div style={{ flex: 1 }}>
                                 <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>{file.name}</div>
                                 <div style={{ fontSize: 11, color: 'var(--mid-gray)' }}>{(file.size / 1024).toFixed(0)} KB</div>
@@ -609,12 +616,12 @@ export default function NewRequestPage() {
               </div>
               {sessionStudent ? (
                 <div className="info-box">
-                  <span className="info-icon">✅</span>
+                  <span className="info-icon"><IcoSuccess /></span>
                   <div className="info-text">Your info has been auto-filled from your account.</div>
                 </div>
               ) : (
                 <div className="info-box">
-                  <span className="info-icon">ℹ️</span>
+                  <span className="info-icon"><IcoInfo /></span>
                   <div className="info-text">Enter the student number and click Lookup to auto-fill, or fill in manually.</div>
                 </div>
               )}
@@ -694,7 +701,7 @@ export default function NewRequestPage() {
                 </div>
               </div>
               <div className="info-box warn">
-                <span className="info-icon">⚠️</span>
+                <span className="info-icon"><IcoWarn /></span>
                 <div className="info-text" style={{ fontSize: 11 }}>Payment is settled at the Treasury Office after RO verification.</div>
               </div>
               <button className="btn-primary" style={{ justifyContent: 'center', padding: 11 }}
@@ -711,14 +718,14 @@ export default function NewRequestPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 18 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div className="info-box">
-                <span className="info-icon">✅</span>
+                <span className="info-icon"><IcoSuccess /></span>
                 <div className="info-text">Please review all information below before submitting.</div>
               </div>
 
               <div className="drms-card" style={{ padding: 18 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                   <div className="section-title" style={{ marginBottom: 0 }}>Requester Information</div>
-                  <button className="btn-outline btn-sm" onClick={() => setStep(1)}>✏ Edit</button>
+                  <button className="btn-outline btn-sm" onClick={() => setStep(1)}>Edit</button>
                 </div>
                 <div className="field-grid">
                   <div className="field-group"><div className="field-label">Name</div><div className="field-value">{form.lastName}, {form.firstName}</div></div>
@@ -730,7 +737,7 @@ export default function NewRequestPage() {
                   <div className="field-group"><div className="field-label">Email</div><div className="field-value">{form.email}</div></div>
                   <div className="field-group"><div className="field-label">Authorized Rep</div><div className="field-value">{form.hasRep ? `${form.repName} (${form.repRelation})` : 'None'}</div></div>
                   {form.hasRep && (
-                    <div className="field-group"><div className="field-label">Auth Documents</div><div className="field-value" style={{ color: authFiles.length > 0 ? '#198754' : '#E50019' }}>{authFiles.length > 0 ? `${authFiles.length} file(s) ready to upload` : '⚠️ No files uploaded'}</div></div>
+                    <div className="field-group"><div className="field-label">Auth Documents</div><div className="field-value" style={{ color: authFiles.length > 0 ? '#198754' : '#E50019' }}>{authFiles.length > 0 ? `${authFiles.length} file(s) ready to upload` : 'No files uploaded'}</div></div>
                   )}
                 </div>
               </div>
@@ -738,7 +745,7 @@ export default function NewRequestPage() {
               <div className="drms-card" style={{ padding: 18 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                   <div className="section-title" style={{ marginBottom: 0 }}>Documents Requested</div>
-                  <button className="btn-outline btn-sm" onClick={() => setStep(2)}>✏ Edit</button>
+                  <button className="btn-outline btn-sm" onClick={() => setStep(2)}>Edit</button>
                 </div>
                 <div className="table-wrap">
                   <table className="drms-table">
@@ -763,7 +770,7 @@ export default function NewRequestPage() {
 
               {submitError && (
                 <div className="info-box warn">
-                  <span className="info-icon">⚠️</span>
+                  <span className="info-icon"><IcoWarn /></span>
                   <div className="info-text">{submitError}</div>
                 </div>
               )}
@@ -783,7 +790,7 @@ export default function NewRequestPage() {
                 </div>
               </div>
               <div className="info-box warn">
-                <span className="info-icon">💳</span>
+                <span className="info-icon"><IcoCard /></span>
                 <div className="info-text" style={{ fontSize: 11 }}>Payment at Treasury Office after verification. An SMS notification will be sent to the student.</div>
               </div>
               {uploadProgress && (

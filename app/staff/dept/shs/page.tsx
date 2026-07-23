@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Search } from 'lucide-react';
 import { Topbar } from '../../../components/drms/Topbar';
 import { API_BASE } from '@/lib/lib_api';
+import { IcoGrad, IcoBook, IcoInfo } from '@/app/components/drms/Icons';
 
 type ApiRequest = {
   request_id: number;
@@ -118,8 +119,8 @@ export default function ShsDeptPage() {
       <div className="page-body">
         {/* Dept toggle */}
         <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
-          <button className="btn-outline" style={{ padding: '10px 24px', fontSize: 14 }} onClick={() => router.push('/staff/dept/college')}>🎓 College</button>
-          <button className="btn-primary" style={{ padding: '10px 24px', fontSize: 14 }}>📚 Senior High School</button>
+          <button className="btn-outline" style={{ padding: '10px 24px', fontSize: 14 }} onClick={() => router.push('/staff/dept/college')}><IcoGrad /> College</button>
+          <button className="btn-primary" style={{ padding: '10px 24px', fontSize: 14 }}><IcoBook /> Senior High School</button>
         </div>
 
         {/* Stat cards */}
@@ -131,7 +132,7 @@ export default function ShsDeptPage() {
         </div>
 
         <div className="info-box" style={{ marginBottom: 16 }}>
-          <span className="info-icon">ℹ️</span>
+          <span className="info-icon"><IcoInfo /></span>
           <div className="info-text">Showing <strong>SHS-level</strong> requests: SF9 (Report Card) and SF10 (Permanent Record).</div>
         </div>
 

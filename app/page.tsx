@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { API_BASE } from '@/lib/lib_api';
+import { IcoCheckBig } from '@/app/components/drms/Icons';
 
 // To use a local photo: put the file in special-project-im/public/campus.jpg
 
@@ -192,7 +193,7 @@ export default function StudentLoginPage() {
                 </div>
 
                 {loginError && (
-                  <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600, padding: '10px 12px', background: 'rgba(229,0,25,0.08)', borderRadius: 8, border: '1px solid #ffd0d0' }}>⚠️ {loginError}</div>
+                  <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600, padding: '10px 12px', background: 'rgba(229,0,25,0.08)', borderRadius: 8, border: '1px solid #ffd0d0' }}>{loginError}</div>
                 )}
 
                 <PrimaryBtn onClick={handleLogin} loading={loginLoading}>
@@ -216,7 +217,7 @@ export default function StudentLoginPage() {
               <>
                 {regSuccess ? (
                   <div style={{ textAlign: 'center', padding: '20px 0' }}>
-                    <div style={{ fontSize: 48, marginBottom: 12 }}>🎉</div>
+                    <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'center' }}><IcoCheckBig /></div>
                     <div style={{ fontSize: 18, fontWeight: 800, color: '#198754', marginBottom: 6 }}>Account Created!</div>
                     <div style={{ fontSize: 13, color: 'var(--mid-gray)' }}>Redirecting to your portal...</div>
                   </div>
@@ -281,7 +282,7 @@ export default function StudentLoginPage() {
                     </div>
 
                     {regError && (
-                      <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600, padding: '10px 12px', background: 'rgba(229,0,25,0.08)', borderRadius: 8, border: '1px solid #ffd0d0' }}>⚠️ {regError}</div>
+                      <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600, padding: '10px 12px', background: 'rgba(229,0,25,0.08)', borderRadius: 8, border: '1px solid #ffd0d0' }}>{regError}</div>
                     )}
 
                     <PrimaryBtn onClick={handleRegister} loading={regLoading}>

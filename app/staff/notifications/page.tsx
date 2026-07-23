@@ -4,6 +4,8 @@ import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Topbar } from '../../components/drms/Topbar';
 import { API_BASE } from '@/lib/lib_api';
+import { IcoCard, IcoTrash, IcoAlert, IcoList, IcoSend, IcoBell, IcoWarn } from '@/app/components/drms/Icons';
+import type { ReactNode } from 'react';
 
 // ── API type ──────────────────────────────────────────────────────────────────
 type ApiNotification = {
@@ -32,27 +34,28 @@ function formatTime(dateStr: string): string {
   return `${dateLabel} · ${timeStr}`;
 }
 
-// Derive icon + bg + category from message content
+// Derive icon + bg + category from message content.
+// SVG icons + rgba backgrounds so both light and dark themes render cleanly.
 function getNotifStyle(notif: ApiNotification): {
-  icon: string; bg: string; cat: string;
+  icon: ReactNode; bg: string; cat: string;
 } {
   const msg = notif.message.toLowerCase();
   if (msg.includes('payment') || msg.includes('receipt') || msg.includes('paid')) {
-    return { icon: '💳', bg: '#EAFAF1', cat: 'Payment' };
+    return { icon: <IcoCard size={16} />, bg: 'rgba(25,135,84,0.14)', cat: 'Payment' };
   }
   if (msg.includes('claim slip') || msg.includes('expir') || msg.includes('shred')) {
-    return { icon: '🗑️', bg: '#FFF8E1', cat: 'Disposal' };
+    return { icon: <IcoTrash size={16} />, bg: 'rgba(255,163,35,0.16)', cat: 'Disposal' };
   }
   if (msg.includes('overdue')) {
-    return { icon: '🚨', bg: '#FEEAEA', cat: 'Document Requests' };
+    return { icon: <IcoAlert size={16} />, bg: 'rgba(229,0,25,0.12)', cat: 'Document Requests' };
   }
   if (msg.includes('submitted') || msg.includes('new request')) {
-    return { icon: '📋', bg: '#EBF5FB', cat: 'Document Requests' };
+    return { icon: <IcoList size={16} />, bg: 'rgba(17,75,159,0.12)', cat: 'Document Requests' };
   }
   if (msg.includes('released') || msg.includes('ready')) {
-    return { icon: '📤', bg: '#F0EDFF', cat: 'Document Requests' };
+    return { icon: <IcoSend size={16} />, bg: 'rgba(111,66,193,0.14)', cat: 'Document Requests' };
   }
-  return { icon: '🔔', bg: '#F5F5F5', cat: 'Document Requests' };
+  return { icon: <IcoBell size={16} />, bg: 'rgba(128,128,128,0.14)', cat: 'Document Requests' };
 }
 
 function formatRequestId(requestId: number, documentRequestNo?: string | null): string {
@@ -238,7 +241,7 @@ export default function NotificationsPage() {
                       <input type="radio" name="notif_read" checked={filterRead === opt}
                         onChange={() => { setFilterRead(opt); setFilterOpen(false); }}
                         style={{ accentColor: '#114B9F' }} />
-                      {opt === 'all' ? 'All notifications' : opt === 'unread' ? '🔵 Unread only' : '✓ Read only'}
+                      {opt === 'all' ? 'All notifications' : opt === 'unread' ? 'Unread only' : '✓ Read only'}
                     </label>
                   ))}
                   {filterRead !== 'all' && (
@@ -267,7 +270,7 @@ export default function NotificationsPage() {
         {/* Error */}
         {error && (
           <div className="info-box warn" style={{ marginBottom: 16 }}>
-            <span className="info-icon">⚠️</span>
+            <span className="info-icon"><IcoWarn /></span>
             <div className="info-text">{error}</div>
           </div>
         )}
@@ -288,7 +291,7 @@ export default function NotificationsPage() {
               style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 50, background: 'rgba(17,75,159,0.1)', color: '#114B9F', border: '1px solid rgba(17,75,159,0.2)', cursor: 'pointer' }}
               onClick={() => setFilterRead('all')}
             >
-              {filterRead === 'unread' ? '🔵 Unread only' : '✓ Read only'} ✕
+              {filterRead === 'unread' ? 'Unread only' : '✓ Read only'} ✕
             </span>
           </div>
         )}
@@ -327,7 +330,7 @@ export default function NotificationsPage() {
                       <div className="notif-title">
                         {`Request ${formatRequestId(n.request, requestNoMap[n.request])}`}
                         {' — '}
-                        {n.sent_via === 'Email' ? '📧 Email' : '📱 SMS'}
+                        {n.sent_via === 'Email' ? 'Email' : 'SMS'}
                       </div>
                       <div className="notif-msg">{n.message}</div>
                       <div className="notif-time">{formatTime(n.sent_at)}</div>

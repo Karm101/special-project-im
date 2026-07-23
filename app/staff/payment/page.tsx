@@ -383,7 +383,7 @@ export default function PaymentMonitorPage() {
             <div style={{ fontSize: 13, color: 'var(--mid-gray)', marginBottom: 20 }}>
               Confirm that payment has been received for this request. Payment date will be set to today.
             </div>
-            {modalError && <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600, marginBottom: 12 }}>⚠️ {modalError}</div>}
+            {modalError && <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600, marginBottom: 12 }}>{modalError}</div>}
             <div style={{ display: 'flex', gap: 10 }}>
               <button className="btn-primary" style={{ flex: 1, justifyContent: 'center', padding: 10 }}
                 onClick={handleModalConfirm} disabled={!!updating}>

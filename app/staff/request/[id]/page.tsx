@@ -5,6 +5,8 @@ import { useRouter, useParams } from 'next/navigation';
 import { Download, X, Send } from 'lucide-react';
 import { Topbar } from '../../../components/drms/Topbar';
 import { API_BASE } from '@/lib/lib_api';
+import { supabase } from '@/lib/supabase';
+import { IcoInfo, IcoSuccess } from '@/app/components/drms/Icons';
 
 // ── API types ─────────────────────────────────────────────────────────────────
 
@@ -312,11 +314,11 @@ function SidePanel({
       {billingModal && (
         <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 12 }}>
           <div style={{ background: 'white', borderRadius: 12, padding: 24, maxWidth: 320, margin: 16 }}>
-            <div style={{ fontSize: 14, fontWeight: 800, color: '#001C43', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
               Billing Reminder
             </div>
-            <div style={{ fontSize: 12, color: '#444', lineHeight: 1.6, marginBottom: 16 }}>
+            <div style={{ fontSize: 12, color: 'var(--text-primary)', lineHeight: 1.6, marginBottom: 16 }}>
               You are about to mark this request as <strong>For Billing</strong>.<br /><br />
               The student will be notified via the school's billing system (SMS/email) with their statement of account.<br /><br />
               The <strong>7-working-day processing period</strong> will only begin after the student's payment is confirmed.
@@ -424,7 +426,7 @@ function SidePanel({
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 13, height: 13 }}><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             Confirm Rejection
           </div>
-          <div style={{ fontSize: 11, color: '#666', marginBottom: 8, lineHeight: 1.5 }}>Edit the message below — include the specific reason.</div>
+          <div style={{ fontSize: 11, color: 'var(--mid-gray)', marginBottom: 8, lineHeight: 1.5 }}>Edit the message below — include the specific reason.</div>
           <textarea className="drms-textarea" style={{ fontSize: 12, minHeight: 80, resize: 'vertical', borderColor: '#E50019' }}
             value={comment} onChange={e => setComment(e.target.value)} autoFocus />
           <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
@@ -443,7 +445,7 @@ function SidePanel({
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 13, height: 13 }}><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             Mark as Invalid Request
           </div>
-          <div style={{ fontSize: 11, color: '#666', marginBottom: 8, lineHeight: 1.5 }}>
+          <div style={{ fontSize: 11, color: 'var(--mid-gray)', marginBottom: 8, lineHeight: 1.5 }}>
             Use this when the requested document is inappropriate for the student's current level, department, or academic status.
           </div>
           <textarea className="drms-textarea" style={{ fontSize: 12, minHeight: 80, resize: 'vertical', borderColor: '#E50019' }}
@@ -464,7 +466,7 @@ function SidePanel({
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 13, height: 13 }}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
             Place on Clearance Hold
           </div>
-          <div style={{ fontSize: 11, color: '#666', marginBottom: 8, lineHeight: 1.5 }}>
+          <div style={{ fontSize: 11, color: 'var(--mid-gray)', marginBottom: 8, lineHeight: 1.5 }}>
             Use this when the student has outstanding clearances with specific offices. Add a remark specifying which offices need to clear first.
           </div>
           <textarea className="drms-textarea" style={{ fontSize: 12, minHeight: 80, resize: 'vertical', borderColor: '#856404' }}
@@ -528,7 +530,7 @@ function SidePanel({
         <div style={{ padding: '12px 14px', borderTop: '1px solid rgba(0,0,0,0.06)', textAlign: 'center' }}>
           <div style={{ fontSize: 12, color: '#B1B1B1', fontStyle: 'italic' }}>
             {status === 'Claimed' && '✓ This request has been completed and claimed.'}
-            {status === 'Shredded' && '🗑️ This request has been shredded after 90 days.'}
+            {status === 'Shredded' && 'This request has been shredded after 90 days.'}
             {status === 'Rejected' && '✕ This request has been rejected.'}
             {status === 'Invalid Request' && '✕ This request was marked as invalid.'}
           </div>
@@ -544,6 +546,42 @@ function FormTab({ data }: { data: RequestDetail }) {
   const fullName = r ? `${r.last_name}, ${r.first_name}` : '—';
   const academicPeriod = [r?.academic_year, r?.term_semester].filter(Boolean).join(' · ') || '—';
   const badge = statusToBadge(data.current_status);
+
+  // ── Authorization documents (uploaded to Supabase Storage on submit) ──
+  type AuthDoc = { name: string; url: string; isPdf: boolean };
+  const [authDocs, setAuthDocs]             = useState<AuthDoc[]>([]);
+  const [authDocsLoading, setAuthDocsLoading] = useState(true);
+  const [viewerDoc, setViewerDoc]           = useState<AuthDoc | null>(null);
+
+  useEffect(() => {
+    async function listAuthDocs() {
+      try {
+        const folder = `request-${data.request_id}`;
+        const { data: files, error } = await supabase.storage
+          .from('authorization-letters')
+          .list(folder, { sortBy: { column: 'name', order: 'asc' } });
+        if (error || !files) { setAuthDocs([]); return; }
+        setAuthDocs(files
+          .filter(f => f.name && !f.name.startsWith('.'))
+          .map(f => {
+            const { data: urlData } = supabase.storage
+              .from('authorization-letters')
+              .getPublicUrl(`${folder}/${f.name}`);
+            return {
+              // Uploads are stored as "<timestamp>-<original name>" — show the original
+              name: f.name.replace(/^\d+-/, ''),
+              url: urlData.publicUrl,
+              isPdf: f.name.toLowerCase().endsWith('.pdf'),
+            };
+          }));
+      } catch {
+        setAuthDocs([]);
+      } finally {
+        setAuthDocsLoading(false);
+      }
+    }
+    listAuthDocs();
+  }, [data.request_id]);
 
   return (
     <div className="modal-form-pane">
@@ -587,6 +625,66 @@ function FormTab({ data }: { data: RequestDetail }) {
           <div className="field-group span2"><div className="field-label">Purpose</div><div className="field-value">{data.purpose}</div></div>
         </div>
       </div>
+
+      {/* Authorization Documents — shown when a representative is involved
+          or files were uploaded with the request */}
+      {(data.is_authorized_rep || authDocs.length > 0) && (
+        <div className="form-section">
+          <div className="form-section-title">Authorization Documents</div>
+          {authDocsLoading ? (
+            <div style={{ fontSize: 13, color: 'var(--mid-gray)', padding: '6px 0' }}>Checking for uploaded documents…</div>
+          ) : authDocs.length === 0 ? (
+            <div className="info-box warn">
+              <div className="info-text">
+                No authorization documents were uploaded for this request. Verify the physical
+                copies (authorization letter + both IDs) before releasing to the representative.
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {authDocs.map((doc, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: 'var(--surface-2)', border: '1px solid var(--border-col)', borderRadius: 8 }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16, flexShrink: 0, color: 'var(--mid-gray)' }}>
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                  </svg>
+                  <div style={{ flex: 1, fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {doc.name}
+                  </div>
+                  <button className="btn-outline btn-sm" onClick={() => setViewerDoc(doc)}>View</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Authorization document viewer modal */}
+      {viewerDoc && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}
+          onClick={() => setViewerDoc(null)}>
+          <div style={{ background: 'var(--surface)', borderRadius: 12, border: '1px solid var(--border-col)', width: 'min(860px, 95vw)', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: '1px solid var(--border-col)' }}>
+              <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {viewerDoc.name}
+              </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <a className="btn-outline btn-sm" href={viewerDoc.url} target="_blank" rel="noopener noreferrer">Open in new tab</a>
+                <button className="btn-outline btn-sm" onClick={() => setViewerDoc(null)}>Close</button>
+              </div>
+            </div>
+            <div style={{ padding: 16, overflow: 'auto', flex: 1, display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
+              {viewerDoc.isPdf ? (
+                <iframe src={viewerDoc.url} title={viewerDoc.name}
+                  style={{ width: '100%', height: '70vh', border: 'none', borderRadius: 8, background: '#fff' }} />
+              ) : (
+                <img src={viewerDoc.url} alt={viewerDoc.name}
+                  style={{ maxWidth: '100%', maxHeight: '70vh', objectFit: 'contain', borderRadius: 8 }} />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Documents Requested */}
       <div className="form-section">
@@ -780,14 +878,14 @@ function ClearanceTab({ data, onRefresh }: { data: RequestDetail; onRefresh: () 
       {/* Summary banner */}
       {clearances.length === 0 ? (
         <div className="info-box" style={{ marginBottom: 16 }}>
-          <span className="info-icon">ℹ️</span>
+          <span className="info-icon"><IcoInfo /></span>
           <div className="info-text">
             No clearance records for this request. Clearances are auto-created when a request is submitted.
           </div>
         </div>
       ) : allCleared ? (
         <div className="info-box" style={{ marginBottom: 16, background: 'rgba(25,135,84,0.08)', borderColor: '#198754' }}>
-          <span className="info-icon">✅</span>
+          <span className="info-icon"><IcoSuccess /></span>
           <div className="info-text">
             All offices have cleared this request. You may proceed to the next stage.
           </div>
@@ -941,7 +1039,7 @@ function ClearanceTab({ data, onRefresh }: { data: RequestDetail; onRefresh: () 
           <div style={{ background: 'white', borderRadius: 12, padding: 24, width: 400, boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}
             onClick={e => e.stopPropagation()}>
             <div style={{ fontSize: 15, fontWeight: 800, color: '#E50019', marginBottom: 8 }}>Remove Office</div>
-            <div style={{ fontSize: 13, color: '#444', marginBottom: 16, lineHeight: 1.6 }}>
+            <div style={{ fontSize: 13, color: 'var(--text-primary)', marginBottom: 16, lineHeight: 1.6 }}>
               Remove <strong>{removeModal.office_name}</strong> from this request's clearance list?
             </div>
             <div style={{ background: 'rgba(229,0,25,0.06)', border: '1px solid rgba(229,0,25,0.2)', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#E50019', marginBottom: 20, lineHeight: 1.6 }}>
@@ -967,13 +1065,13 @@ function ClearanceTab({ data, onRefresh }: { data: RequestDetail; onRefresh: () 
           onClick={() => setAddOfficeModal(false)}>
           <div style={{ background: 'white', borderRadius: 12, padding: 24, width: 440, boxShadow: '0 8px 32px rgba(0,0,0,0.2)', maxHeight: '80vh', overflowY: 'auto' }}
             onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: 15, fontWeight: 800, color: '#001C43', marginBottom: 4 }}>Add Clearance Office</div>
-            <div style={{ fontSize: 12, color: '#888', marginBottom: 16 }}>Select from the configured list or enter a new office name.</div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 4 }}>Add Clearance Office</div>
+            <div style={{ fontSize: 12, color: 'var(--mid-gray)', marginBottom: 16 }}>Select from the configured list or enter a new office name.</div>
 
             {/* Configured offices */}
             {configOffices.length > 0 && (
               <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--mid-gray)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
                   Configured offices for {data.form_type}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 200, overflowY: 'auto', border: '1px solid #eee', borderRadius: 8, padding: 10 }}>
@@ -992,7 +1090,7 @@ function ClearanceTab({ data, onRefresh }: { data: RequestDetail; onRefresh: () 
                           }}
                           style={{ width: 15, height: 15, accentColor: '#114B9F' }}
                         />
-                        <span style={{ fontSize: 13, color: '#001C43' }}>{name}</span>
+                        <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>{name}</span>
                         {alreadyIn && <span style={{ fontSize: 11, color: '#B1B1B1', fontStyle: 'italic' }}>already on this request</span>}
                       </label>
                     );
@@ -1003,7 +1101,7 @@ function ClearanceTab({ data, onRefresh }: { data: RequestDetail; onRefresh: () 
 
             {/* Free text */}
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>New office name</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--mid-gray)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>New office name</div>
               <input
                 type="text"
                 placeholder="e.g. Program Chair"
@@ -1067,12 +1165,12 @@ function ClearanceTab({ data, onRefresh }: { data: RequestDetail; onRefresh: () 
                   <tr>
                     {/* Office name */}
                     <td style={{ border: '1px solid #ccc', padding: '10px 10px', verticalAlign: 'top' }}>
-                      <div style={{ fontWeight: 600, color: '#001C43' }}>{detailModal.office_name}</div>
+                      <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{detailModal.office_name}</div>
                     </td>
 
                     {/* Processed by — name + signature image */}
                     <td style={{ border: '1px solid #ccc', padding: '10px 10px', verticalAlign: 'top' }}>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: '#001C43', marginBottom: 8 }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8 }}>
                         {detailModal.cleared_by_name ?? '—'}
                       </div>
                       {detailModal.signature_image_url ? (
@@ -1088,7 +1186,7 @@ function ClearanceTab({ data, onRefresh }: { data: RequestDetail; onRefresh: () 
 
                     {/* Date */}
                     <td style={{ border: '1px solid #ccc', padding: '10px 10px', verticalAlign: 'top' }}>
-                      <div style={{ color: '#001C43' }}>
+                      <div style={{ color: 'var(--text-primary)' }}>
                         {detailModal.cleared_at
                           ? new Date(detailModal.cleared_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Manila' })
                           : '—'}
@@ -1097,7 +1195,7 @@ function ClearanceTab({ data, onRefresh }: { data: RequestDetail; onRefresh: () 
 
                     {/* Remarks */}
                     <td style={{ border: '1px solid #ccc', padding: '10px 10px', verticalAlign: 'top' }}>
-                      <div style={{ color: '#001C43' }}>{detailModal.remarks ?? '—'}</div>
+                      <div style={{ color: 'var(--text-primary)' }}>{detailModal.remarks ?? '—'}</div>
                     </td>
                   </tr>
                 </tbody>
@@ -1251,7 +1349,7 @@ function JourneyTab({ data }: { data: RequestDetail }) {
                     )}
                   </div>
                   {log?.remarks && (
-                    <div style={{ marginTop: 6, fontSize: 11, color: '#666', fontStyle: 'italic' }}>
+                    <div style={{ marginTop: 6, fontSize: 11, color: 'var(--mid-gray)', fontStyle: 'italic' }}>
                       Remarks: {log.remarks}
                     </div>
                   )}

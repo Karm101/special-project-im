@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Bell, ChevronDown, Sun, Moon } from 'lucide-react';
 import { API_BASE } from '@/lib/lib_api';
+import { IcoUser, IcoGear, IcoLogout } from '@/app/components/drms/Icons';
 
 interface BreadcrumbItem { label: string; href?: string; }
 
@@ -160,13 +161,13 @@ export function Topbar({
           </div>
 
           <div className={`user-dropdown${ddOpen ? ' open' : ''}`} onClick={e => e.stopPropagation()}>
-            <button className="dd-item" onClick={() => { setDdOpen(false); router.push('/staff/profile'); }}>👤 View Profile</button>
-            <button className="dd-item" onClick={() => { setDdOpen(false); router.push('/staff/settings'); }}>⚙️ Settings</button>
+            <button className="dd-item" onClick={() => { setDdOpen(false); router.push('/staff/profile'); }}><IcoUser /> View Profile</button>
+            <button className="dd-item" onClick={() => { setDdOpen(false); router.push('/staff/settings'); }}><IcoGear /> Settings</button>
             <div className="dd-sep" />
             <button className="dd-item danger" onClick={() => {
               sessionStorage.clear();
               router.push('/staff/login');
-            }}>🚪 Sign Out</button>
+            }}><IcoLogout /> Sign Out</button>
           </div>
         </div>
       </div>

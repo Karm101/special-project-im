@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Search } from 'lucide-react';
 import { Topbar } from '../../../components/drms/Topbar';
 import { API_BASE } from '@/lib/lib_api';
+import { IcoGrad, IcoBook, IcoInfo } from '@/app/components/drms/Icons';
 
 type ApiRequest = {
   request_id: number;
@@ -120,8 +121,8 @@ export default function CollegeDeptPage() {
       <div className="page-body">
         {/* Dept toggle */}
         <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
-          <button className="btn-primary" style={{ padding: '10px 24px', fontSize: 14 }}>🎓 College</button>
-          <button className="btn-outline" style={{ padding: '10px 24px', fontSize: 14 }} onClick={() => router.push('/staff/dept/shs')}>📚 Senior High School</button>
+          <button className="btn-primary" style={{ padding: '10px 24px', fontSize: 14 }}><IcoGrad /> College</button>
+          <button className="btn-outline" style={{ padding: '10px 24px', fontSize: 14 }} onClick={() => router.push('/staff/dept/shs')}><IcoBook /> Senior High School</button>
         </div>
 
         {/* Stat cards */}
@@ -133,7 +134,7 @@ export default function CollegeDeptPage() {
         </div>
 
         <div className="info-box" style={{ marginBottom: 16 }}>
-          <span className="info-icon">ℹ️</span>
+          <span className="info-icon"><IcoInfo /></span>
           <div className="info-text">Showing <strong>College-level</strong> requests: Transcript of Records and Honorable Dismissal.</div>
         </div>
 

@@ -6,6 +6,7 @@ import { Search } from 'lucide-react';
 import { Pagination } from '../../components/drms/Pagination';
 import { Topbar } from '../../components/drms/Topbar';
 import { API_BASE } from '@/lib/lib_api';
+import { IcoWarn, IcoInfo } from '@/app/components/drms/Icons';
 
 // ── API types ─────────────────────────────────────────────────────────────────
 type ApiClearance = {
@@ -84,10 +85,10 @@ function ClearanceDetailModal({ c, onClose }: { c: ApiClearance; onClose: () => 
             <tbody>
               <tr>
                 <td style={{ border: '1px solid #ccc', padding: '10px', verticalAlign: 'top' }}>
-                  <div style={{ fontWeight: 600, color: '#001C43' }}>{c.office_name}</div>
+                  <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{c.office_name}</div>
                 </td>
                 <td style={{ border: '1px solid #ccc', padding: '10px', verticalAlign: 'top' }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: '#001C43', marginBottom: 8 }}>{c.cleared_by_name ?? '—'}</div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8 }}>{c.cleared_by_name ?? '—'}</div>
                   {c.signature_image_url ? (
                     <img src={c.signature_image_url} alt="E-signature" style={{ maxHeight: 56, maxWidth: 180, objectFit: 'contain', border: '1px solid #eee', borderRadius: 4, padding: 4, background: '#fafafa' }} />
                   ) : (
@@ -95,10 +96,10 @@ function ClearanceDetailModal({ c, onClose }: { c: ApiClearance; onClose: () => 
                   )}
                 </td>
                 <td style={{ border: '1px solid #ccc', padding: '10px', verticalAlign: 'top' }}>
-                  <div style={{ color: '#001C43' }}>{formatDate(c.cleared_at)}</div>
+                  <div style={{ color: 'var(--text-primary)' }}>{formatDate(c.cleared_at)}</div>
                 </td>
                 <td style={{ border: '1px solid #ccc', padding: '10px', verticalAlign: 'top' }}>
-                  <div style={{ color: '#001C43' }}>{c.remarks ?? '—'}</div>
+                  <div style={{ color: 'var(--text-primary)' }}>{c.remarks ?? '—'}</div>
                 </td>
               </tr>
             </tbody>
@@ -350,7 +351,7 @@ export default function ClearancePage() {
 
         {error && (
           <div className="info-box warn" style={{ marginBottom: 16 }}>
-            <span className="info-icon">⚠️</span>
+            <span className="info-icon"><IcoWarn /></span>
             <div className="info-text">{error}</div>
           </div>
         )}
@@ -371,7 +372,7 @@ export default function ClearancePage() {
 
         {!loading && ro4Requests.length === 0 && (
           <div className="info-box" style={{ marginTop: 8 }}>
-            <span className="info-icon">ℹ️</span>
+            <span className="info-icon"><IcoInfo /></span>
             <div className="info-text">No document requests found.</div>
           </div>
         )}

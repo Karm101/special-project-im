@@ -306,7 +306,7 @@ export default function ClearanceOfficeDashboard() {
         {!isSetup && role !== 'Super Admin' && (
           <div style={{ background: 'rgba(255,163,35,0.1)', border: '1px solid rgba(255,163,35,0.3)', borderRadius: 10, padding: '12px 16px', marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ fontSize: 13, color: '#7a4f00', fontWeight: 600 }}>
-              ⚠ Complete your setup to start confirming clearances.
+              Complete your setup to start confirming clearances.
             </div>
             <button onClick={() => router.push('/clearance-office/setup')} style={{ background: '#FFA323', color: 'white', border: 'none', borderRadius: 6, padding: '6px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif" }}>
               Complete Setup
