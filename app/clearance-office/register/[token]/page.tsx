@@ -18,6 +18,13 @@ export default function ClearanceOfficeRegisterPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  // Apply saved theme so the CSS variables render correctly on hard loads
+  useEffect(() => {
+    const saved = localStorage.getItem('drms_theme') ?? 'light';
+    document.documentElement.setAttribute('data-theme', saved);
+  }, []);
+
+
   useEffect(() => {
     async function verifyToken() {
       try {
@@ -73,13 +80,13 @@ export default function ClearanceOfficeRegisterPage() {
 
   const inp: React.CSSProperties = {
     width: '100%', padding: '10px 12px', fontSize: 13,
-    border: '1.5px solid #dde3ed', borderRadius: 8,
+    border: '1.5px solid var(--border-col)', borderRadius: 8,
     fontFamily: "'Montserrat', sans-serif", outline: 'none',
-    boxSizing: 'border-box', background: 'white', color: '#001C43',
+    boxSizing: 'border-box', background: 'var(--surface)', color: 'var(--text-primary)',
   };
 
   if (verifying) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Montserrat', sans-serif", color: '#888' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Montserrat', sans-serif", color: 'var(--mid-gray)' }}>
       Verifying invite link...
     </div>
   );
@@ -90,8 +97,8 @@ export default function ClearanceOfficeRegisterPage() {
         <div style={{ fontSize: 40, marginBottom: 16 }}>
           <svg viewBox="0 0 24 24" fill="none" stroke="#E50019" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 48, height: 48, margin: '0 auto' }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         </div>
-        <div style={{ fontSize: 16, fontWeight: 800, color: '#001C43', marginBottom: 8, fontFamily: "'Montserrat', sans-serif" }}>Invalid Invite Link</div>
-        <div style={{ fontSize: 13, color: '#888', fontFamily: "'Montserrat', sans-serif" }}>{inviteError}</div>
+        <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 8, fontFamily: "'Montserrat', sans-serif" }}>Invalid Invite Link</div>
+        <div style={{ fontSize: 13, color: 'var(--mid-gray)', fontFamily: "'Montserrat', sans-serif" }}>{inviteError}</div>
       </div>
     </div>
   );
@@ -100,8 +107,8 @@ export default function ClearanceOfficeRegisterPage() {
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{ textAlign: 'center', maxWidth: 400 }}>
         <svg viewBox="0 0 24 24" fill="none" stroke="#198754" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 48, height: 48, margin: '0 auto 16px' }}><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
-        <div style={{ fontSize: 16, fontWeight: 800, color: '#001C43', marginBottom: 8, fontFamily: "'Montserrat', sans-serif" }}>Account Created!</div>
-        <div style={{ fontSize: 13, color: '#888', fontFamily: "'Montserrat', sans-serif" }}>Redirecting to login...</div>
+        <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 8, fontFamily: "'Montserrat', sans-serif" }}>Account Created!</div>
+        <div style={{ fontSize: 13, color: 'var(--mid-gray)', fontFamily: "'Montserrat', sans-serif" }}>Redirecting to login...</div>
       </div>
     </div>
   );
@@ -114,12 +121,12 @@ export default function ClearanceOfficeRegisterPage() {
         <div style={{ background: 'rgba(255,255,255,0.97)', borderRadius: 14, boxShadow: '0 4px 24px rgba(0,0,0,0.2)', overflow: 'hidden' }}>
           
           {/* Header section */}
-          <div style={{ textAlign: 'center', padding: '28px 28px 20px', borderBottom: '1px solid #eee' }}>
+          <div style={{ textAlign: 'center', padding: '28px 28px 20px', borderBottom: '1px solid var(--border-col)' }}>
             <img src="/mmcm-logo-with-name.png" alt="MMCM" style={{ height: 52, display: 'block', margin: '0 auto 12px' }} />
-            <div style={{ fontSize: 18, fontWeight: 800, color: '#001C43', fontFamily: "'Montserrat', sans-serif" }}>
+            <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', fontFamily: "'Montserrat', sans-serif" }}>
               Clearance Office Portal
             </div>
-            <div style={{ fontSize: 12, color: '#555', marginTop: 4, fontFamily: "'Montserrat', sans-serif" }}>
+            <div style={{ fontSize: 12, color: 'var(--mid-gray)', marginTop: 4, fontFamily: "'Montserrat', sans-serif" }}>
               Mapúa Malayan Colleges Mindanao — Registrar's Office
             </div>
           </div>
@@ -130,38 +137,38 @@ export default function ClearanceOfficeRegisterPage() {
             {/* Name row */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <div>
-                <label style={{ fontSize: 11, fontWeight: 700, color: '#888', display: 'block', marginBottom: 4, fontFamily: "'Montserrat', sans-serif" }}>FIRST NAME *</label>
-                <input style={{ ...inp, borderColor: errors.first_name ? '#E50019' : '#dde3ed' }} placeholder="First name" value={form.first_name} onChange={e => setForm({ ...form, first_name: e.target.value })} />
+                <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--mid-gray)', display: 'block', marginBottom: 4, fontFamily: "'Montserrat', sans-serif" }}>FIRST NAME *</label>
+                <input style={{ ...inp, borderColor: errors.first_name ? '#E50019' : 'var(--border-col)' }} placeholder="First name" value={form.first_name} onChange={e => setForm({ ...form, first_name: e.target.value })} />
                 {errors.first_name && <div style={{ fontSize: 11, color: '#E50019', marginTop: 3 }}>{errors.first_name}</div>}
               </div>
               <div>
-                <label style={{ fontSize: 11, fontWeight: 700, color: '#888', display: 'block', marginBottom: 4, fontFamily: "'Montserrat', sans-serif" }}>LAST NAME *</label>
-                <input style={{ ...inp, borderColor: errors.last_name ? '#E50019' : '#dde3ed' }} placeholder="Last name" value={form.last_name} onChange={e => setForm({ ...form, last_name: e.target.value })} />
+                <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--mid-gray)', display: 'block', marginBottom: 4, fontFamily: "'Montserrat', sans-serif" }}>LAST NAME *</label>
+                <input style={{ ...inp, borderColor: errors.last_name ? '#E50019' : 'var(--border-col)' }} placeholder="Last name" value={form.last_name} onChange={e => setForm({ ...form, last_name: e.target.value })} />
                 {errors.last_name && <div style={{ fontSize: 11, color: '#E50019', marginTop: 3 }}>{errors.last_name}</div>}
               </div>
             </div>
 
             <div>
-              <label style={{ fontSize: 11, fontWeight: 700, color: '#888', display: 'block', marginBottom: 4, fontFamily: "'Montserrat', sans-serif" }}>USERNAME *</label>
-              <input style={{ ...inp, borderColor: errors.username ? '#E50019' : '#dde3ed' }} placeholder="Choose a username" value={form.username} onChange={e => setForm({ ...form, username: e.target.value })} />
+              <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--mid-gray)', display: 'block', marginBottom: 4, fontFamily: "'Montserrat', sans-serif" }}>USERNAME *</label>
+              <input style={{ ...inp, borderColor: errors.username ? '#E50019' : 'var(--border-col)' }} placeholder="Choose a username" value={form.username} onChange={e => setForm({ ...form, username: e.target.value })} />
               {errors.username && <div style={{ fontSize: 11, color: '#E50019', marginTop: 3 }}>{errors.username}</div>}
             </div>
 
             <div>
-              <label style={{ fontSize: 11, fontWeight: 700, color: '#888', display: 'block', marginBottom: 4, fontFamily: "'Montserrat', sans-serif" }}>EMAIL *</label>
-              <input style={{ ...inp, borderColor: errors.email ? '#E50019' : '#dde3ed' }} type="email" placeholder="Your email address" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+              <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--mid-gray)', display: 'block', marginBottom: 4, fontFamily: "'Montserrat', sans-serif" }}>EMAIL *</label>
+              <input style={{ ...inp, borderColor: errors.email ? '#E50019' : 'var(--border-col)' }} type="email" placeholder="Your email address" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
               {errors.email && <div style={{ fontSize: 11, color: '#E50019', marginTop: 3 }}>{errors.email}</div>}
             </div>
 
             <div>
-              <label style={{ fontSize: 11, fontWeight: 700, color: '#888', display: 'block', marginBottom: 4, fontFamily: "'Montserrat', sans-serif" }}>PASSWORD *</label>
-              <input style={{ ...inp, borderColor: errors.password ? '#E50019' : '#dde3ed' }} type="password" placeholder="At least 8 characters" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} />
+              <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--mid-gray)', display: 'block', marginBottom: 4, fontFamily: "'Montserrat', sans-serif" }}>PASSWORD *</label>
+              <input style={{ ...inp, borderColor: errors.password ? '#E50019' : 'var(--border-col)' }} type="password" placeholder="At least 8 characters" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} />
               {errors.password && <div style={{ fontSize: 11, color: '#E50019', marginTop: 3 }}>{errors.password}</div>}
             </div>
 
             <div>
-              <label style={{ fontSize: 11, fontWeight: 700, color: '#888', display: 'block', marginBottom: 4, fontFamily: "'Montserrat', sans-serif" }}>CONFIRM PASSWORD *</label>
-              <input style={{ ...inp, borderColor: errors.confirm_password ? '#E50019' : '#dde3ed' }} type="password" placeholder="Repeat your password" value={form.confirm_password} onChange={e => setForm({ ...form, confirm_password: e.target.value })} />
+              <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--mid-gray)', display: 'block', marginBottom: 4, fontFamily: "'Montserrat', sans-serif" }}>CONFIRM PASSWORD *</label>
+              <input style={{ ...inp, borderColor: errors.confirm_password ? '#E50019' : 'var(--border-col)' }} type="password" placeholder="Repeat your password" value={form.confirm_password} onChange={e => setForm({ ...form, confirm_password: e.target.value })} />
               {errors.confirm_password && <div style={{ fontSize: 11, color: '#E50019', marginTop: 3 }}>{errors.confirm_password}</div>}
             </div>
 

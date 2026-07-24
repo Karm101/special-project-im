@@ -48,7 +48,7 @@ const ACTION_LABELS: Record<string, { label: string; color: string }> = {
   confirmed:          { label: 'Confirmed',          color: '#198754' },
   confirmed_by_admin: { label: 'Confirmed by Admin', color: '#114B9F' },
   link_sent:          { label: 'Link Sent',          color: '#FFA323' },
-  link_disabled:      { label: 'Link Disabled',      color: '#888'    },
+  link_disabled:      { label: 'Link Disabled',      color: 'var(--mid-gray)'    },
   link_regenerated:   { label: 'Link Regenerated',   color: '#FFA323' },
   office_added:       { label: 'Office Added',       color: '#114B9F' },
   office_removed:     { label: 'Office Removed',     color: '#E50019' },
@@ -92,12 +92,12 @@ export default function ClearanceOfficeDashboard() {
   const userSelectedRef = useRef(false);
   
   const [isDark, setIsDark] = useState(false);
-  const bg     = isDark ? '#0f1117' : '#f4f6fb';
-  const card   = isDark ? '#1c2236' : 'white';
-  const border = isDark ? 'rgba(255,255,255,0.07)' : '#eaecf0';
-  const txt    = isDark ? '#dde1ed' : '#001C43';
-  const sub    = isDark ? '#8890a4' : '#888';
-  const subtle = isDark ? '#252e45' : '#f8f9fa';
+  const bg     = 'var(--bg-base)';
+  const card   = 'var(--surface)';
+  const border = 'var(--border-col)';
+  const txt    = 'var(--text-primary)';
+  const sub    = 'var(--mid-gray)';
+  const subtle = 'var(--surface-2)';
 
   function showToast(msg: string) {
     setToast(msg);
@@ -350,7 +350,7 @@ export default function ClearanceOfficeDashboard() {
             <div style={{ flex: 1 }} />
             <button
               onClick={fetchClearances}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888', padding: '0 8px', display: 'flex', alignItems: 'center' }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--mid-gray)', padding: '0 8px', display: 'flex', alignItems: 'center' }}
               title="Refresh"
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
@@ -364,13 +364,13 @@ export default function ClearanceOfficeDashboard() {
           {activeTab === 'audit' && (
             <div style={{ padding: 20 }}>
               {auditLoading ? (
-                <div style={{ textAlign: 'center', padding: 40, color: '#888', fontSize: 13 }}>Loading audit log...</div>
+                <div style={{ textAlign: 'center', padding: 40, color: 'var(--mid-gray)', fontSize: 13 }}>Loading audit log...</div>
               ) : auditLogs.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: 40, color: '#888', fontSize: 13, fontStyle: 'italic' }}>No audit entries yet.</div>
+                <div style={{ textAlign: 'center', padding: 40, color: 'var(--mid-gray)', fontSize: 13, fontStyle: 'italic' }}>No audit entries yet.</div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                   {auditLogs.map(log => {
-                    const meta = ACTION_LABELS[log.action] ?? { label: log.action, color: '#888' };
+                    const meta = ACTION_LABELS[log.action] ?? { label: log.action, color: 'var(--mid-gray)' };
                     return (
                       <div key={log.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 0', borderBottom: `1px solid ${border}` }}>
                         <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 50, background: `${meta.color}18`, color: meta.color, whiteSpace: 'nowrap', flexShrink: 0 }}>
@@ -380,7 +380,7 @@ export default function ClearanceOfficeDashboard() {
                           <div style={{ fontSize: 12, color: txt, fontWeight: 600 }}>{log.performed_by}</div>
                           <div style={{ fontSize: 11, color: sub, marginTop: 1 }}>{log.details}</div>
                         </div>
-                        <div style={{ fontSize: 11, color: '#aaa', whiteSpace: 'nowrap', flexShrink: 0 }}>{formatDate(log.created_at)}</div>
+                        <div style={{ fontSize: 11, color: 'var(--mid-gray)', whiteSpace: 'nowrap', flexShrink: 0 }}>{formatDate(log.created_at)}</div>
                       </div>
                     );
                   })}
@@ -396,10 +396,10 @@ export default function ClearanceOfficeDashboard() {
               {/* Left — list */}
               <div style={{ borderRight: `1px solid ${border}`, overflowY: 'auto', maxHeight: 600 }}>
                 {loading && (
-                  <div style={{ padding: 32, textAlign: 'center', color: '#888', fontSize: 13 }}>Loading...</div>
+                  <div style={{ padding: 32, textAlign: 'center', color: 'var(--mid-gray)', fontSize: 13 }}>Loading...</div>
                 )}
                 {!loading && tabList.length === 0 && (
-                  <div style={{ padding: 32, textAlign: 'center', color: '#888', fontSize: 13, fontStyle: 'italic' }}>
+                  <div style={{ padding: 32, textAlign: 'center', color: 'var(--mid-gray)', fontSize: 13, fontStyle: 'italic' }}>
                     {activeTab === 'pending' ? 'No pending clearances.' : 'No cleared records yet.'}
                   </div>
                 )}
@@ -409,7 +409,7 @@ export default function ClearanceOfficeDashboard() {
                     <div
                       key={c.clearance_id}
                       onClick={() => { setSelectedId(c.clearance_id); userSelectedRef.current = true; }}
-                      style={{ padding: '14px 16px', borderBottom: `1px solid ${border}`, cursor: 'pointer', background: isSelected ? (isDark ? 'rgba(125,179,255,0.1)' : 'rgba(17,75,159,0.06)') : card, borderLeft: isSelected ? '3px solid #114B9F' : '3px solid transparent', transition: 'all .12s' }}
+                      style={{ padding: '14px 16px', borderBottom: `1px solid ${border}`, cursor: 'pointer', background: isSelected ? 'rgba(125,179,255,0.12)' : card, borderLeft: isSelected ? '3px solid #114B9F' : '3px solid transparent', transition: 'all .12s' }}
                     >
                       <div style={{ fontSize: 12, fontWeight: 700, color: txt }}>
                         {formatRequestId(c.request.request_id, c.request.document_request_no)}
@@ -417,10 +417,10 @@ export default function ClearanceOfficeDashboard() {
                       <div style={{ fontSize: 11, color: sub, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {c.request.student_name}
                       </div>
-                      <div style={{ fontSize: 11, color: isDark ? '#6b7280' : '#aaa', marginTop: 2 }}>
+                      <div style={{ fontSize: 11, color: 'var(--mid-gray)', marginTop: 2 }}>
                         {c.request.documents}
                       </div>
-                      <div style={{ fontSize: 10, color: isDark ? '#4b5563' : '#ccc', marginTop: 3 }}>
+                      <div style={{ fontSize: 10, color: 'var(--mid-gray)', marginTop: 3 }}>
                         Submitted {new Date(c.request.date_submitted).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </div>
                     </div>
@@ -449,7 +449,7 @@ export default function ClearanceOfficeDashboard() {
                       { label: 'Documents', value: selected.request.documents },
                     ].map(f => (
                       <div key={f.label} style={{ gridColumn: f.label === 'Documents' ? '1 / -1' : undefined }}>
-                        <div style={{ fontSize: 10, fontWeight: 700, color: isDark ? '#6b7280' : '#aaa', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 3 }}>{f.label}</div>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--mid-gray)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 3 }}>{f.label}</div>
                         <div style={{ fontSize: 13, fontWeight: 600, color: txt }}>{f.value}</div>
                       </div>
                     ))}
@@ -458,8 +458,8 @@ export default function ClearanceOfficeDashboard() {
                   {/* Purpose */}
                   {selected.request.purpose && (
                     <div style={{ background: subtle, borderRadius: 8, padding: '10px 14px', marginBottom: 20 }}>
-                      <div style={{ fontSize: 10, fontWeight: 700, color: '#aaa', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Purpose</div>
-                      <div style={{ fontSize: 13, color: isDark ? '#9ca3af' : '#444', lineHeight: 1.6 }}></div>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--mid-gray)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Purpose</div>
+                      <div style={{ fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.6 }}></div>
                     </div>
                   )}
 
@@ -467,7 +467,7 @@ export default function ClearanceOfficeDashboard() {
                   {selected.clearance_status === 'Cleared' && (
                     <div style={{ background: 'rgba(25,135,84,0.06)', border: '1px solid rgba(25,135,84,0.2)', borderRadius: 10, padding: '14px 16px', marginBottom: 20 }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: '#198754', marginBottom: 8 }}>✓ Clearance Confirmed</div>
-                      <div style={{ fontSize: 12, color: '#444' }}>Confirmed by <strong>{selected.cleared_by_name}</strong> on {formatDate(selected.cleared_at)}</div>
+                      <div style={{ fontSize: 12, color: 'var(--text-primary)' }}>Confirmed by <strong>{selected.cleared_by_name}</strong> on {formatDate(selected.cleared_at)}</div>
                       {selected.remarks && <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>Remarks: {selected.remarks}</div>}
                     </div>
                   )}
@@ -478,10 +478,10 @@ export default function ClearanceOfficeDashboard() {
                       {/* Signature preview */}
                       {sigUrl && (
                         <div style={{ marginBottom: 16, padding: '12px 14px', background: subtle, borderRadius: 8 }}>
-                          <div style={{ fontSize: 10, fontWeight: 700, color: '#aaa', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>Your signature (auto-populated)</div>
+                          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--mid-gray)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>Your signature (auto-populated)</div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <img src={sigUrl} alt="Your signature" style={{ height: 40, maxWidth: 120, objectFit: 'contain', border: '1px solid #eee', borderRadius: 4, padding: 4, background: 'white' }} />
-                            <div style={{ fontSize: 12, color: '#001C43', fontWeight: 600 }}>{displayName}</div>
+                            <img src={sigUrl} alt="Your signature" style={{ height: 40, maxWidth: 120, objectFit: 'contain', border: '1px solid var(--border-col)', borderRadius: 4, padding: 4, background: 'white' }} />
+                            <div style={{ fontSize: 12, color: 'var(--text-primary)', fontWeight: 600 }}>{displayName}</div>
                           </div>
                         </div>
                       )}
@@ -502,7 +502,7 @@ export default function ClearanceOfficeDashboard() {
                   )}
                 </div>
               ) : (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ccc', fontSize: 13, fontStyle: 'italic' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--mid-gray)', fontSize: 13, fontStyle: 'italic' }}>
                   Select a request to view details
                 </div>
               )}
@@ -522,13 +522,13 @@ export default function ClearanceOfficeDashboard() {
 
             {/* Auto-populate preview */}
             <div style={{ background: subtle, borderRadius: 8, padding: '12px 14px', marginBottom: 16 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: '#aaa', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8, fontFamily: "'Montserrat', sans-serif" }}>Will be recorded as</div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--mid-gray)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8, fontFamily: "'Montserrat', sans-serif" }}>Will be recorded as</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                {sigUrl && <img src={sigUrl} alt="Signature" style={{ height: 36, maxWidth: 100, objectFit: 'contain', border: '1px solid #eee', borderRadius: 4, padding: 4, background: 'white' }} />}
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#001C43', fontFamily: "'Montserrat', sans-serif" }}>{displayName}</div>
+                {sigUrl && <img src={sigUrl} alt="Signature" style={{ height: 36, maxWidth: 100, objectFit: 'contain', border: '1px solid var(--border-col)', borderRadius: 4, padding: 4, background: 'white' }} />}
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Montserrat', sans-serif" }}>{displayName}</div>
               </div>
               {role === 'Super Admin' && (
-                <div style={{ fontSize: 11, color: '#888', marginTop: 6, fontFamily: "'Montserrat', sans-serif" }}>
+                <div style={{ fontSize: 11, color: 'var(--mid-gray)', marginTop: 6, fontFamily: "'Montserrat', sans-serif" }}>
                   This will be logged as confirmed by Super Admin on behalf of {confirmModal.office_name}.
                 </div>
               )}
@@ -536,13 +536,13 @@ export default function ClearanceOfficeDashboard() {
 
             {/* Remarks */}
             <div style={{ marginBottom: 16 }}>
-              <label style={{ fontSize: 11, fontWeight: 700, color: '#888', display: 'block', marginBottom: 5, fontFamily: "'Montserrat', sans-serif" }}>REMARKS (optional)</label>
+              <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--mid-gray)', display: 'block', marginBottom: 5, fontFamily: "'Montserrat', sans-serif" }}>REMARKS (optional)</label>
               <textarea
                 value={remarks}
                 onChange={e => setRemarks(e.target.value)}
                 placeholder="Any notes or remarks..."
                 rows={3}
-                style={{ width: '100%', padding: '9px 12px', fontSize: 13, border: `1.5px solid ${border}`, borderRadius: 8, fontFamily: "'Montserrat', sans-serif", outline: 'none', resize: 'vertical', boxSizing: 'border-box', color: txt, background: isDark ? '#252e45' : 'white' }}
+                style={{ width: '100%', padding: '9px 12px', fontSize: 13, border: `1.5px solid ${border}`, borderRadius: 8, fontFamily: "'Montserrat', sans-serif", outline: 'none', resize: 'vertical', boxSizing: 'border-box', color: txt, background: 'var(--surface)' }}
               />
             </div>
 

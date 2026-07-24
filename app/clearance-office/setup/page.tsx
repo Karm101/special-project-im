@@ -21,6 +21,13 @@ export default function ClearanceOfficeSetupPage() {
   const [saving, setSaving]         = useState(false);
   const [error, setError]           = useState('');
 
+  // Apply saved theme so the CSS variables render correctly on hard loads
+  useEffect(() => {
+    const saved = localStorage.getItem('drms_theme') ?? 'light';
+    document.documentElement.setAttribute('data-theme', saved);
+  }, []);
+
+
   useEffect(() => {
     const t  = sessionStorage.getItem('co_token') ?? '';
     const on = sessionStorage.getItem('co_office_name') ?? '';
@@ -88,9 +95,9 @@ export default function ClearanceOfficeSetupPage() {
 
   const inp: React.CSSProperties = {
     width: '100%', padding: '10px 12px', fontSize: 13,
-    border: '1.5px solid #dde3ed', borderRadius: 8,
+    border: '1.5px solid var(--border-col)', borderRadius: 8,
     fontFamily: "'Montserrat', sans-serif", outline: 'none',
-    boxSizing: 'border-box', background: 'white', color: '#001C43',
+    boxSizing: 'border-box', background: 'var(--surface)', color: 'var(--text-primary)',
   };
 
   return (
@@ -101,12 +108,12 @@ export default function ClearanceOfficeSetupPage() {
         <div style={{ background: 'rgba(255,255,255,0.97)', borderRadius: 14, boxShadow: '0 4px 24px rgba(0,0,0,0.2)', overflow: 'hidden' }}>
           
           {/* Header section */}
-          <div style={{ textAlign: 'center', padding: '28px 28px 20px', borderBottom: '1px solid #eee' }}>
+          <div style={{ textAlign: 'center', padding: '28px 28px 20px', borderBottom: '1px solid var(--border-col)' }}>
             <img src="/mmcm-logo-with-name.png" alt="MMCM" style={{ height: 52, display: 'block', margin: '0 auto 12px' }} />
-            <div style={{ fontSize: 18, fontWeight: 800, color: '#001C43', fontFamily: "'Montserrat', sans-serif" }}>
+            <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', fontFamily: "'Montserrat', sans-serif" }}>
               Clearance Office Portal
             </div>
-            <div style={{ fontSize: 12, color: '#555', marginTop: 4, fontFamily: "'Montserrat', sans-serif" }}>
+            <div style={{ fontSize: 12, color: 'var(--mid-gray)', marginTop: 4, fontFamily: "'Montserrat', sans-serif" }}>
               Mapúa Malayan Colleges Mindanao — Registrar's Office
             </div>
           </div>
@@ -122,27 +129,27 @@ export default function ClearanceOfficeSetupPage() {
 
             {/* Display name */}
             <div>
-              <label style={{ fontSize: 11, fontWeight: 700, color: '#888', display: 'block', marginBottom: 5, fontFamily: "'Montserrat', sans-serif" }}>DISPLAY NAME *</label>
+              <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--mid-gray)', display: 'block', marginBottom: 5, fontFamily: "'Montserrat', sans-serif" }}>DISPLAY NAME *</label>
               <input style={inp} placeholder="e.g. Maria Santos" value={displayName} onChange={e => setDisplayName(e.target.value)} />
-              <div style={{ fontSize: 11, color: '#aaa', marginTop: 3, fontFamily: "'Montserrat', sans-serif" }}>This name will appear on all clearance records you confirm.</div>
+              <div style={{ fontSize: 11, color: 'var(--mid-gray)', marginTop: 3, fontFamily: "'Montserrat', sans-serif" }}>This name will appear on all clearance records you confirm.</div>
             </div>
 
             {/* E-signature upload */}
             <div>
-              <label style={{ fontSize: 11, fontWeight: 700, color: '#888', display: 'block', marginBottom: 5, fontFamily: "'Montserrat', sans-serif" }}>E-SIGNATURE *</label>
+              <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--mid-gray)', display: 'block', marginBottom: 5, fontFamily: "'Montserrat', sans-serif" }}>E-SIGNATURE *</label>
               <div
                 onClick={() => document.getElementById('sig-upload')?.click()}
-                style={{ border: '2px dashed #dde3ed', borderRadius: 10, padding: 20, textAlign: 'center', cursor: 'pointer', background: '#fafbfd', transition: 'border-color .2s' }}
+                style={{ border: '2px dashed var(--border-col)', borderRadius: 10, padding: 20, textAlign: 'center', cursor: 'pointer', background: 'var(--surface-2)', transition: 'border-color .2s' }}
                 onMouseEnter={e => (e.currentTarget.style.borderColor = '#114B9F')}
-                onMouseLeave={e => (e.currentTarget.style.borderColor = '#dde3ed')}
+                onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border-col)')}
               >
                 {sigPreview ? (
                   <img src={sigPreview} alt="Signature preview" style={{ maxHeight: 80, maxWidth: '100%', objectFit: 'contain' }} />
                 ) : (
                   <>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" style={{ width: 32, height: 32, margin: '0 auto 8px' }}><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                    <div style={{ fontSize: 12, color: '#aaa', fontFamily: "'Montserrat', sans-serif" }}>Click to upload signature image</div>
-                    <div style={{ fontSize: 11, color: '#ccc', marginTop: 4, fontFamily: "'Montserrat', sans-serif" }}>JPG or PNG recommended</div>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" style={{ width: 32, height: 32, margin: '0 auto 8px' }}><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    <div style={{ fontSize: 12, color: 'var(--mid-gray)', fontFamily: "'Montserrat', sans-serif" }}>Click to upload signature image</div>
+                    <div style={{ fontSize: 11, color: 'var(--mid-gray)', marginTop: 4, fontFamily: "'Montserrat', sans-serif" }}>JPG or PNG recommended</div>
                   </>
                 )}
               </div>

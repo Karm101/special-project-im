@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState , useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { API_BASE } from '@/lib/lib_api';
 
@@ -10,6 +10,13 @@ export default function ClearanceOfficeLoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState('');
+
+  // Apply saved theme so the CSS variables render correctly on hard loads
+  useEffect(() => {
+    const saved = localStorage.getItem('drms_theme') ?? 'light';
+    document.documentElement.setAttribute('data-theme', saved);
+  }, []);
+
 
   async function handleLogin() {
     if (!username.trim() || !password.trim()) {
@@ -50,10 +57,10 @@ export default function ClearanceOfficeLoginPage() {
 
   const inp: React.CSSProperties = {
     width: '100%', padding: '11px 14px', fontSize: 13,
-    border: '1.5px solid #dde3ed', borderRadius: 8,
+    border: '1.5px solid var(--border-col)', borderRadius: 8,
     fontFamily: "'Montserrat', sans-serif",
     outline: 'none', boxSizing: 'border-box',
-    background: 'white', color: '#001C43',
+    background: 'var(--surface)', color: 'var(--text-primary)',
   };
 
   return (
@@ -65,25 +72,25 @@ export default function ClearanceOfficeLoginPage() {
         <div style={{ background: 'rgba(255,255,255,0.97)', borderRadius: 14, boxShadow: '0 4px 24px rgba(0,0,0,0.2)', overflow: 'hidden' }}>
           
           {/* Header section */}
-          <div style={{ textAlign: 'center', padding: '28px 28px 20px', borderBottom: '1px solid #eee' }}>
+          <div style={{ textAlign: 'center', padding: '28px 28px 20px', borderBottom: '1px solid var(--border-col)' }}>
             <img src="/mmcm-logo-with-name.png" alt="MMCM" style={{ height: 52, display: 'block', margin: '0 auto 12px' }} />
-            <div style={{ fontSize: 18, fontWeight: 800, color: '#001C43', fontFamily: "'Montserrat', sans-serif" }}>
+            <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', fontFamily: "'Montserrat', sans-serif" }}>
               Clearance Office Portal
             </div>
-            <div style={{ fontSize: 12, color: '#555', marginTop: 4, fontFamily: "'Montserrat', sans-serif" }}>
+            <div style={{ fontSize: 12, color: 'var(--mid-gray)', marginTop: 4, fontFamily: "'Montserrat', sans-serif" }}>
               Mapúa Malayan Colleges Mindanao — Registrar's Office
             </div>
           </div>
 
         {/* Card */}
         <div style={{ padding: 28 }}>
-          <div style={{ fontSize: 15, fontWeight: 800, color: '#001C43', marginBottom: 20, fontFamily: "'Montserrat', sans-serif" }}>
+          <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 20, fontFamily: "'Montserrat', sans-serif" }}>
             Sign In
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div>
-              <label style={{ fontSize: 11, fontWeight: 700, color: '#888', display: 'block', marginBottom: 5, fontFamily: "'Montserrat', sans-serif" }}>USERNAME/EMAIL</label>
+              <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--mid-gray)', display: 'block', marginBottom: 5, fontFamily: "'Montserrat', sans-serif" }}>USERNAME/EMAIL</label>
               <input
                 style={inp}
                 placeholder="Email or username"
@@ -103,7 +110,7 @@ export default function ClearanceOfficeLoginPage() {
               />
             </div>
             <div>
-              <label style={{ fontSize: 11, fontWeight: 700, color: '#888', display: 'block', marginBottom: 5, fontFamily: "'Montserrat', sans-serif" }}>PASSWORD</label>
+              <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--mid-gray)', display: 'block', marginBottom: 5, fontFamily: "'Montserrat', sans-serif" }}>PASSWORD</label>
               <input style={inp} type="password" placeholder="Enter your password" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLogin()} />
             </div>
 
@@ -123,7 +130,7 @@ export default function ClearanceOfficeLoginPage() {
           </div>
         </div>
 
-        <div style={{ textAlign: 'center', marginTop: 16, fontSize: 11, color: '#aaa', fontFamily: "'Montserrat', sans-serif" }}>
+        <div style={{ textAlign: 'center', marginTop: 16, fontSize: 11, color: 'var(--mid-gray)', fontFamily: "'Montserrat', sans-serif" }}>
           Need an account? Contact the Registrar's Office.
         </div>
         </div>

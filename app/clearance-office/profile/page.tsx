@@ -201,13 +201,13 @@ export default function ClearanceOfficeProfilePage() {
 
   const inp: React.CSSProperties = {
     width: '100%', padding: '10px 12px', fontSize: 13,
-    border: '1.5px solid #dde3ed', borderRadius: 8,
+    border: '1.5px solid var(--border-col)', borderRadius: 8,
     fontFamily: "'Montserrat', sans-serif", outline: 'none',
-    boxSizing: 'border-box', background: 'white', color: '#001C43',
+    boxSizing: 'border-box', background: 'var(--surface)', color: 'var(--text-primary)',
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f4f6fb', fontFamily: "'Montserrat', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-base)', fontFamily: "'Montserrat', sans-serif" }}>
 
       {/* Top nav */}
       <div style={{ background: '#001C43', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 56 }}>
@@ -247,13 +247,13 @@ export default function ClearanceOfficeProfilePage() {
       </div>
 
       <div style={{ padding: '32px 24px', maxWidth: 640, margin: '0 auto' }}>
-        <div style={{ fontSize: 20, fontWeight: 800, color: '#001C43', marginBottom: 4 }}>My Profile</div>
-        <div style={{ fontSize: 13, color: '#888', marginBottom: 28 }}>{officeName} — {role}</div>
+        <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 4 }}>My Profile</div>
+        <div style={{ fontSize: 13, color: 'var(--mid-gray)', marginBottom: 28 }}>{officeName} — {role}</div>
 
         {/* Display Name */}
-        <div style={{ background: 'white', borderRadius: 12, padding: 24, marginBottom: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#001C43', marginBottom: 16 }}>Display Name</div>
-          <div style={{ fontSize: 12, color: '#888', marginBottom: 12 }}>
+        <div style={{ background: 'var(--surface)', borderRadius: 12, padding: 24, marginBottom: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>Display Name</div>
+          <div style={{ fontSize: 12, color: 'var(--mid-gray)', marginBottom: 12 }}>
             This name appears on all clearance records you confirm.
           </div>
           {editingName ? (
@@ -264,14 +264,14 @@ export default function ClearanceOfficeProfilePage() {
                 <button onClick={handleSaveName} disabled={savingName} style={{ flex: 1, padding: '9px', background: '#001C43', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif" }}>
                   {savingName ? 'Saving...' : 'Save'}
                 </button>
-                <button onClick={() => { setEditingName(false); setEditName(displayName); setNameError(''); }} style={{ flex: 1, padding: '9px', background: 'none', border: '1.5px solid #dde3ed', borderRadius: 8, fontSize: 13, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif", color: '#001C43' }}>
+                <button onClick={() => { setEditingName(false); setEditName(displayName); setNameError(''); }} style={{ flex: 1, padding: '9px', background: 'none', border: '1.5px solid var(--border-col)', borderRadius: 8, fontSize: 13, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif", color: 'var(--text-primary)' }}>
                   Cancel
                 </button>
               </div>
             </div>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ fontSize: 15, fontWeight: 700, color: '#001C43' }}>{displayName || '—'}</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>{displayName || '—'}</div>
               <button onClick={() => setEditingName(true)} style={{ fontSize: 12, fontWeight: 600, color: '#114B9F', background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Montserrat', sans-serif" }}>Edit</button>
             </div>
           )}
@@ -279,8 +279,8 @@ export default function ClearanceOfficeProfilePage() {
         </div>
 
         {/* Email */}
-        <div style={{ background: 'white', borderRadius: 12, padding: 24, marginBottom: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#001C43', marginBottom: 16 }}>Email</div>
+        <div style={{ background: 'var(--surface)', borderRadius: 12, padding: 24, marginBottom: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>Email</div>
           {editingEmail ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <input style={inp} type="email" value={editEmail} onChange={e => setEditEmail(e.target.value)} placeholder="Your email address" autoFocus />
@@ -289,14 +289,14 @@ export default function ClearanceOfficeProfilePage() {
                 <button onClick={handleSaveEmail} disabled={savingEmail} style={{ flex: 1, padding: '9px', background: '#001C43', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif" }}>
                   {savingEmail ? 'Saving...' : 'Save'}
                 </button>
-                <button onClick={() => { setEditingEmail(false); setEditEmail(email); setEmailError(''); }} style={{ flex: 1, padding: '9px', background: 'none', border: '1.5px solid #dde3ed', borderRadius: 8, fontSize: 13, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif", color: '#001C43' }}>
+                <button onClick={() => { setEditingEmail(false); setEditEmail(email); setEmailError(''); }} style={{ flex: 1, padding: '9px', background: 'none', border: '1.5px solid var(--border-col)', borderRadius: 8, fontSize: 13, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif", color: 'var(--text-primary)' }}>
                   Cancel
                 </button>
               </div>
             </div>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ fontSize: 15, fontWeight: 700, color: '#001C43' }}>{email || '—'}</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>{email || '—'}</div>
               <button onClick={() => { setEditingEmail(true); setEditEmail(email); }} style={{ fontSize: 12, fontWeight: 600, color: '#114B9F', background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Montserrat', sans-serif" }}>Edit</button>
             </div>
           )}
@@ -304,35 +304,35 @@ export default function ClearanceOfficeProfilePage() {
         </div>
 
         {/* E-Signature */}
-        <div style={{ background: 'white', borderRadius: 12, padding: 24, marginBottom: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#001C43', marginBottom: 8 }}>E-Signature</div>
-          <div style={{ fontSize: 12, color: '#888', marginBottom: 16 }}>Your e-signature is auto-populated when you confirm clearances.</div>
+        <div style={{ background: 'var(--surface)', borderRadius: 12, padding: 24, marginBottom: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>E-Signature</div>
+          <div style={{ fontSize: 12, color: 'var(--mid-gray)', marginBottom: 16 }}>Your e-signature is auto-populated when you confirm clearances.</div>
 
           {/* Current signature */}
           {sigUrl && (
-            <div style={{ marginBottom: 16, padding: '12px 14px', background: '#f8f9fa', borderRadius: 8 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Current Signature</div>
-              <img src={sigUrl} alt="Current signature" style={{ maxHeight: 80, maxWidth: 200, objectFit: 'contain', border: '1px solid #eee', borderRadius: 4, padding: 4, background: 'white' }} />
+            <div style={{ marginBottom: 16, padding: '12px 14px', background: 'var(--surface-2)', borderRadius: 8 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--mid-gray)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Current Signature</div>
+              <img src={sigUrl} alt="Current signature" style={{ maxHeight: 80, maxWidth: 200, objectFit: 'contain', border: '1px solid var(--border-col)', borderRadius: 4, padding: 4, background: 'white' }} />
             </div>
           )}
 
           {/* Upload new */}
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#888', marginBottom: 8 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--mid-gray)', marginBottom: 8 }}>
             {sigUrl ? 'Replace Signature' : 'Upload Signature'}
           </div>
           <div
             onClick={() => document.getElementById('sig-upload-profile')?.click()}
-            style={{ border: '2px dashed #dde3ed', borderRadius: 10, padding: 20, textAlign: 'center', cursor: 'pointer', background: '#fafbfd', marginBottom: 12 }}
+            style={{ border: '2px dashed var(--border-col)', borderRadius: 10, padding: 20, textAlign: 'center', cursor: 'pointer', background: 'var(--surface-2)', marginBottom: 12 }}
             onMouseEnter={e => (e.currentTarget.style.borderColor = '#114B9F')}
-            onMouseLeave={e => (e.currentTarget.style.borderColor = '#dde3ed')}
+            onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border-col)')}
           >
             {sigPreview ? (
               <img src={sigPreview} alt="New signature preview" style={{ maxHeight: 70, maxWidth: '100%', objectFit: 'contain' }} />
             ) : (
               <>
-                <svg viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" style={{ width: 28, height: 28, margin: '0 auto 8px' }}><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                <div style={{ fontSize: 12, color: '#aaa' }}>Click to select a signature image</div>
-                <div style={{ fontSize: 11, color: '#ccc', marginTop: 2 }}>JPG or PNG recommended</div>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" style={{ width: 28, height: 28, margin: '0 auto 8px' }}><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <div style={{ fontSize: 12, color: 'var(--mid-gray)' }}>Click to select a signature image</div>
+                <div style={{ fontSize: 11, color: 'var(--mid-gray)', marginTop: 2 }}>JPG or PNG recommended</div>
               </>
             )}
           </div>
@@ -343,7 +343,7 @@ export default function ClearanceOfficeProfilePage() {
               <button onClick={handleUploadSig} disabled={uploadingSig} style={{ flex: 1, padding: '9px', background: '#001C43', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif" }}>
                 {uploadingSig ? 'Uploading...' : 'Save New Signature'}
               </button>
-              <button onClick={() => { setSigFile(null); setSigPreview(''); }} style={{ flex: 1, padding: '9px', background: 'none', border: '1.5px solid #dde3ed', borderRadius: 8, fontSize: 13, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif", color: '#001C43' }}>
+              <button onClick={() => { setSigFile(null); setSigPreview(''); }} style={{ flex: 1, padding: '9px', background: 'none', border: '1.5px solid var(--border-col)', borderRadius: 8, fontSize: 13, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif", color: 'var(--text-primary)' }}>
                 Cancel
               </button>
             </div>
@@ -353,9 +353,9 @@ export default function ClearanceOfficeProfilePage() {
         </div>
 
         {/* Change Password */}
-        <div style={{ background: 'white', borderRadius: 12, padding: 24, marginBottom: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+        <div style={{ background: 'var(--surface)', borderRadius: 12, padding: 24, marginBottom: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: showPwForm ? 16 : 0 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#001C43' }}>Password</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Password</div>
             <button onClick={() => { setShowPwForm(!showPwForm); setPwError(''); setPwSuccess(''); setOldPw(''); setNewPw(''); setConfirmPw(''); }} style={{ fontSize: 12, fontWeight: 600, color: '#114B9F', background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Montserrat', sans-serif" }}>
               {showPwForm ? 'Cancel' : 'Change Password'}
             </button>
@@ -363,15 +363,15 @@ export default function ClearanceOfficeProfilePage() {
           {showPwForm && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div>
-                <label style={{ fontSize: 11, fontWeight: 700, color: '#888', display: 'block', marginBottom: 4 }}>CURRENT PASSWORD</label>
+                <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--mid-gray)', display: 'block', marginBottom: 4 }}>CURRENT PASSWORD</label>
                 <input style={inp} type="password" value={oldPw} onChange={e => { setOldPw(e.target.value); setPwError(''); }} placeholder="Enter current password" />
               </div>
               <div>
-                <label style={{ fontSize: 11, fontWeight: 700, color: '#888', display: 'block', marginBottom: 4 }}>NEW PASSWORD</label>
+                <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--mid-gray)', display: 'block', marginBottom: 4 }}>NEW PASSWORD</label>
                 <input style={inp} type="password" value={newPw} onChange={e => { setNewPw(e.target.value); setPwError(''); }} placeholder="At least 8 characters" />
               </div>
               <div>
-                <label style={{ fontSize: 11, fontWeight: 700, color: '#888', display: 'block', marginBottom: 4 }}>CONFIRM NEW PASSWORD</label>
+                <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--mid-gray)', display: 'block', marginBottom: 4 }}>CONFIRM NEW PASSWORD</label>
                 <input style={inp} type="password" value={confirmPw} onChange={e => { setConfirmPw(e.target.value); setPwError(''); }} placeholder="Repeat new password" />
               </div>
               {pwError   && <div style={{ fontSize: 12, color: '#E50019', fontWeight: 600 }}>{pwError}</div>}
